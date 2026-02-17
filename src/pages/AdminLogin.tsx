@@ -91,6 +91,12 @@ const AdminLogin = () => {
                 {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {t('Sign In', 'تسجيل الدخول')}
               </Button>
+              <p className="text-center text-sm text-muted-foreground">
+                {t('Staff?', 'موظف?')}{' '}
+                <a href="/staff/signup" className="text-primary hover:underline font-medium">
+                  {t('Register here', 'سجل هنا')}
+                </a>
+              </p>
             </form>
           </CardContent>
         </Card>

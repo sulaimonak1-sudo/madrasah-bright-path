@@ -20,6 +20,7 @@ import AdminPromotion from "./pages/AdminPromotion";
 import AdminReports from "./pages/AdminReports";
 import AdminLocking from "./pages/AdminLocking";
 import ResultView from "./pages/ResultView";
+import StaffSignup from "./pages/StaffSignup";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/result" element={<ResultView />} />
               <Route path="/admin/login" element={<AdminLogin />} />
+              <Route path="/staff/signup" element={<StaffSignup />} />
 
               {/* Admin & Teacher */}
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
