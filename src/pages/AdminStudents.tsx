@@ -182,6 +182,11 @@ const AdminStudents = () => {
     const autoId = studentUid.trim() ? studentUid.trim() : generateStudentId();
     // Auto-generate Arabic name if not provided
     const autoAr = nameAr.trim() ? nameAr.trim() : transliterateToArabic(nameEn.trim() || fullName.trim());
+    
+    // Use provided parameters, fallback to state variables, then null
+    const finalLevelId = levelId || classLevelId || null;
+    const finalArmId = armId || classArmId || null;
+    
     const { error } = await supabase.from('students').insert({
       full_name: fullName.trim(),
       name_en: nameEn.trim() || fullName.trim(),
@@ -189,8 +194,8 @@ const AdminStudents = () => {
       student_uid: autoId,
       gender: gender || null,
       status: 'active',
-      class_level_id: levelId || classLevelId || null,
-      class_arm_id: armId || classArmId || null,
+      class_level_id: finalLevelId,
+      class_arm_id: finalArmId,
       guardian_name: guardianName.trim() || null,
       guardian_phone: guardianPhone.trim() || null,
     });
