@@ -176,7 +176,7 @@ const AdminStudents = () => {
     return `${bilingualText(level.name_en, level.name_ar)}${arm ? ' - ' + arm.name : ''}`;
   };
 
-  const addStudent = async () => {
+  const addStudent = async (levelId: string = '', armId: string = '') => {
     if (!fullName.trim()) return;
     // Auto-generate student ID if not provided
     const autoId = studentUid.trim() ? studentUid.trim() : generateStudentId();
@@ -189,8 +189,8 @@ const AdminStudents = () => {
       student_uid: autoId,
       gender: gender || null,
       status: 'active',
-      class_level_id: classLevelId || null,
-      class_arm_id: classArmId || null,
+      class_level_id: levelId || classLevelId || null,
+      class_arm_id: armId || classArmId || null,
       guardian_name: guardianName.trim() || null,
       guardian_phone: guardianPhone.trim() || null,
     });
@@ -318,10 +318,7 @@ const AdminStudents = () => {
                   <DialogFooter>
                     <DialogClose asChild><Button variant="outline">{t('Cancel', 'إلغاء')}</Button></DialogClose>
                     <Button onClick={() => {
-                      // Set class level/arm for add
-                      setClassLevelId(selectedClassLevel?.id || '');
-                      setClassArmId(selectedClassArm?.id || '');
-                      addStudent();
+                      addStudent(selectedClassLevel?.id || '', selectedClassArm?.id || '');
                     }}>{t('Add', 'إضافة')}</Button>
                   </DialogFooter>
                 </DialogContent>
