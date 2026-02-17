@@ -24,6 +24,8 @@ const ResultView = () => {
   const [term, setTerm] = useState<any | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [scores, setScores] = useState<any[]>([]);
+  const [classLevel, setClassLevel] = useState<any | null>(null);
+  const [classArm, setClassArm] = useState<any | null>(null);
 
   useEffect(() => {
     // load available terms for selection
@@ -56,6 +58,20 @@ const ResultView = () => {
       setTerm(data.term);
       setSubjects(data.subjects || []);
       setScores(data.scores || []);
+      // fetch class level and arm for display
+      try {
+        const stud = data.student as any;
+        if (stud?.class_level_id) {
+          const { data: cl } = await supabase.from('class_levels').select('*').eq('id', stud.class_level_id).maybeSingle();
+          setClassLevel(cl || null);
+        }
+        if (stud?.class_arm_id) {
+          const { data: arm } = await supabase.from('class_arms').select('*').eq('id', stud.class_arm_id).maybeSingle();
+          setClassArm(arm || null);
+        }
+      } catch (err) {
+        // ignore
+      }
     } catch (err: any) {
       setError(err.message || String(err));
     } finally {
