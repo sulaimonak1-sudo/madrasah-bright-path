@@ -102,23 +102,22 @@ const AdminResults = () => {
   useEffect(() => {
     if (!selectedSubject || !termId || !selectedClassLevel) { setScores([]); return; }
     const fetchData = async () => {
-      // Build student query depending on whether a class arm is selected
-      let studQuery: any = supabase.from('students').select('id, full_name, name_en, name_ar, student_uid')
-        .eq('class_level_id', selectedClassLevel.id)
-        .eq('status', 'active')
-        .order('full_name');
-      if (selectedClassArm) {
-        studQuery = studQuery.eq('class_arm_id', selectedClassArm.id);
-      } else {
-        studQuery = studQuery.is('class_arm_id', null);
-      }
-
+      // Fetch students by class level, then filter client-side for arms.
       const [studRes, scoresRes] = await Promise.all([
-        studQuery,
+        supabase.from('students').select('id, full_name, name_en, name_ar, student_uid, class_arm_id')
+          .eq('class_level_id', selectedClassLevel.id)
+          .eq('status', 'active')
+          .order('full_name'),
         supabase.from('term_scores').select('*')
           .eq('term_id', termId).eq('subject_id', selectedSubject.id),
       ]);
-      const students = studRes.data || [];
+      let students = studRes.data || [];
+      // Normalize: treat undefined/empty-string/null as no arm
+      if (selectedClassArm) {
+        students = students.filter((s: any) => s.class_arm_id === selectedClassArm.id);
+      } else {
+        students = students.filter((s: any) => !s.class_arm_id);
+      }
       const existingScores = scoresRes.data || [];
       const entries: ScoreEntry[] = students.map(s => {
         const existing = existingScores.find(sc => sc.student_id === s.id);
