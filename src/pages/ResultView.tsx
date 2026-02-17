@@ -164,7 +164,7 @@ const ResultView = () => {
             {/* Header: English left, Arabic right */}
             {/* Polished centered header */}
             <div className="p-6">
-              <div className="max-w-4xl mx-auto text-center">
+              <div className="max-w-4xl mx-auto text-center border-t-2 border-emerald-100 pt-6">
                 <div className="flex items-center justify-center">
                   <div className="rounded-full bg-emerald-900/10 border border-emerald-900 p-3 flex items-center justify-center" style={{width:72, height:72}}>
                     <GraduationCap className="h-8 w-8 text-emerald-900" />
@@ -172,8 +172,12 @@ const ResultView = () => {
                 </div>
                 <h1 className="text-3xl font-extrabold tracking-wide uppercase mt-4 text-emerald-900">Al-Bari Group of Schools</h1>
                 <p className="text-lg mt-1 text-emerald-800">Madrasah Section</p>
-                <div className="my-2 border-t border-emerald-200" />
-                <p className="text-sm mt-2 text-slate-600">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com</p>
+                <div className="my-2 flex items-center justify-center">
+                  <div className="w-2/5 border-t border-emerald-200" />
+                  <div className="mx-3 text-emerald-900">◈</div>
+                  <div className="w-2/5 border-t border-emerald-200" />
+                </div>
+                <p className="text-sm mt-1 text-slate-600">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com</p>
                 <h2 className="text-xl font-semibold mt-4">STUDENT ACADEMIC REPORT</h2>
                 <p className="mt-2 text-sm text-slate-600">{sessionName ? `Session: ${sessionName}` : ''} {term?.name_en ? ` | Term: ${term?.name_en}` : ''}</p>
               </div>
@@ -232,11 +236,12 @@ const ResultView = () => {
 
             {/* Scores Table */}
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto px-6">
+                <div className="border border-emerald-200 rounded-md overflow-hidden">
                 <Table className="min-w-full table-auto">
                   <TableHeader>
                     <TableRow className="bg-emerald-900 text-white">
-                      <TableHead className="font-semibold">{t('Subject', 'المادة')}</TableHead>
+                      <TableHead className="font-semibold uppercase tracking-wide text-sm">{t('Subject', 'المادة')}</TableHead>
                       {!isCumulative && (
                         <>
                           <TableHead className="text-center">{t('CA1', 'د.أ١')}</TableHead>
@@ -294,14 +299,19 @@ const ResultView = () => {
                     ))}
                   </TableBody>
                 </Table>
+                </div>
               </div>
             </CardContent>
 
             {/* Footer */}
               <div className="border-t p-6 space-y-6">
-                <div className="flex justify-between items-center text-sm">
-                  <div className="">{t('Term Average:', 'متوسط الفصل:')} <strong>{termAvg}%</strong></div>
-                  {isCumulative && <div className="">{t('Cumulative Average:', 'المتوسط التراكمي:')} <strong>{cumulativeAvg}%</strong></div>}
+                <div className="pt-2">
+                  <div className="grid grid-cols-2 items-center">
+                    <div />
+                    <div className="text-right text-lg font-bold">
+                      {t('Term Average:', 'متوسط الفصل:')} <span className="text-emerald-900">{termAvg}%</span>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -336,8 +346,9 @@ const ResultView = () => {
                     {qrDataUrl ? <img src={qrDataUrl} alt="verify-qr" className="w-20 h-20 object-contain" /> : <span>QR</span>}
                   </div>
                 </div>
-              </div>
-          </Card>
+                <div className="mt-6 h-6 bg-emerald-900" />
+                </div>
+              </Card>
         </div>
       </div>
     </PublicLayout>
