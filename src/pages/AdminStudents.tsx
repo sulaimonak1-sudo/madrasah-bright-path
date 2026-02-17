@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, Search } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,57 @@ const AdminStudents = () => {
   const [classArms, setClassArms] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [addOpen, setAddOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<any>(null);
+  // Edit student state
+  const [editFields, setEditFields] = useState<any>({});
+
+  const openEdit = (student: any) => {
+    setSelectedStudent(student);
+    setEditFields({ ...student });
+    setEditOpen(true);
+  };
+
+  const handleEditChange = (field: string, value: any) => {
+    setEditFields((prev: any) => ({ ...prev, [field]: value }));
+  };
+
+  const saveEdit = async () => {
+    if (!editFields.full_name?.trim()) return;
+    const { error } = await supabase.from('students').update({
+      ...editFields,
+      name_en: editFields.name_en || editFields.full_name,
+      name_ar: editFields.name_ar || transliterateToArabic(editFields.name_en || editFields.full_name),
+    }).eq('id', selectedStudent.id);
+    if (error) {
+      toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: t('Student updated', 'تم تحديث الطالب') });
+    setEditOpen(false);
+    setSelectedStudent(null);
+    fetchData();
+  };
+
+  // Delete student
+  const openDelete = (student: any) => {
+    setSelectedStudent(student);
+    setDeleteOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!selectedStudent) return;
+    const { error } = await supabase.from('students').delete().eq('id', selectedStudent.id);
+    if (error) {
+      toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: t('Student deleted', 'تم حذف الطالب') });
+    setDeleteOpen(false);
+    setSelectedStudent(null);
+    fetchData();
+  };
 
   // Form fields
   const [fullName, setFullName] = useState('');
@@ -243,11 +294,96 @@ const AdminStudents = () => {
                         {t(student.status, student.status === 'active' ? 'نشط' : 'غير نشط')}
                       </Badge>
                     </TableCell>
+                    <TableCell className="flex gap-2">
+                      <Button size="icon" variant="ghost" onClick={() => openEdit(student)}><Pencil className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => openDelete(student)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    </TableCell>
                   </TableRow>
                 ))}
                 {filtered.length === 0 && (
-                  <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{t('No students found.', 'لا طلاب.')}</TableCell></TableRow>
+                  <TableRow><TableCell colSpan={6} className="text-center py-8 text-muted-foreground">{t('No students found.', 'لا طلاب.')}</TableCell></TableRow>
                 )}
+                      {/* Edit Student Dialog */}
+                      <Dialog open={editOpen} onOpenChange={setEditOpen}>
+                        <DialogContent className="max-w-lg">
+                          <DialogHeader><DialogTitle>{t('Edit Student', 'تعديل طالب')}</DialogTitle></DialogHeader>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2 col-span-2">
+                              <Label>{t('Full Name', 'الاسم الكامل')} *</Label>
+                              <Input value={editFields.full_name || ''} onChange={e => handleEditChange('full_name', e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Name (English)', 'الاسم (إنجليزي)')}</Label>
+                              <Input value={editFields.name_en || ''} onChange={e => handleEditChange('name_en', e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
+                              <Input value={editFields.name_ar || ''} onChange={e => handleEditChange('name_ar', e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Student ID', 'رقم الطالب')}</Label>
+                              <Input value={editFields.student_uid || ''} onChange={e => handleEditChange('student_uid', e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Gender', 'الجنس')}</Label>
+                              <Select value={editFields.gender || ''} onValueChange={v => handleEditChange('gender', v)}>
+                                <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="male">{t('Male', 'ذكر')}</SelectItem>
+                                  <SelectItem value="female">{t('Female', 'أنثى')}</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Class Level', 'المرحلة')}</Label>
+                              <Select value={editFields.class_level_id || ''} onValueChange={v => { handleEditChange('class_level_id', v); handleEditChange('class_arm_id', ''); }}>
+                                <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                                <SelectContent>
+                                  {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Class Arm', 'الشعبة')}</Label>
+                              <Select value={editFields.class_arm_id || ''} onValueChange={v => handleEditChange('class_arm_id', v)} disabled={!editFields.class_level_id}>
+                                <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                                <SelectContent>
+                                  {classArms.filter(a => a.class_level_id === editFields.class_level_id).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Guardian Name', 'اسم ولي الأمر')}</Label>
+                              <Input value={editFields.guardian_name || ''} onChange={e => handleEditChange('guardian_name', e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>{t('Guardian Phone', 'هاتف ولي الأمر')}</Label>
+                              <Input value={editFields.guardian_phone || ''} onChange={e => handleEditChange('guardian_phone', e.target.value)} />
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <DialogClose asChild><Button variant="outline">{t('Cancel', 'إلغاء')}</Button></DialogClose>
+                            <Button onClick={saveEdit}>{t('Save', 'حفظ')}</Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+
+                      {/* Delete Student Alert Dialog */}
+                      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                        <AlertDialogTrigger asChild></AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>{t('Delete Student', 'حذف الطالب')}</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              {t('Are you sure you want to delete this student? This action cannot be undone.', 'هل أنت متأكد أنك تريد حذف هذا الطالب؟ لا يمكن التراجع عن هذا الإجراء.')}
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>{t('Cancel', 'إلغاء')}</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDelete}>{t('Delete', 'حذف')}</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
               </TableBody>
             </Table>
           </CardContent>
