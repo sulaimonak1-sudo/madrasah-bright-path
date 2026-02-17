@@ -132,7 +132,6 @@ const AdminResults = () => {
         ca1: s.ca1,
         ca2: s.ca2,
         exam: s.exam,
-        total: s.ca1 + s.ca2 + s.exam,
         grade: calculateGrade(s.ca1 + s.ca2 + s.exam),
       }));
       const { error } = await supabase.from('term_scores').upsert(upserts, {
