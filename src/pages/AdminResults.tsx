@@ -97,14 +97,24 @@ const AdminResults = () => {
       .then(({ data }) => setSubjects(data || []));
   }, [selectedClassLevel]);
 
-  // When subject is selected, fetch students & scores
+  // When subject is selected, fetch students & scores. Support classes without arms
+  // by querying students where `class_arm_id IS NULL` when `selectedClassArm` is null.
   useEffect(() => {
-    if (!selectedSubject || !selectedClassArm || !termId) { setScores([]); return; }
+    if (!selectedSubject || !termId || !selectedClassLevel) { setScores([]); return; }
     const fetchData = async () => {
+      // Build student query depending on whether a class arm is selected
+      let studQuery: any = supabase.from('students').select('id, full_name, name_en, name_ar, student_uid')
+        .eq('class_level_id', selectedClassLevel.id)
+        .eq('status', 'active')
+        .order('full_name');
+      if (selectedClassArm) {
+        studQuery = studQuery.eq('class_arm_id', selectedClassArm.id);
+      } else {
+        studQuery = studQuery.is('class_arm_id', null);
+      }
+
       const [studRes, scoresRes] = await Promise.all([
-        supabase.from('students').select('id, full_name, name_en, name_ar, student_uid')
-          .eq('class_level_id', selectedClassLevel.id).eq('class_arm_id', selectedClassArm.id)
-          .eq('status', 'active').order('full_name'),
+        studQuery,
         supabase.from('term_scores').select('*')
           .eq('term_id', termId).eq('subject_id', selectedSubject.id),
       ]);
