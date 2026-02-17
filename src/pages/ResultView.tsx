@@ -1,0 +1,209 @@
+import { useLanguage } from '@/contexts/LanguageContext';
+import { PublicLayout } from '@/components/PublicLayout';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { mockStudents, mockSubjects, mockTermScores, mockTerms, mockClassLevels, mockClassArms } from '@/data/mockData';
+import { GRADE_CONFIG, calculateGrade } from '@/types';
+import { useSearchParams } from 'react-router-dom';
+import { Printer, GraduationCap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const ResultView = () => {
+  const { t, bilingualText, isRTL, language } = useLanguage();
+  const [params] = useSearchParams();
+
+  const studentIdParam = params.get('student');
+  const termIdParam = params.get('term');
+
+  // Find student
+  const student = mockStudents.find(s => s.student_id === studentIdParam);
+  const term = mockTerms.find(t => t.id === termIdParam);
+
+  if (!student || !term) {
+    return (
+      <PublicLayout>
+        <div className="flex min-h-[50vh] items-center justify-center">
+          <Card className="max-w-md text-center p-8">
+            <p className="text-lg font-semibold text-destructive">
+              {t('Result not found. Please check your details.', 'النتيجة غير موجودة. يرجى التحقق من البيانات.')}
+            </p>
+          </Card>
+        </div>
+      </PublicLayout>
+    );
+  }
+
+  const classLevel = mockClassLevels.find(c => c.id === student.class_level_id);
+  const classArm = mockClassArms.find(a => a.id === student.class_arm_id);
+  const subjects = mockSubjects.filter(s => s.class_level_id === student.class_level_id);
+  
+  const isCumulative = term.term_number === 3;
+  const allTerms = mockTerms.filter(t => t.session_id === term.session_id);
+
+  // Build scores
+  const getScore = (subjectId: string, tId: string) =>
+    mockTermScores.find(ts => ts.student_id === student.id && ts.subject_id === subjectId && ts.term_id === tId);
+
+  const subjectRows = subjects.map(sub => {
+    const t1 = getScore(sub.id, allTerms.find(t => t.term_number === 1)?.id || '');
+    const t2 = getScore(sub.id, allTerms.find(t => t.term_number === 2)?.id || '');
+    const t3 = getScore(sub.id, allTerms.find(t => t.term_number === 3)?.id || '');
+    const currentScore = term.term_number === 1 ? t1 : term.term_number === 2 ? t2 : t3;
+
+    const cumulativeTotal = (t1?.total || 0) + (t2?.total || 0) + (t3?.total || 0);
+    const cumulativeAvg = Math.round(cumulativeTotal / 3);
+
+    return {
+      subject: sub,
+      currentScore,
+      t1Total: t1?.total,
+      t2Total: t2?.total,
+      t3Total: t3?.total,
+      cumulativeTotal,
+      cumulativeAvg,
+      finalGrade: calculateGrade(cumulativeAvg),
+    };
+  });
+
+  const termAvg = subjectRows.length > 0
+    ? Math.round(subjectRows.reduce((sum, r) => sum + (r.currentScore?.total || 0), 0) / subjectRows.length)
+    : 0;
+
+  const cumulativeAvg = subjectRows.length > 0
+    ? Math.round(subjectRows.reduce((sum, r) => sum + r.cumulativeAvg, 0) / subjectRows.length)
+    : 0;
+
+  const promoted = cumulativeAvg >= 50;
+
+  return (
+    <PublicLayout>
+      <div className="container py-8">
+        <div className="mx-auto max-w-4xl">
+          {/* Print button */}
+          <div className="mb-4 flex justify-end no-print">
+            <Button onClick={() => window.print()} variant="outline">
+              <Printer className="mr-2 h-4 w-4" />
+              {t('Print Result', 'طباعة النتيجة')}
+            </Button>
+          </div>
+
+          <Card className="shadow-card-lg overflow-hidden">
+            {/* Header */}
+            <div className="gradient-hero geometric-pattern p-6 text-center text-primary-foreground">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <GraduationCap className="h-8 w-8" />
+              </div>
+              <h1 className="text-xl font-bold">{t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}</h1>
+              <p className="text-sm opacity-80">{t('Madrasah Result Portal', 'بوابة نتائج المدرسة')}</p>
+              <p className="mt-2 text-lg font-semibold">
+                {t('Academic Report', 'التقرير الأكاديمي')} — {t(term.name_en, term.name_ar)}
+              </p>
+            </div>
+
+            {/* Student Info */}
+            <div className="grid grid-cols-2 gap-4 p-6 border-b bg-muted/30 text-sm">
+              <div><span className="text-muted-foreground">{t('Name:', 'الاسم:')}</span> <strong>{bilingualText(student.name_en, student.name_ar)}</strong></div>
+              <div><span className="text-muted-foreground">{t('Student ID:', 'رقم الطالب:')}</span> <strong>{student.student_id}</strong></div>
+              <div><span className="text-muted-foreground">{t('Class:', 'الصف:')}</span> <strong>{bilingualText(classLevel?.name_en, classLevel?.name_ar)} {classArm?.name}</strong></div>
+              <div><span className="text-muted-foreground">{t('Gender:', 'الجنس:')}</span> <strong>{t(student.gender, student.gender === 'male' ? 'ذكر' : 'أنثى')}</strong></div>
+            </div>
+
+            {/* Scores Table */}
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-muted/50">
+                      <TableHead className="font-semibold">{t('Subject', 'المادة')}</TableHead>
+                      {!isCumulative && (
+                        <>
+                          <TableHead className="text-center">{t('CA1', 'د.أ١')}</TableHead>
+                          <TableHead className="text-center">{t('CA2', 'د.أ٢')}</TableHead>
+                          <TableHead className="text-center">{t('Exam', 'الامتحان')}</TableHead>
+                          <TableHead className="text-center font-semibold">{t('Total', 'المجموع')}</TableHead>
+                          <TableHead className="text-center">{t('Grade', 'التقدير')}</TableHead>
+                        </>
+                      )}
+                      {isCumulative && (
+                        <>
+                          <TableHead className="text-center">{t('T1', 'ف١')}</TableHead>
+                          <TableHead className="text-center">{t('T2', 'ف٢')}</TableHead>
+                          <TableHead className="text-center">{t('T3', 'ف٣')}</TableHead>
+                          <TableHead className="text-center">{t('Cum. Total', 'المجموع التراكمي')}</TableHead>
+                          <TableHead className="text-center">{t('Cum. Avg', 'المتوسط')}</TableHead>
+                          <TableHead className="text-center">{t('Grade', 'التقدير')}</TableHead>
+                        </>
+                      )}
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {subjectRows.map(row => (
+                      <TableRow key={row.subject.id}>
+                        <TableCell className="font-medium">{bilingualText(row.subject.name_en, row.subject.name_ar)}</TableCell>
+                        {!isCumulative && (
+                          <>
+                            <TableCell className="text-center">{row.currentScore?.ca1 ?? '—'}</TableCell>
+                            <TableCell className="text-center">{row.currentScore?.ca2 ?? '—'}</TableCell>
+                            <TableCell className="text-center">{row.currentScore?.exam ?? '—'}</TableCell>
+                            <TableCell className="text-center font-bold">{row.currentScore?.total ?? '—'}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline">{row.currentScore?.grade ?? '—'}</Badge>
+                            </TableCell>
+                          </>
+                        )}
+                        {isCumulative && (
+                          <>
+                            <TableCell className="text-center">{row.t1Total ?? '—'}</TableCell>
+                            <TableCell className="text-center">{row.t2Total ?? '—'}</TableCell>
+                            <TableCell className="text-center">{row.t3Total ?? '—'}</TableCell>
+                            <TableCell className="text-center font-bold">{row.cumulativeTotal}</TableCell>
+                            <TableCell className="text-center font-bold">{row.cumulativeAvg}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant="outline">{row.finalGrade}</Badge>
+                            </TableCell>
+                          </>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+
+            {/* Footer */}
+            <div className="border-t p-6 space-y-3">
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>{t('Term Average:', 'متوسط الفصل:')} <strong>{termAvg}%</strong></div>
+                {isCumulative && <div>{t('Cumulative Average:', 'المتوسط التراكمي:')} <strong>{cumulativeAvg}%</strong></div>}
+              </div>
+              {isCumulative && (
+                <div className="rounded-lg bg-muted p-4 text-center">
+                  <p className="text-lg font-bold">
+                    {t('Promotion Status:', 'حالة الترقية:')}{' '}
+                    <span className={cn(promoted ? 'text-success' : 'text-destructive')}>
+                      {promoted ? t('PROMOTED', 'ناجح') : t('RETAINED', 'باقٍ')}
+                    </span>
+                  </p>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-4 pt-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">{t("Teacher's Remark:", 'ملاحظة المعلم:')}</p>
+                  <div className="mt-1 h-8 border-b border-dashed" />
+                </div>
+                <div>
+                  <p className="text-muted-foreground">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</p>
+                  <div className="mt-1 h-8 border-b border-dashed" />
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+      </div>
+    </PublicLayout>
+  );
+};
+
+export default ResultView;
