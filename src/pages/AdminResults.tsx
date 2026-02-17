@@ -266,23 +266,34 @@ const AdminResults = () => {
                     <CardDescription>{t(`${arms.length} arm(s)`, `${arms.length} شعبة`)}</CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-2">
-                    {arms.length === 0 && (
-                      <p className="text-sm text-muted-foreground">{t('No arms configured', 'لا شعب')}</p>
-                    )}
-                    {arms.map(arm => (
+                    {arms.length === 0 ? (
                       <Button
-                        key={arm.id}
                         variant="outline"
                         className="w-full justify-between"
-                        onClick={() => selectClass(level, arm)}
+                        onClick={() => selectClass(level, null)}
                       >
                         <span className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
-                          {bilingualText(level.name_en, level.name_ar)} - {arm.name}
+                          {bilingualText(level.name_en, level.name_ar)}
                         </span>
                         <ChevronRight className="h-4 w-4" />
                       </Button>
-                    ))}
+                    ) : (
+                      arms.map(arm => (
+                        <Button
+                          key={arm.id}
+                          variant="outline"
+                          className="w-full justify-between"
+                          onClick={() => selectClass(level, arm)}
+                        >
+                          <span className="flex items-center gap-2">
+                            <Users className="h-4 w-4 text-muted-foreground" />
+                            {bilingualText(level.name_en, level.name_ar)} - {arm.name}
+                          </span>
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      ))
+                    )}
                   </CardContent>
                 </Card>
               );
