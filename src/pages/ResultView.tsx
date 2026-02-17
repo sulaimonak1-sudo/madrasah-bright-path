@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { GRADE_CONFIG, calculateGrade } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
 import { Printer, GraduationCap } from 'lucide-react';
+import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
 
 const ResultView = () => {
@@ -27,6 +28,7 @@ const ResultView = () => {
   const [classLevel, setClassLevel] = useState<any | null>(null);
   const [classArm, setClassArm] = useState<any | null>(null);
   const [sessionName, setSessionName] = useState<string | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     // load available terms for selection
@@ -69,6 +71,14 @@ const ResultView = () => {
       }
       setSubjects(data.subjects || []);
       setScores(data.scores || []);
+      // generate QR for verification URL (student uid + term id)
+      try {
+        const verifyUrl = `${window.location.origin}/verify-result?student_uid=${encodeURIComponent(data.student.student_uid)}&term_id=${encodeURIComponent(data.term.id)}`;
+        const qr = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
+        setQrDataUrl(qr);
+      } catch (err) {
+        setQrDataUrl(null);
+      }
       // fetch class level and arm for display
       try {
         const stud = data.student as any;
@@ -322,7 +332,9 @@ const ResultView = () => {
 
                 <div className="mt-6 flex items-center justify-between">
                   <div className="text-sm text-slate-600">Result generated via Al-Bari Madrasah Portal</div>
-                  <div className="w-24 h-24 border grid place-items-center">QR</div>
+                  <div className="w-24 h-24 border grid place-items-center">
+                    {qrDataUrl ? <img src={qrDataUrl} alt="verify-qr" className="w-20 h-20 object-contain" /> : <span>QR</span>}
+                  </div>
                 </div>
               </div>
             </div>

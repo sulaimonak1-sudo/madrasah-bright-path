@@ -40,3 +40,17 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Print styles for result sheet */
+@media print {
+  html, body { background: #fff; color: #111; }
+  .no-print { display: none !important; }
+  .container { padding: 0 !important; }
+  .card { box-shadow: none !important; border: none !important; }
+  /* page margins for A4 */
+  @page { size: A4; margin: 18mm; }
+  /* Ensure header, tables print full width */
+  .max-w-4xl { width: 100% !important; max-width: none !important; }
+  /* avoid background colors in print unless necessary */
+  .bg-emerald-900 { background: #133b2b !important; color: #fff !important; }
+}
