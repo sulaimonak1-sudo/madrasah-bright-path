@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import {
   LayoutDashboard, Users, BookOpen, Layers, FolderOpen,
@@ -28,9 +29,17 @@ const navItems = [
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { t, isRTL } = useLanguage();
+  const { signOut, isAdmin, role } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Filter nav items based on role - teachers get limited access
+  const filteredNavItems = isAdmin
+    ? navItems
+    : navItems.filter(item => 
+        ['/admin', '/admin/results', '/admin/reports'].includes(item.path)
+      );
 
   return (
     <div className={cn("flex min-h-screen", isRTL && "flex-row-reverse")}>
@@ -66,7 +75,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto py-3 px-3 space-y-1">
-          {navItems.map(item => {
+          {filteredNavItems.map(item => {
             const isActive = location.pathname === item.path;
             return (
               <Link
@@ -90,7 +99,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         {/* Footer */}
         <div className="border-t border-sidebar-border p-3">
           <button
-            onClick={() => navigate('/admin/login')}
+            onClick={async () => {
+              await signOut();
+              navigate('/admin/login');
+            }}
             className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 transition-colors"
           >
             <LogOut className="h-4.5 w-4.5" />
