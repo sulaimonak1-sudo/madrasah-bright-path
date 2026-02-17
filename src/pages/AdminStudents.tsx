@@ -148,6 +148,20 @@ const AdminStudents = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // When opening the Add Student dialog, prefill class level/arm from the
+  // class page the user clicked into. Also clear fields when opening a new
+  // dialog to ensure a fresh form.
+  const handleAddOpenChange = (open: boolean) => {
+    setAddOpen(open);
+    if (open) {
+      setClassLevelId(selectedClassLevel?.id || '');
+      setClassArmId(selectedClassArm?.id || '');
+      setFullName(''); setNameEn(''); setNameAr(''); setStudentUid('');
+      setGender(''); setGuardianName(''); setGuardianPhone('');
+    } else {
+      setClassLevelId(''); setClassArmId('');
+    }
+  };
   const filteredArms = useMemo(() => classArms.filter(a => a.class_level_id === classLevelId), [classArms, classLevelId]);
 
   // Students filtered by selected class
@@ -282,7 +296,7 @@ const AdminStudents = () => {
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input className="pl-9" placeholder={t('Search students...', 'البحث عن طالب...')} value={search} onChange={e => setSearch(e.target.value)} />
               </div>
-              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+              <Dialog open={addOpen} onOpenChange={handleAddOpenChange}>
                 <DialogTrigger asChild>
                   <Button size="sm"><Plus className="mr-2 h-4 w-4" />{t('Add Student', 'إضافة طالب')}</Button>
                 </DialogTrigger>
@@ -315,7 +329,24 @@ const AdminStudents = () => {
                         </SelectContent>
                       </Select>
                     </div>
-                    {/* Class Level and Arm are fixed for this context */}
+                    <div className="space-y-2">
+                      <Label>{t('Class Level', 'المرحلة')}</Label>
+                      <Select value={classLevelId} onValueChange={v => { setClassLevelId(v); setClassArmId(''); }}>
+                        <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                        <SelectContent>
+                          {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('Class Arm', 'الشعبة')}</Label>
+                      <Select value={classArmId} onValueChange={setClassArmId} disabled={!classLevelId}>
+                        <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                        <SelectContent>
+                          {classArms.filter(a => a.class_level_id === classLevelId).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <div className="space-y-2 col-span-2">
                       <Label>{t('Guardian Name', 'اسم ولي الأمر')}</Label>
                       <Input value={guardianName} onChange={e => setGuardianName(e.target.value)} />
@@ -327,9 +358,7 @@ const AdminStudents = () => {
                   </div>
                   <DialogFooter>
                     <DialogClose asChild><Button variant="outline">{t('Cancel', 'إلغاء')}</Button></DialogClose>
-                    <Button onClick={() => {
-                      addStudent(selectedClassLevel?.id || '', selectedClassArm?.id || '');
-                    }}>{t('Add', 'إضافة')}</Button>
+                    <Button onClick={() => { addStudent(); }}>{t('Add', 'إضافة')}</Button>
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
