@@ -111,6 +111,14 @@ const Index = () => {
                   onChange={e => setPin(e.target.value)}
                   required
                 />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full mt-2"
+                  onClick={() => navigate('/generate-pin')}
+                >
+                  {t('Get/Generate PIN', 'الحصول على الرقم السري')}
+                </Button>
               </div>
 
               <Button type="submit" className="w-full" size="lg">
