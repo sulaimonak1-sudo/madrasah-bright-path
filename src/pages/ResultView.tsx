@@ -16,6 +16,7 @@ const ResultView = () => {
   const [studentUid, setStudentUid] = useState('');
   const [pin, setPin] = useState('');
   const [termId, setTermId] = useState('');
+  const [terms, setTerms] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -25,7 +26,17 @@ const ResultView = () => {
   const [scores, setScores] = useState<any[]>([]);
 
   useEffect(() => {
-    // Optional: prefill termId to latest term if you want — left empty for user selection
+    // load available terms for selection
+    (async () => {
+      try {
+        const { data, error } = await supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false });
+        if (error) throw error;
+        setTerms(data || []);
+        if (data && data.length > 0) setTermId(prev => prev || data[0].id);
+      } catch (err) {
+        // ignore - user can still enter a term id manually if needed
+      }
+    })();
   }, []);
 
   const handleLookup = async (e?: React.FormEvent) => {
@@ -62,7 +73,13 @@ const ResultView = () => {
               <form onSubmit={handleLookup} className="space-y-4">
                 <input className="w-full p-2 border rounded" placeholder={t('Student ID', 'رقم الطالب')} value={studentUid} onChange={e => setStudentUid(e.target.value)} />
                 <input className="w-full p-2 border rounded" placeholder={t('PIN (if provided)', 'الرقم السري (اختياري)')} value={pin} onChange={e => setPin(e.target.value)} />
-                <input className="w-full p-2 border rounded" placeholder={t('Term ID', 'معرف الفصل')} value={termId} onChange={e => setTermId(e.target.value)} />
+                <label className="block text-sm text-muted-foreground">{t('Select Term', 'اختر الفصل')}</label>
+                <select className="w-full p-2 border rounded" value={termId} onChange={e => setTermId(e.target.value)}>
+                  <option value="">{t('Select term...', 'اختر الفصل...')}</option>
+                  {terms.map(tm => (
+                    <option key={tm.id} value={tm.id}>{`${tm.term_number} - ${bilingualText(tm.name_en, tm.name_ar)}`}</option>
+                  ))}
+                </select>
                 {error && <div className="text-destructive text-sm">{error}</div>}
                 <div className="flex gap-2">
                   <Button type="submit" className="flex-1" disabled={loading}>{loading ? t('Loading...', 'جارٍ التحميل...') : t('View Result', 'عرض النتيجة')}</Button>

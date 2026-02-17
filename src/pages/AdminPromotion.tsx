@@ -6,24 +6,127 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { mockSessions, mockClassLevels, mockStudents } from '@/data/mockData';
 import { TrendingUp, Play, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const AdminPromotion = () => {
   const { t, bilingualText } = useLanguage();
+  const { toast } = useToast();
   const [sessionId, setSessionId] = useState('');
   const [classId, setClassId] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [classLevels, setClassLevels] = useState<any[]>([]);
+  const [promotionPreview, setPromotionPreview] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
-  // Mock promotion preview
-  const promotionPreview = mockStudents
-    .filter(s => s.class_level_id === classId)
-    .map(s => ({
-      ...s,
-      cumulativeAvg: Math.floor(Math.random() * 40) + 40,
-      status: Math.random() > 0.15 ? 'PROMOTED' as const : 'RETAINED' as const,
-    }));
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { data: s } = await supabase.from('sessions').select('*').order('name');
+        setSessions((s as any[]) || []);
+        const { data: cl } = await supabase.from('class_levels').select('*').order('display_order');
+        setClassLevels((cl as any[]) || []);
+      } catch (err) {
+        toast({ title: t('Error loading data', 'خطأ في تحميل البيانات'), description: String(err) });
+      }
+    };
+    load();
+  }, []);
+
+  // Build promotion preview using real data
+  const buildPromotionPreview = async () => {
+    if (!sessionId || !classId) return;
+    setLoading(true);
+    try {
+      // fetch students in class level
+      const { data: students } = await supabase.from('students').select('*').eq('class_level_id', classId);
+
+      // fetch terms for session
+      const { data: terms } = await supabase.from('terms').select('id').eq('session_id', sessionId);
+      const termIds = (terms || []).map((t: any) => t.id);
+
+      // fetch term_scores for these students and terms
+      const studentIds = (students || []).map((s: any) => s.id);
+      const { data: scores } = await supabase
+        .from('term_scores')
+        .select('student_id,total')
+        .in('student_id', studentIds)
+        .in('term_id', termIds as any[]);
+
+      const scoresByStudent: Record<string, number[]> = {};
+      (scores || []).forEach((sc: any) => {
+        scoresByStudent[sc.student_id] = scoresByStudent[sc.student_id] || [];
+        if (typeof sc.total === 'number') scoresByStudent[sc.student_id].push(sc.total);
+      });
+
+      const preview = (students || []).map((s: any) => {
+        const arr = scoresByStudent[s.id] || [];
+        const cumulativeAvg = arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : 0;
+        const status = cumulativeAvg >= 50 ? 'PROMOTED' : 'RETAINED';
+        return { ...s, cumulativeAvg, status };
+      });
+
+      setPromotionPreview(preview);
+      setShowPreview(true);
+    } catch (err) {
+      toast({ title: t('Failed to build preview', 'فشل في إنشاء المعاينة'), description: String(err) });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const commitPromotion = async () => {
+    if (!sessionId || !classId) return;
+    setLoading(true);
+    const toInsert: any[] = [];
+    const toUpdateStudents: any[] = [];
+    try {
+      // load class levels to find next
+      const { data: cl } = await supabase.from('class_levels').select('*').order('display_order');
+      const ordered = (cl || []) as any[];
+      const currentIndex = ordered.findIndex((c) => c.id === classId);
+
+      for (const s of promotionPreview) {
+        const promoted = s.status === 'PROMOTED';
+        const nextLevel = promoted && currentIndex >= 0 && currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null;
+
+        toInsert.push({
+          student_id: s.id,
+          session_id: sessionId,
+          from_class_level_id: classId,
+          to_class_level_id: nextLevel?.id || null,
+          cumulative_average: s.cumulativeAvg || 0,
+          status: s.status,
+          promoted_at: new Date().toISOString(),
+        });
+
+        if (promoted && nextLevel) {
+          toUpdateStudents.push({ id: s.id, class_level_id: nextLevel.id });
+        }
+      }
+
+      // insert promotion_records
+      if (toInsert.length) {
+        const { error: insertErr } = await supabase.from('promotion_records').insert(toInsert as any[]);
+        if (insertErr) throw insertErr;
+      }
+
+      // batch update students
+      for (const u of toUpdateStudents) {
+        const { error: updErr } = await supabase.from('students').update({ class_level_id: u.class_level_id }).eq('id', u.id);
+        if (updErr) throw updErr;
+      }
+
+      toast({ title: t('Promotion committed', 'تم تأكيد الترقية') });
+    } catch (err) {
+      toast({ title: t('Failed to commit', 'فشل في التأكيد'), description: String(err) });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -48,7 +151,7 @@ const AdminPromotion = () => {
                 <Select value={sessionId} onValueChange={setSessionId}>
                   <SelectTrigger><SelectValue placeholder={t('Select session', 'اختر السنة')} /></SelectTrigger>
                   <SelectContent>
-                    {mockSessions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    {sessions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -57,12 +160,12 @@ const AdminPromotion = () => {
                 <Select value={classId} onValueChange={setClassId}>
                   <SelectTrigger><SelectValue placeholder={t('Select class', 'اختر الصف')} /></SelectTrigger>
                   <SelectContent>
-                    {mockClassLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
+                    {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <Button onClick={() => setShowPreview(true)} disabled={!sessionId || !classId} className="w-full">
+            <Button onClick={buildPromotionPreview} disabled={!sessionId || !classId || loading} className="w-full">
               <Play className="mr-2 h-4 w-4" />
               {t('Preview Promotion', 'معاينة الترقية')}
             </Button>
@@ -87,8 +190,8 @@ const AdminPromotion = () => {
                 <TableBody>
                   {promotionPreview.map(s => (
                     <TableRow key={s.id}>
-                      <TableCell className="font-mono text-sm">{s.student_id}</TableCell>
-                      <TableCell>{bilingualText(s.name_en, s.name_ar)}</TableCell>
+                      <TableCell className="font-mono text-sm">{s.student_uid || s.id}</TableCell>
+                      <TableCell>{bilingualText(s.name_en || s.full_name, s.name_ar)}</TableCell>
                       <TableCell className="font-semibold">{s.cumulativeAvg}%</TableCell>
                       <TableCell>
                         <Badge variant={s.status === 'PROMOTED' ? 'default' : 'destructive'} className="gap-1">
@@ -102,7 +205,7 @@ const AdminPromotion = () => {
               </Table>
             </CardContent>
             <div className="p-4 border-t">
-              <Button className="w-full">{t('Commit Promotion', 'تأكيد الترقية')}</Button>
+              <Button className="w-full" onClick={commitPromotion} disabled={loading}>{t('Commit Promotion', 'تأكيد الترقية')}</Button>
             </div>
           </Card>
         )}
