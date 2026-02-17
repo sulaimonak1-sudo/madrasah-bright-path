@@ -47,6 +47,20 @@ const AdminResults = () => {
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [saving, setSaving] = useState(false);
 
+  // State for viewing/generating a student's result
+  const [selectedStudentResult, setSelectedStudentResult] = useState<ScoreEntry | null>(null);
+
+  // Handler for generating/viewing result
+  const handleGenerateResult = (student: ScoreEntry) => {
+    setSelectedStudentResult(student);
+    // Here you can trigger a modal or further logic to generate/display the result
+    // For now, just show a toast as a placeholder
+    toast({
+      title: t('Result Generated', 'تم إنشاء النتيجة'),
+      description: t(`Result for ${student.student_name} generated.`, `تم إنشاء نتيجة ${student.student_name}.`)
+    });
+  };
+
   // Fetch sessions and class levels
   useEffect(() => {
     const fetch = async () => {
@@ -415,19 +429,7 @@ const AdminResults = () => {
                           </TableRow>
                         );
                       })}
-                      // State for viewing/generating a student's result
-                      const [selectedStudentResult, setSelectedStudentResult] = useState<ScoreEntry | null>(null);
-
-                      // Handler for generating/viewing result
-                      const handleGenerateResult = (student: ScoreEntry) => {
-                        setSelectedStudentResult(student);
-                        // Here you can trigger a modal or further logic to generate/display the result
-                        // For now, just show a toast as a placeholder
-                        toast({
-                          title: t('Result Generated', 'تم إنشاء النتيجة'),
-                          description: t(`Result for ${student.student_name} generated.`, `تم إنشاء نتيجة ${student.student_name}.`)
-                        });
-                      };
+                      // ...existing code...
                     </TableBody>
                   </Table>
                 </div>
