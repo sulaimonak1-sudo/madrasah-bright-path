@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { FileSpreadsheet, Save, Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { FileSpreadsheet, Save, Loader2, ArrowLeft, BookOpen, Users, ChevronRight } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -21,34 +22,50 @@ interface ScoreEntry {
   existing_id?: string;
 }
 
+type Step = 'classes' | 'subjects' | 'scores';
+
 const AdminResults = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+
+  // Global filters
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
-  const [classLevelId, setClassLevelId] = useState('');
-  const [classArmId, setClassArmId] = useState('');
-  const [subjectId, setSubjectId] = useState('');
-  const [saving, setSaving] = useState(false);
-
   const [sessions, setSessions] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
+
+  // Drill-down state
+  const [step, setStep] = useState<Step>('classes');
+  const [selectedClassLevel, setSelectedClassLevel] = useState<any>(null);
+  const [selectedClassArm, setSelectedClassArm] = useState<any>(null);
+  const [selectedSubject, setSelectedSubject] = useState<any>(null);
+
+  // Data
   const [classLevels, setClassLevels] = useState<any[]>([]);
-  const [classArms, setClassArms] = useState<any[]>([]);
+  const [classArms, setClassArms] = useState<Record<string, any[]>>({});
   const [subjects, setSubjects] = useState<any[]>([]);
   const [scores, setScores] = useState<ScoreEntry[]>([]);
+  const [saving, setSaving] = useState(false);
 
-  // Fetch sessions and class levels on mount
+  // Fetch sessions and class levels
   useEffect(() => {
-    const fetchBase = async () => {
-      const [sessRes, clRes] = await Promise.all([
+    const fetch = async () => {
+      const [sessRes, clRes, armsRes] = await Promise.all([
         supabase.from('sessions').select('*').order('name', { ascending: false }),
         supabase.from('class_levels').select('*').order('display_order'),
+        supabase.from('class_arms').select('*'),
       ]);
       setSessions(sessRes.data || []);
       setClassLevels(clRes.data || []);
+      // Group arms by class_level_id
+      const grouped: Record<string, any[]> = {};
+      (armsRes.data || []).forEach((arm: any) => {
+        if (!grouped[arm.class_level_id]) grouped[arm.class_level_id] = [];
+        grouped[arm.class_level_id].push(arm);
+      });
+      setClassArms(grouped);
     };
-    fetchBase();
+    fetch();
   }, []);
 
   // Fetch terms when session changes
@@ -59,37 +76,26 @@ const AdminResults = () => {
     setTermId('');
   }, [sessionId]);
 
-  // Fetch class arms when class level changes
+  // When class is selected, fetch subjects
   useEffect(() => {
-    if (!classLevelId) { setClassArms([]); setClassArmId(''); return; }
-    supabase.from('class_arms').select('*').eq('class_level_id', classLevelId)
-      .then(({ data }) => setClassArms(data || []));
-    setClassArmId('');
-  }, [classLevelId]);
-
-  // Fetch subjects when class level changes
-  useEffect(() => {
-    if (!classLevelId) { setSubjects([]); setSubjectId(''); return; }
-    supabase.from('subjects').select('*').eq('class_level_id', classLevelId)
+    if (!selectedClassLevel) { setSubjects([]); return; }
+    supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id)
       .then(({ data }) => setSubjects(data || []));
-    setSubjectId('');
-  }, [classLevelId]);
+  }, [selectedClassLevel]);
 
-  // Fetch students and existing scores when all filters are set
+  // When subject is selected, fetch students & scores
   useEffect(() => {
-    if (!termId || !classLevelId || !classArmId || !subjectId) { setScores([]); return; }
-    const fetchStudentsAndScores = async () => {
+    if (!selectedSubject || !selectedClassArm || !termId) { setScores([]); return; }
+    const fetchData = async () => {
       const [studRes, scoresRes] = await Promise.all([
         supabase.from('students').select('id, full_name, name_en, name_ar, student_uid')
-          .eq('class_level_id', classLevelId).eq('class_arm_id', classArmId).eq('status', 'active')
-          .order('full_name'),
+          .eq('class_level_id', selectedClassLevel.id).eq('class_arm_id', selectedClassArm.id)
+          .eq('status', 'active').order('full_name'),
         supabase.from('term_scores').select('*')
-          .eq('term_id', termId).eq('subject_id', subjectId),
+          .eq('term_id', termId).eq('subject_id', selectedSubject.id),
       ]);
-
       const students = studRes.data || [];
       const existingScores = scoresRes.data || [];
-
       const entries: ScoreEntry[] = students.map(s => {
         const existing = existingScores.find(sc => sc.student_id === s.id);
         return {
@@ -103,8 +109,8 @@ const AdminResults = () => {
       });
       setScores(entries);
     };
-    fetchStudentsAndScores();
-  }, [termId, classLevelId, classArmId, subjectId]);
+    fetchData();
+  }, [selectedSubject, selectedClassArm, termId, selectedClassLevel]);
 
   const updateScore = useCallback((index: number, field: 'ca1' | 'ca2' | 'exam', value: string) => {
     const num = Math.max(0, Math.min(field === 'exam' ? 60 : 15, Number(value) || 0));
@@ -121,7 +127,7 @@ const AdminResults = () => {
       const upserts = scores.map(s => ({
         ...(s.existing_id ? { id: s.existing_id } : {}),
         student_id: s.student_id,
-        subject_id: subjectId,
+        subject_id: selectedSubject.id,
         term_id: termId,
         ca1: s.ca1,
         ca2: s.ca2,
@@ -129,17 +135,13 @@ const AdminResults = () => {
         total: s.ca1 + s.ca2 + s.exam,
         grade: calculateGrade(s.ca1 + s.ca2 + s.exam),
       }));
-
       const { error } = await supabase.from('term_scores').upsert(upserts, {
         onConflict: 'student_id,subject_id,term_id',
       });
-
       if (error) throw error;
-
-      toast({ title: t('Saved!', 'تم الحفظ!'), description: t(`${scores.length} scores saved successfully`, `تم حفظ ${scores.length} درجة بنجاح`) });
-      
-      // Refresh to get IDs
-      const { data } = await supabase.from('term_scores').select('*').eq('term_id', termId).eq('subject_id', subjectId);
+      toast({ title: t('Saved!', 'تم الحفظ!'), description: t(`${scores.length} scores saved`, `تم حفظ ${scores.length} درجة`) });
+      // Refresh IDs
+      const { data } = await supabase.from('term_scores').select('*').eq('term_id', termId).eq('subject_id', selectedSubject.id);
       if (data) {
         setScores(prev => prev.map(s => {
           const updated = data.find(d => d.student_id === s.student_id);
@@ -153,41 +155,79 @@ const AdminResults = () => {
     }
   };
 
-  const allFiltersSet = sessionId && termId && classLevelId && classArmId && subjectId;
+  const selectClass = (level: any, arm: any) => {
+    setSelectedClassLevel(level);
+    setSelectedClassArm(arm);
+    setSelectedSubject(null);
+    setStep('subjects');
+  };
+
+  const selectSubject = (subject: any) => {
+    setSelectedSubject(subject);
+    setStep('scores');
+  };
+
+  const goBack = () => {
+    if (step === 'scores') { setSelectedSubject(null); setStep('subjects'); }
+    else if (step === 'subjects') { setSelectedClassLevel(null); setSelectedClassArm(null); setStep('classes'); }
+  };
+
   const selectedTerm = terms.find(t => t.id === termId);
   const isLocked = selectedTerm?.is_locked;
+  const hasSessionTerm = sessionId && termId;
+
+  // Breadcrumb
+  const breadcrumb = () => {
+    const parts = [t('Results', 'النتائج')];
+    if (step !== 'classes' && selectedClassLevel && selectedClassArm) {
+      parts.push(`${bilingualText(selectedClassLevel.name_en, selectedClassLevel.name_ar)} - ${selectedClassArm.name}`);
+    }
+    if (step === 'scores' && selectedSubject) {
+      parts.push(t(selectedSubject.name, selectedSubject.name_ar));
+    }
+    return parts;
+  };
 
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
-        <div>
-          <h1 className="text-2xl font-bold">{t('Enter Results', 'إدخال النتائج')}</h1>
-          <p className="text-muted-foreground">{t('Select filters then enter scores for each student', 'اختر الفلاتر ثم أدخل الدرجات لكل طالب')}</p>
+        {/* Header with breadcrumb */}
+        <div className="flex items-center gap-3">
+          {step !== 'classes' && (
+            <Button variant="ghost" size="icon" onClick={goBack}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          )}
+          <div>
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+              {breadcrumb().map((part, i) => (
+                <span key={i} className="flex items-center gap-1">
+                  {i > 0 && <ChevronRight className="h-3 w-3" />}
+                  <span className={i === breadcrumb().length - 1 ? 'text-foreground font-medium' : ''}>{part}</span>
+                </span>
+              ))}
+            </div>
+            <h1 className="text-2xl font-bold">{t('Results', 'النتائج')}</h1>
+          </div>
         </div>
 
-        {/* Filters */}
+        {/* Session & Term selector - always visible */}
         <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileSpreadsheet className="h-5 w-5 text-accent" />
-              {t('Select Class & Subject', 'اختر الصف والمادة')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-              <div className="space-y-2">
-                <Label>{t('Session', 'السنة')}</Label>
+          <CardContent className="py-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('Session', 'السنة')}</Label>
                 <Select value={sessionId} onValueChange={setSessionId}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={t('Select session', 'اختر السنة')} /></SelectTrigger>
                   <SelectContent>
                     {sessions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>{t('Term', 'الفصل')}</Label>
+              <div className="space-y-1.5">
+                <Label className="text-xs">{t('Term', 'الفصل')}</Label>
                 <Select value={termId} onValueChange={setTermId} disabled={!sessionId}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                  <SelectTrigger className="h-9"><SelectValue placeholder={t('Select term', 'اختر الفصل')} /></SelectTrigger>
                   <SelectContent>
                     {terms.map(term => (
                       <SelectItem key={term.id} value={term.id}>
@@ -197,126 +237,168 @@ const AdminResults = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>{t('Class Level', 'المرحلة')}</Label>
-                <Select value={classLevelId} onValueChange={setClassLevelId}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
-                  <SelectContent>
-                    {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('Class Arm', 'الشعبة')}</Label>
-                <Select value={classArmId} onValueChange={setClassArmId} disabled={!classLevelId}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
-                  <SelectContent>
-                    {classArms.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('Subject', 'المادة')}</Label>
-                <Select value={subjectId} onValueChange={setSubjectId} disabled={!classLevelId}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
-                  <SelectContent>
-                    {subjects.map(s => <SelectItem key={s.id} value={s.id}>{t(s.name, s.name_ar)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Locked warning */}
         {isLocked && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive text-sm">
+          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-destructive text-sm">
             {t('⚠ This term is locked. Scores cannot be edited.', '⚠ هذا الفصل مقفل. لا يمكن تعديل الدرجات.')}
           </div>
         )}
 
-        {/* Score entry table */}
-        {allFiltersSet && scores.length > 0 && (
+        {!hasSessionTerm && (
+          <Card className="shadow-card">
+            <CardContent className="py-12 text-center text-muted-foreground">
+              {t('Please select a session and term to continue.', 'يرجى اختيار السنة والفصل للمتابعة.')}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 1: All classes */}
+        {hasSessionTerm && step === 'classes' && (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {classLevels.map(level => {
+              const arms = classArms[level.id] || [];
+              return (
+                <Card key={level.id} className="shadow-card">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base">{bilingualText(level.name_en, level.name_ar)}</CardTitle>
+                    <CardDescription>{t(`${arms.length} arm(s)`, `${arms.length} شعبة`)}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-2">
+                    {arms.length === 0 && (
+                      <p className="text-sm text-muted-foreground">{t('No arms configured', 'لا شعب')}</p>
+                    )}
+                    {arms.map(arm => (
+                      <Button
+                        key={arm.id}
+                        variant="outline"
+                        className="w-full justify-between"
+                        onClick={() => selectClass(level, arm)}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          {bilingualText(level.name_en, level.name_ar)} - {arm.name}
+                        </span>
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Step 2: Subjects for selected class */}
+        {hasSessionTerm && step === 'subjects' && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BookOpen className="h-5 w-5 text-accent" />
+                {t('Subjects', 'المواد')} — {bilingualText(selectedClassLevel?.name_en, selectedClassLevel?.name_ar)} {selectedClassArm?.name}
+              </CardTitle>
+              <CardDescription>{t('Select a subject to enter scores', 'اختر مادة لإدخال الدرجات')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {subjects.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">{t('No subjects found for this class level.', 'لا توجد مواد لهذه المرحلة.')}</p>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                  {subjects.map(sub => (
+                    <Button
+                      key={sub.id}
+                      variant="outline"
+                      className="justify-between h-auto py-3"
+                      onClick={() => selectSubject(sub)}
+                    >
+                      <div className="text-left">
+                        <div className="font-medium">{sub.name}</div>
+                        {sub.name_ar && <div className="text-xs text-muted-foreground">{sub.name_ar}</div>}
+                      </div>
+                      <ChevronRight className="h-4 w-4 shrink-0" />
+                    </Button>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 3: Score entry */}
+        {hasSessionTerm && step === 'scores' && (
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>{t('Student Scores', 'درجات الطلاب')}</CardTitle>
-                <CardDescription>{t(`${scores.length} students`, `${scores.length} طالب`)}</CardDescription>
+                <CardTitle className="flex items-center gap-2">
+                  <FileSpreadsheet className="h-5 w-5 text-accent" />
+                  {t(selectedSubject?.name, selectedSubject?.name_ar)}
+                </CardTitle>
+                <CardDescription>
+                  {bilingualText(selectedClassLevel?.name_en, selectedClassLevel?.name_ar)} {selectedClassArm?.name} — {scores.length} {t('students', 'طالب')}
+                </CardDescription>
               </div>
-              <Button onClick={handleSave} disabled={saving || isLocked}>
+              <Button onClick={handleSave} disabled={saving || isLocked || scores.length === 0}>
                 {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 {t('Save All', 'حفظ الكل')}
               </Button>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-8">#</TableHead>
-                      <TableHead>{t('Student', 'الطالب')}</TableHead>
-                      <TableHead className="w-24 text-center">{t('CA1 (15)', 'اختبار١ (١٥)')}</TableHead>
-                      <TableHead className="w-24 text-center">{t('CA2 (15)', 'اختبار٢ (١٥)')}</TableHead>
-                      <TableHead className="w-24 text-center">{t('Exam (60)', 'امتحان (٦٠)')}</TableHead>
-                      <TableHead className="w-20 text-center">{t('Total', 'المجموع')}</TableHead>
-                      <TableHead className="w-16 text-center">{t('Grade', 'التقدير')}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {scores.map((s, i) => {
-                      const total = s.ca1 + s.ca2 + s.exam;
-                      const grade = calculateGrade(total);
-                      return (
-                        <TableRow key={s.student_id}>
-                          <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                          <TableCell className="font-medium">{s.student_name}</TableCell>
-                          <TableCell>
-                            <Input
-                              type="number" min={0} max={15} value={s.ca1}
-                              onChange={e => updateScore(i, 'ca1', e.target.value)}
-                              className="h-8 text-center" disabled={isLocked}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number" min={0} max={15} value={s.ca2}
-                              onChange={e => updateScore(i, 'ca2', e.target.value)}
-                              className="h-8 text-center" disabled={isLocked}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number" min={0} max={60} value={s.exam}
-                              onChange={e => updateScore(i, 'exam', e.target.value)}
-                              className="h-8 text-center" disabled={isLocked}
-                            />
-                          </TableCell>
-                          <TableCell className="text-center font-semibold">{total}</TableCell>
-                          <TableCell className="text-center">
-                            <span className={`inline-block rounded px-2 py-0.5 text-xs font-bold ${
-                              grade === 'A' ? 'bg-green-100 text-green-800' :
-                              grade === 'B' ? 'bg-blue-100 text-blue-800' :
-                              grade === 'C' ? 'bg-yellow-100 text-yellow-800' :
-                              grade === 'F' ? 'bg-red-100 text-red-800' :
-                              'bg-muted text-muted-foreground'
-                            }`}>
-                              {grade}
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {allFiltersSet && scores.length === 0 && (
-          <Card className="shadow-card">
-            <CardContent className="py-12 text-center text-muted-foreground">
-              {t('No students found for the selected class arm.', 'لم يتم العثور على طلاب للشعبة المختارة.')}
+              {scores.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">{t('No students found in this class arm.', 'لا يوجد طلاب في هذه الشعبة.')}</p>
+              ) : (
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-8">#</TableHead>
+                        <TableHead>{t('Student', 'الطالب')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('CA1 (15)', 'اختبار١ (١٥)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('CA2 (15)', 'اختبار٢ (١٥)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('Exam (60)', 'امتحان (٦٠)')}</TableHead>
+                        <TableHead className="w-20 text-center">{t('Total', 'المجموع')}</TableHead>
+                        <TableHead className="w-16 text-center">{t('Grade', 'التقدير')}</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {scores.map((s, i) => {
+                        const total = s.ca1 + s.ca2 + s.exam;
+                        const grade = calculateGrade(total);
+                        return (
+                          <TableRow key={s.student_id}>
+                            <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                            <TableCell className="font-medium">{s.student_name}</TableCell>
+                            <TableCell>
+                              <Input type="number" min={0} max={15} value={s.ca1}
+                                onChange={e => updateScore(i, 'ca1', e.target.value)}
+                                className="h-8 text-center" disabled={isLocked} />
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" min={0} max={15} value={s.ca2}
+                                onChange={e => updateScore(i, 'ca2', e.target.value)}
+                                className="h-8 text-center" disabled={isLocked} />
+                            </TableCell>
+                            <TableCell>
+                              <Input type="number" min={0} max={60} value={s.exam}
+                                onChange={e => updateScore(i, 'exam', e.target.value)}
+                                className="h-8 text-center" disabled={isLocked} />
+                            </TableCell>
+                            <TableCell className="text-center font-semibold">{total}</TableCell>
+                            <TableCell className="text-center">
+                              <Badge variant={
+                                grade === 'A' ? 'default' :
+                                grade === 'B' ? 'secondary' :
+                                grade === 'F' ? 'destructive' : 'outline'
+                              }>{grade}</Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
             </CardContent>
           </Card>
         )}

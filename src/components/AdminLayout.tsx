@@ -21,7 +21,7 @@ const navItems = [
   { path: '/admin/class-arms', icon: FolderOpen, label_en: 'Class Arms', label_ar: 'الشعب' },
   { path: '/admin/subjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد الدراسية' },
   { path: '/admin/sessions', icon: Calendar, label_en: 'Sessions & Terms', label_ar: 'السنوات والفصول' },
-  { path: '/admin/results', icon: Upload, label_en: 'Upload Results', label_ar: 'رفع النتائج' },
+  { path: '/admin/results', icon: Upload, label_en: 'Results', label_ar: 'النتائج' },
   { path: '/admin/promotion', icon: TrendingUp, label_en: 'Promotion', label_ar: 'الترقية' },
   { path: '/admin/reports', icon: FileText, label_en: 'Reports', label_ar: 'التقارير' },
   { path: '/admin/locking', icon: Lock, label_en: 'Result Locking', label_ar: 'قفل النتائج' },
