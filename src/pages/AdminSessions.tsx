@@ -64,12 +64,44 @@ const AdminSessions = () => {
     fetchData();
   };
 
+  // Utility: Simple English to Arabic transliteration (same as in students)
+  function transliterateToArabic(text: string): string {
+    return text
+      .replace(/a/gi, 'ا')
+      .replace(/b/gi, 'ب')
+      .replace(/c/gi, 'ك')
+      .replace(/d/gi, 'د')
+      .replace(/e/gi, 'ي')
+      .replace(/f/gi, 'ف')
+      .replace(/g/gi, 'ج')
+      .replace(/h/gi, 'ه')
+      .replace(/i/gi, 'ي')
+      .replace(/j/gi, 'ج')
+      .replace(/k/gi, 'ك')
+      .replace(/l/gi, 'ل')
+      .replace(/m/gi, 'م')
+      .replace(/n/gi, 'ن')
+      .replace(/o/gi, 'و')
+      .replace(/p/gi, 'ب')
+      .replace(/q/gi, 'ق')
+      .replace(/r/gi, 'ر')
+      .replace(/s/gi, 'س')
+      .replace(/t/gi, 'ت')
+      .replace(/u/gi, 'و')
+      .replace(/v/gi, 'ف')
+      .replace(/w/gi, 'و')
+      .replace(/x/gi, 'كس')
+      .replace(/y/gi, 'ي')
+      .replace(/z/gi, 'ز');
+  }
+
   const addTerm = async () => {
     if (!termNameEn.trim() || !termSessionId) return;
+    const autoAr = termNameAr.trim() || transliterateToArabic(termNameEn.trim());
     const { error } = await supabase.from('terms').insert({
       session_id: termSessionId,
       name_en: termNameEn.trim(),
-      name_ar: termNameAr.trim() || null,
+      name_ar: autoAr,
       term_number: termNumber,
     });
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
@@ -181,7 +213,7 @@ const AdminSessions = () => {
               </div>
               <div className="space-y-2">
                 <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                <Input placeholder="الفصل الأول" value={termNameAr} onChange={e => setTermNameAr(e.target.value)} />
+                <Input placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} value={termNameAr} onChange={e => setTermNameAr(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>{t('Term Number', 'رقم الفصل')}</Label>

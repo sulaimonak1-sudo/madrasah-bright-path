@@ -33,11 +33,43 @@ const AdminSubjects = () => {
 
   useEffect(() => { fetchData(); }, []);
 
+  // Utility: Simple English to Arabic transliteration (same as in students)
+  function transliterateToArabic(text: string): string {
+    return text
+      .replace(/a/gi, 'ا')
+      .replace(/b/gi, 'ب')
+      .replace(/c/gi, 'ك')
+      .replace(/d/gi, 'د')
+      .replace(/e/gi, 'ي')
+      .replace(/f/gi, 'ف')
+      .replace(/g/gi, 'ج')
+      .replace(/h/gi, 'ه')
+      .replace(/i/gi, 'ي')
+      .replace(/j/gi, 'ج')
+      .replace(/k/gi, 'ك')
+      .replace(/l/gi, 'ل')
+      .replace(/m/gi, 'م')
+      .replace(/n/gi, 'ن')
+      .replace(/o/gi, 'و')
+      .replace(/p/gi, 'ب')
+      .replace(/q/gi, 'ق')
+      .replace(/r/gi, 'ر')
+      .replace(/s/gi, 'س')
+      .replace(/t/gi, 'ت')
+      .replace(/u/gi, 'و')
+      .replace(/v/gi, 'ف')
+      .replace(/w/gi, 'و')
+      .replace(/x/gi, 'كس')
+      .replace(/y/gi, 'ي')
+      .replace(/z/gi, 'ز');
+  }
+
   const addSubject = async () => {
     if (!name.trim() || !classLevelId) return;
+    const autoAr = nameAr.trim() || transliterateToArabic(name.trim());
     const { error } = await supabase.from('subjects').insert({
       name: name.trim(),
-      name_ar: nameAr.trim() || null,
+      name_ar: autoAr,
       class_level_id: classLevelId,
     });
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
@@ -74,7 +106,7 @@ const AdminSubjects = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder="الرياضيات" />
+                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Class Level', 'المرحلة')}</Label>

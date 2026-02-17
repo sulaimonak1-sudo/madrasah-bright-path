@@ -27,6 +27,52 @@ const AdminStudents = () => {
   const [nameEn, setNameEn] = useState('');
   const [nameAr, setNameAr] = useState('');
   const [studentUid, setStudentUid] = useState('');
+
+  // Utility: Generate next student ID (e.g. ABS-001, ABS-002...)
+  function generateStudentId() {
+    const prefix = 'ABS-';
+    const nums = students
+      .map(s => s.student_uid)
+      .filter(Boolean)
+      .map(id => parseInt((id || '').replace(/\D/g, '')))
+      .filter(n => !isNaN(n));
+    const next = (nums.length ? Math.max(...nums) : 0) + 1;
+    return `${prefix}${String(next).padStart(3, '0')}`;
+  }
+
+  // Utility: Simple English to Arabic transliteration (placeholder)
+  function transliterateToArabic(text: string): string {
+    // This is a placeholder. For real use, integrate a proper transliteration or translation API.
+    // Here, just return the English text in Arabic letters for demo purposes.
+    // You can replace this with a real library or API call.
+    return text
+      .replace(/a/gi, 'ا')
+      .replace(/b/gi, 'ب')
+      .replace(/c/gi, 'ك')
+      .replace(/d/gi, 'د')
+      .replace(/e/gi, 'ي')
+      .replace(/f/gi, 'ف')
+      .replace(/g/gi, 'ج')
+      .replace(/h/gi, 'ه')
+      .replace(/i/gi, 'ي')
+      .replace(/j/gi, 'ج')
+      .replace(/k/gi, 'ك')
+      .replace(/l/gi, 'ل')
+      .replace(/m/gi, 'م')
+      .replace(/n/gi, 'ن')
+      .replace(/o/gi, 'و')
+      .replace(/p/gi, 'ب')
+      .replace(/q/gi, 'ق')
+      .replace(/r/gi, 'ر')
+      .replace(/s/gi, 'س')
+      .replace(/t/gi, 'ت')
+      .replace(/u/gi, 'و')
+      .replace(/v/gi, 'ف')
+      .replace(/w/gi, 'و')
+      .replace(/x/gi, 'كس')
+      .replace(/y/gi, 'ي')
+      .replace(/z/gi, 'ز');
+  }
   const [gender, setGender] = useState('');
   const [classLevelId, setClassLevelId] = useState('');
   const [classArmId, setClassArmId] = useState('');
@@ -62,11 +108,15 @@ const AdminStudents = () => {
 
   const addStudent = async () => {
     if (!fullName.trim()) return;
+    // Auto-generate student ID if not provided
+    const autoId = studentUid.trim() ? studentUid.trim() : generateStudentId();
+    // Auto-generate Arabic name if not provided
+    const autoAr = nameAr.trim() ? nameAr.trim() : transliterateToArabic(nameEn.trim() || fullName.trim());
     const { error } = await supabase.from('students').insert({
       full_name: fullName.trim(),
       name_en: nameEn.trim() || fullName.trim(),
-      name_ar: nameAr.trim() || null,
-      student_uid: studentUid.trim() || null,
+      name_ar: autoAr,
+      student_uid: autoId,
       gender: gender || null,
       class_level_id: classLevelId || null,
       class_arm_id: classArmId || null,
@@ -107,11 +157,11 @@ const AdminStudents = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} />
+                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Student ID', 'رقم الطالب')}</Label>
-                  <Input value={studentUid} onChange={e => setStudentUid(e.target.value)} placeholder="e.g. ABS-001" />
+                  <Input value={studentUid} onChange={e => setStudentUid(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Gender', 'الجنس')}</Label>
