@@ -5,7 +5,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import {
   LayoutDashboard, Users, BookOpen, Layers, FolderOpen,
-  Calendar, Upload, TrendingUp, FileText, Lock, LogOut, GraduationCap, Menu, X
+  Calendar, Upload, TrendingUp, FileText, Lock, LogOut, Menu, X
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
@@ -57,8 +57,8 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       )}>
         {/* Logo */}
         <div className="flex items-center gap-3 px-5 py-5 border-b border-sidebar-border">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary">
-            <GraduationCap className="h-6 w-6 text-sidebar-primary-foreground" />
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-sidebar-primary overflow-hidden">
+            <img src="/al-bari-logo.png" alt="Al-Bari Logo" className="h-full w-full object-contain" />
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="text-sm font-bold text-sidebar-foreground truncate">

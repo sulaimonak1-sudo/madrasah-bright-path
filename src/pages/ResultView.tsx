@@ -26,6 +26,7 @@ const ResultView = () => {
   const [scores, setScores] = useState<any[]>([]);
   const [classLevel, setClassLevel] = useState<any | null>(null);
   const [classArm, setClassArm] = useState<any | null>(null);
+  const [sessionName, setSessionName] = useState<string | null>(null);
 
   useEffect(() => {
     // load available terms for selection
@@ -56,6 +57,16 @@ const ResultView = () => {
       }
       setStudent(data.student);
       setTerm(data.term);
+      // fetch session name (for header display)
+      try {
+        const sessId = data?.term?.session_id;
+        if (sessId) {
+          const { data: sess } = await supabase.from('sessions').select('name_en').eq('id', sessId).maybeSingle();
+          setSessionName(sess?.name_en || null);
+        }
+      } catch (err) {
+        // ignore
+      }
       setSubjects(data.subjects || []);
       setScores(data.scores || []);
       // fetch class level and arm for display
@@ -151,9 +162,10 @@ const ResultView = () => {
                 </div>
                 <h1 className="text-3xl font-extrabold tracking-wide uppercase mt-4 text-emerald-900">Al-Bari Group of Schools</h1>
                 <p className="text-lg mt-1 text-emerald-800">Madrasah Section</p>
-                <div className="my-4 border-t border-emerald-200" />
-                <h2 className="text-xl font-semibold">STUDENT ACADEMIC REPORT</h2>
-                <p className="mt-2 text-sm text-slate-600">{term?.name_en ? `Term: ${term?.name_en}` : ''} {term?.name_ar ? `| ${term?.name_ar}` : ''}</p>
+                <div className="my-2 border-t border-emerald-200" />
+                <p className="text-sm mt-2 text-slate-600">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com</p>
+                <h2 className="text-xl font-semibold mt-4">STUDENT ACADEMIC REPORT</h2>
+                <p className="mt-2 text-sm text-slate-600">{sessionName ? `Session: ${sessionName}` : ''} {term?.name_en ? ` | Term: ${term?.name_en}` : ''}</p>
               </div>
             </div>
 
@@ -239,7 +251,12 @@ const ResultView = () => {
                   <TableBody>
                     {subjectRows.map(row => (
                       <TableRow key={row.subject.id}>
-                        <TableCell className="font-medium">{bilingualText(row.subject.name_en, row.subject.name_ar)}</TableCell>
+                        <TableCell className="font-medium align-top">
+                          <div className="flex justify-between items-start">
+                            <div className="text-sm">{row.subject.name_en}</div>
+                            <div className="text-sm text-right" dir="rtl">{row.subject.name_ar}</div>
+                          </div>
+                        </TableCell>
                         {!isCumulative && (
                           <>
                             <TableCell className="text-center">{row.currentScore?.ca1 ?? '—'}</TableCell>

@@ -2,7 +2,6 @@ import { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
-import { GraduationCap } from 'lucide-react';
 
 export const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
@@ -13,8 +12,8 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
       <header className="border-b bg-card">
         <div className="container flex items-center justify-between py-4">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-              <GraduationCap className="h-6 w-6 text-primary-foreground" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary overflow-hidden">
+              <img src="/al-bari-logo.png" alt="Al-Bari Logo" className="h-full w-full object-contain" />
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">
