@@ -140,24 +140,72 @@ const ResultView = () => {
           </div>
 
           <Card className="shadow-card-lg overflow-hidden">
-            {/* Header */}
-            <div className="gradient-hero geometric-pattern p-6 text-center text-primary-foreground">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <GraduationCap className="h-8 w-8" />
+            {/* Header: English left, Arabic right */}
+            {/* Polished centered header */}
+            <div className="p-6">
+              <div className="max-w-4xl mx-auto text-center">
+                <div className="flex items-center justify-center">
+                  <div className="rounded-full bg-emerald-900/10 border border-emerald-900 p-3 flex items-center justify-center" style={{width:72, height:72}}>
+                    <GraduationCap className="h-8 w-8 text-emerald-900" />
+                  </div>
+                </div>
+                <h1 className="text-3xl font-extrabold tracking-wide uppercase mt-4 text-emerald-900">Al-Bari Group of Schools</h1>
+                <p className="text-lg mt-1 text-emerald-800">Madrasah Section</p>
+                <div className="my-4 border-t border-emerald-200" />
+                <h2 className="text-xl font-semibold">STUDENT ACADEMIC REPORT</h2>
+                <p className="mt-2 text-sm text-slate-600">{term?.name_en ? `Term: ${term?.name_en}` : ''} {term?.name_ar ? `| ${term?.name_ar}` : ''}</p>
               </div>
-              <h1 className="text-xl font-bold">{t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}</h1>
-              <p className="text-sm opacity-80">{t('Madrasah Result Portal', 'بوابة نتائج المدرسة')}</p>
-              <p className="mt-2 text-lg font-semibold">
-                {t('Academic Report', 'التقرير الأكاديمي')} — {t(term.name_en, term.name_ar)}
-              </p>
             </div>
 
-            {/* Student Info */}
-            <div className="grid grid-cols-2 gap-4 p-6 border-b bg-muted/30 text-sm">
-              <div><span className="text-muted-foreground">{t('Name:', 'الاسم:')}</span> <strong>{bilingualText(student.name_en, student.name_ar)}</strong></div>
-              <div><span className="text-muted-foreground">{t('Student ID:', 'رقم الطالب:')}</span> <strong>{student.student_id}</strong></div>
-              <div><span className="text-muted-foreground">{t('Class:', 'الصف:')}</span> <strong>{bilingualText(classLevel?.name_en, classLevel?.name_ar)} {classArm?.name}</strong></div>
-              <div><span className="text-muted-foreground">{t('Gender:', 'الجنس:')}</span> <strong>{t(student.gender, student.gender === 'male' ? 'ذكر' : 'أنثى')}</strong></div>
+            {/* Student Info block with photo */}
+            <div className="p-6 border-b bg-white text-sm">
+              <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                <div className="md:col-span-1 flex justify-center">
+                  <div className="w-28 h-28 bg-slate-100 border rounded overflow-hidden">
+                    {/* Placeholder for student photo if available */}
+                    <img src={student.photo_url || '/'} onError={(e)=>{(e.target as HTMLImageElement).style.display='none'}} alt="photo" className="w-full h-full object-cover" />
+                  </div>
+                </div>
+                <div className="md:col-span-3 grid grid-cols-2 gap-x-6">
+                  <div className="space-y-2">
+                    <div>
+                      <span className="text-muted-foreground">Student Name:</span>
+                      <div className="font-semibold">{student.name_en}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Student ID:</span>
+                      <div className="font-semibold">{student.student_id}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Class:</span>
+                      <div className="font-semibold">{classLevel?.name_en || '—'} {classArm?.name ? `- ${classArm?.name}` : ''}</div>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Gender:</span>
+                      <div className="font-semibold">{student.gender === 'male' ? 'Male' : 'Female'}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 text-right" dir="rtl">
+                    <div>
+                      <div className="font-semibold">{student.name_ar || '—'}</div>
+                      <span className="text-muted-foreground">:الاسم</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">{student.student_id}</div>
+                      <span className="text-muted-foreground">:رقم الطالب</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">{classLevel?.name_ar || '—'} {classArm?.name ? `- ${classArm?.name}` : ''}</div>
+                      <span className="text-muted-foreground">:الصف</span>
+                    </div>
+                    <div>
+                      <div className="font-semibold">{student.gender === 'male' ? 'ذكر' : 'أنثى'}</div>
+                      <span className="text-muted-foreground">:الجنس</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Scores Table */}
@@ -165,7 +213,7 @@ const ResultView = () => {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/50">
+                    <TableRow className="bg-emerald-900 text-white">
                       <TableHead className="font-semibold">{t('Subject', 'المادة')}</TableHead>
                       {!isCumulative && (
                         <>
@@ -223,29 +271,41 @@ const ResultView = () => {
             </CardContent>
 
             {/* Footer */}
-            <div className="border-t p-6 space-y-3">
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div>{t('Term Average:', 'متوسط الفصل:')} <strong>{termAvg}%</strong></div>
-                {isCumulative && <div>{t('Cumulative Average:', 'المتوسط التراكمي:')} <strong>{cumulativeAvg}%</strong></div>}
-              </div>
-              {isCumulative && (
-                <div className="rounded-lg bg-muted p-4 text-center">
-                  <p className="text-lg font-bold">
-                    {t('Promotion Status:', 'حالة الترقية:')}{' '}
-                    <span className={cn(promoted ? 'text-success' : 'text-destructive')}>
-                      {promoted ? t('PROMOTED', 'ناجح') : t('RETAINED', 'باقٍ')}
-                    </span>
-                  </p>
+              <div className="border-t p-6 space-y-6">
+                <div className="flex justify-between items-center text-sm">
+                  <div className="">{t('Term Average:', 'متوسط الفصل:')} <strong>{termAvg}%</strong></div>
+                  {isCumulative && <div className="">{t('Cumulative Average:', 'المتوسط التراكمي:')} <strong>{cumulativeAvg}%</strong></div>}
                 </div>
-              )}
-              <div className="grid grid-cols-2 gap-4 pt-4 text-sm">
-                <div>
-                  <p className="text-muted-foreground">{t("Teacher's Remark:", 'ملاحظة المعلم:')}</p>
-                  <div className="mt-1 h-8 border-b border-dashed" />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <p className="font-semibold">{t("Class Teacher's Remark:", "ملاحظة معلم الفصل:")}</p>
+                    <p className="mt-2 text-sm text-slate-700">{student?.teacher_remark || ''}</p>
+                    <p className="mt-3 text-sm text-right" dir="rtl">{''}</p>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</p>
+                    <p className="mt-2 text-sm text-slate-700">{''}</p>
+                    <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
+                      <div>
+                        <div className="border-b h-6" />
+                        <div className="text-muted-foreground">Class Teacher</div>
+                      </div>
+                      <div>
+                        <div className="border-b h-6" />
+                        <div className="text-muted-foreground">Head Teacher</div>
+                      </div>
+                      <div>
+                        <div className="border-b h-6" />
+                        <div className="text-muted-foreground">Date</div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</p>
-                  <div className="mt-1 h-8 border-b border-dashed" />
+
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="text-sm text-slate-600">Result generated via Al-Bari Madrasah Portal</div>
+                  <div className="w-24 h-24 border grid place-items-center">QR</div>
                 </div>
               </div>
             </div>
