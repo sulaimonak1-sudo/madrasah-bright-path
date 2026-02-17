@@ -1,80 +1,97 @@
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { mockStudents, mockSubjects, mockTermScores, mockTerms, mockClassLevels, mockClassArms } from '@/data/mockData';
 import { GRADE_CONFIG, calculateGrade } from '@/types';
-import { useSearchParams } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 import { Printer, GraduationCap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const ResultView = () => {
-  const { t, bilingualText, isRTL, language } = useLanguage();
-  const [params] = useSearchParams();
+  const { t, bilingualText, isRTL } = useLanguage();
 
-  const studentIdParam = params.get('student');
-  const termIdParam = params.get('term');
+  const [studentUid, setStudentUid] = useState('');
+  const [pin, setPin] = useState('');
+  const [termId, setTermId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // Find student
-  const student = mockStudents.find(s => s.student_id === studentIdParam);
-  const term = mockTerms.find(t => t.id === termIdParam);
+  const [student, setStudent] = useState<any | null>(null);
+  const [term, setTerm] = useState<any | null>(null);
+  const [subjects, setSubjects] = useState<any[]>([]);
+  const [scores, setScores] = useState<any[]>([]);
 
-  if (!student || !term) {
+  useEffect(() => {
+    // Optional: prefill termId to latest term if you want — left empty for user selection
+  }, []);
+
+  const handleLookup = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    setError('');
+    if (!studentUid.trim() || !termId) return setError(t('Please enter Student ID and select term', 'الرجاء إدخال رقم الطالب واختيار الفصل'));
+    setLoading(true);
+    try {
+      const { data, error: fnErr } = await supabase.functions.invoke('verify-result', { body: { student_uid: studentUid.trim(), pin: pin.trim(), term_id: termId } });
+      if (fnErr) throw fnErr;
+      if (!data?.ok) {
+        setError(data?.error || 'Not found');
+        setLoading(false);
+        return;
+      }
+      setStudent(data.student);
+      setTerm(data.term);
+      setSubjects(data.subjects || []);
+      setScores(data.scores || []);
+    } catch (err: any) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // If no student loaded, show lookup form
+  if (!student) {
     return (
       <PublicLayout>
-        <div className="flex min-h-[50vh] items-center justify-center">
-          <Card className="max-w-md text-center p-8">
-            <p className="text-lg font-semibold text-destructive">
-              {t('Result not found. Please check your details.', 'النتيجة غير موجودة. يرجى التحقق من البيانات.')}
-            </p>
+        <div className="container py-8 flex justify-center">
+          <Card className="max-w-md w-full">
+            <CardContent>
+              <form onSubmit={handleLookup} className="space-y-4">
+                <input className="w-full p-2 border rounded" placeholder={t('Student ID', 'رقم الطالب')} value={studentUid} onChange={e => setStudentUid(e.target.value)} />
+                <input className="w-full p-2 border rounded" placeholder={t('PIN (if provided)', 'الرقم السري (اختياري)')} value={pin} onChange={e => setPin(e.target.value)} />
+                <input className="w-full p-2 border rounded" placeholder={t('Term ID', 'معرف الفصل')} value={termId} onChange={e => setTermId(e.target.value)} />
+                {error && <div className="text-destructive text-sm">{error}</div>}
+                <div className="flex gap-2">
+                  <Button type="submit" className="flex-1" disabled={loading}>{loading ? t('Loading...', 'جارٍ التحميل...') : t('View Result', 'عرض النتيجة')}</Button>
+                </div>
+              </form>
+            </CardContent>
           </Card>
         </div>
       </PublicLayout>
     );
   }
 
-  const classLevel = mockClassLevels.find(c => c.id === student.class_level_id);
-  const classArm = mockClassArms.find(a => a.id === student.class_arm_id);
-  const subjects = mockSubjects.filter(s => s.class_level_id === student.class_level_id);
-  
-  const isCumulative = term.term_number === 3;
-  const allTerms = mockTerms.filter(t => t.session_id === term.session_id);
-
-  // Build scores
-  const getScore = (subjectId: string, tId: string) =>
-    mockTermScores.find(ts => ts.student_id === student.id && ts.subject_id === subjectId && ts.term_id === tId);
-
+  // Build subject rows from fetched data
+  const isCumulative = term?.term_number === 3;
+  const getScoreFor = (subjectId: string) => scores.find((s: any) => s.subject_id === subjectId);
   const subjectRows = subjects.map(sub => {
-    const t1 = getScore(sub.id, allTerms.find(t => t.term_number === 1)?.id || '');
-    const t2 = getScore(sub.id, allTerms.find(t => t.term_number === 2)?.id || '');
-    const t3 = getScore(sub.id, allTerms.find(t => t.term_number === 3)?.id || '');
-    const currentScore = term.term_number === 1 ? t1 : term.term_number === 2 ? t2 : t3;
-
-    const cumulativeTotal = (t1?.total || 0) + (t2?.total || 0) + (t3?.total || 0);
-    const cumulativeAvg = Math.round(cumulativeTotal / 3);
-
+    const current = getScoreFor(sub.id);
+    const total = current ? (Number(current.ca1 || 0) + Number(current.ca2 || 0) + Number(current.exam || 0)) : null;
     return {
       subject: sub,
-      currentScore,
-      t1Total: t1?.total,
-      t2Total: t2?.total,
-      t3Total: t3?.total,
-      cumulativeTotal,
-      cumulativeAvg,
-      finalGrade: calculateGrade(cumulativeAvg),
+      currentScore: current ? { ca1: current.ca1, ca2: current.ca2, exam: current.exam, total, grade: current.grade || calculateGrade(total || 0) } : null,
+      cumulativeTotal: total || 0,
+      cumulativeAvg: total || 0,
+      finalGrade: current ? (current.grade || calculateGrade(total || 0)) : '—',
     };
   });
 
-  const termAvg = subjectRows.length > 0
-    ? Math.round(subjectRows.reduce((sum, r) => sum + (r.currentScore?.total || 0), 0) / subjectRows.length)
-    : 0;
-
-  const cumulativeAvg = subjectRows.length > 0
-    ? Math.round(subjectRows.reduce((sum, r) => sum + r.cumulativeAvg, 0) / subjectRows.length)
-    : 0;
-
+  const termAvg = subjectRows.length > 0 ? Math.round(subjectRows.reduce((s, r) => s + (r.currentScore?.total || 0), 0) / subjectRows.length) : 0;
+  const cumulativeAvg = subjectRows.length > 0 ? Math.round(subjectRows.reduce((s, r) => s + (r.cumulativeAvg || 0), 0) / subjectRows.length) : 0;
   const promoted = cumulativeAvg >= 50;
 
   return (
