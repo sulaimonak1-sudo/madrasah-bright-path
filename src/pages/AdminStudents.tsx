@@ -188,6 +188,7 @@ const AdminStudents = () => {
       name_ar: autoAr,
       student_uid: autoId,
       gender: gender || null,
+      status: 'active',
       class_level_id: classLevelId || null,
       class_arm_id: classArmId || null,
       guardian_name: guardianName.trim() || null,
