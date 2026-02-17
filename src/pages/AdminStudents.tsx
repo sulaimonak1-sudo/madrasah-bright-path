@@ -186,6 +186,11 @@ const AdminStudents = () => {
     // Use provided parameters, fallback to state variables, then null
     const finalLevelId = levelId || classLevelId || null;
     const finalArmId = armId || classArmId || null;
+
+    if (!finalLevelId) {
+      toast({ title: t('Error', 'خطأ'), description: t('Please select a class level', 'الرجاء تحديد مستوى الفئة'), variant: 'destructive' });
+      return;
+    }
     
     const { error } = await supabase.from('students').insert({
       full_name: fullName.trim(),
