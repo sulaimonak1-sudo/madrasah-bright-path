@@ -1,23 +1,51 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { GraduationCap, Lock } from 'lucide-react';
+import { Lock, Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useEffect } from 'react';
 
 const AdminLogin = () => {
   const { t } = useLanguage();
+  const { user, role, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
+  // Redirect if already logged in with valid role
+  useEffect(() => {
+    if (!authLoading && user && (role === 'admin' || role === 'teacher')) {
+      navigate('/admin', { replace: true });
+    }
+  }, [user, role, authLoading, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Mock login - will be replaced with Supabase auth
-    navigate('/admin');
+    setLoading(true);
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      toast({
+        variant: 'destructive',
+        title: t('Login Failed', 'فشل تسجيل الدخول'),
+        description: t(error.message, error.message),
+      });
+      setLoading(false);
+      return;
+    }
+
+    // Role will be fetched by AuthContext, redirect handled by useEffect
+    setLoading(false);
   };
 
   return (
@@ -45,6 +73,7 @@ const AdminLogin = () => {
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
               <div className="space-y-2">
@@ -55,9 +84,11 @@ const AdminLogin = () => {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg">
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 {t('Sign In', 'تسجيل الدخول')}
               </Button>
             </form>
