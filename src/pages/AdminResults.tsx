@@ -378,7 +378,17 @@ const AdminResults = () => {
                         return (
                           <TableRow key={s.student_id}>
                             <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                            <TableCell className="font-medium">{s.student_name}</TableCell>
+                            <TableCell className="font-medium flex items-center gap-2">
+                              {s.student_name}
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="ml-2"
+                                onClick={() => handleGenerateResult(s)}
+                              >
+                                {t('Generate Result', 'إنشاء النتيجة')}
+                              </Button>
+                            </TableCell>
                             <TableCell>
                               <Input type="number" min={0} max={15} value={s.ca1}
                                 onChange={e => updateScore(i, 'ca1', e.target.value)}
@@ -405,6 +415,19 @@ const AdminResults = () => {
                           </TableRow>
                         );
                       })}
+                      // State for viewing/generating a student's result
+                      const [selectedStudentResult, setSelectedStudentResult] = useState<ScoreEntry | null>(null);
+
+                      // Handler for generating/viewing result
+                      const handleGenerateResult = (student: ScoreEntry) => {
+                        setSelectedStudentResult(student);
+                        // Here you can trigger a modal or further logic to generate/display the result
+                        // For now, just show a toast as a placeholder
+                        toast({
+                          title: t('Result Generated', 'تم إنشاء النتيجة'),
+                          description: t(`Result for ${student.student_name} generated.`, `تم إنشاء نتيجة ${student.student_name}.`)
+                        });
+                      };
                     </TableBody>
                   </Table>
                 </div>
