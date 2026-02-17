@@ -20,7 +20,8 @@ const AdminSubjects = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [name, setName] = useState('');
   const [nameAr, setNameAr] = useState('');
-  const [classLevelId, setClassLevelId] = useState('');
+  const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([]);
+  const [allClasses, setAllClasses] = useState(false);
 
   const fetchData = async () => {
     const [subRes, clRes] = await Promise.all([
@@ -65,16 +66,24 @@ const AdminSubjects = () => {
   }
 
   const addSubject = async () => {
-    if (!name.trim() || !classLevelId) return;
+    if (!name.trim() || (!allClasses && selectedClassLevels.length === 0)) return;
     const autoAr = nameAr.trim() || transliterateToArabic(name.trim());
-    const { error } = await supabase.from('subjects').insert({
-      name: name.trim(),
-      name_ar: autoAr,
-      class_level_id: classLevelId,
-    });
-    if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
-    toast({ title: t('Subject added', 'تمت إضافة المادة') });
-    setName(''); setNameAr(''); setClassLevelId('');
+    let classIds = allClasses ? classLevels.map(c => c.id) : selectedClassLevels;
+    let errors = [];
+    for (const clId of classIds) {
+      const { error } = await supabase.from('subjects').insert({
+        name: name.trim(),
+        name_ar: autoAr,
+        class_level_id: clId,
+      });
+      if (error) errors.push(error.message);
+    }
+    if (errors.length) {
+      toast({ title: t('Error', 'خطأ'), description: errors.join(', '), variant: 'destructive' });
+    } else {
+      toast({ title: t('Subject added', 'تمت إضافة المادة') });
+    }
+    setName(''); setNameAr(''); setSelectedClassLevels([]); setAllClasses(false);
     setAddOpen(false);
     fetchData();
   };
@@ -109,13 +118,28 @@ const AdminSubjects = () => {
                   <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('Class Level', 'المرحلة')}</Label>
-                  <Select value={classLevelId} onValueChange={setClassLevelId}>
-                    <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
-                    <SelectContent>
-                      {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <Label>{t('Class Levels', 'المراحل الدراسية')}</Label>
+                  <div className="flex items-center gap-2 mb-2">
+                    <input type="checkbox" id="allClasses" checked={allClasses} onChange={e => setAllClasses(e.target.checked)} />
+                    <label htmlFor="allClasses" className="text-sm">{t('All Classes', 'كل المراحل')}</label>
+                  </div>
+                  {!allClasses && (
+                    <div className="grid grid-cols-2 gap-2">
+                      {classLevels.map(c => (
+                        <label key={c.id} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={selectedClassLevels.includes(c.id)}
+                            onChange={e => {
+                              if (e.target.checked) setSelectedClassLevels([...selectedClassLevels, c.id]);
+                              else setSelectedClassLevels(selectedClassLevels.filter(id => id !== c.id));
+                            }}
+                          />
+                          <span>{bilingualText(c.name_en, c.name_ar)}</span>
+                        </label>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
               <DialogFooter>
