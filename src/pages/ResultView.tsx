@@ -233,7 +233,7 @@ const ResultView = () => {
             {/* Scores Table */}
             <CardContent className="p-0">
               <div className="overflow-x-auto">
-                <Table>
+                <Table className="min-w-full table-auto">
                   <TableHeader>
                     <TableRow className="bg-emerald-900 text-white">
                       <TableHead className="font-semibold">{t('Subject', 'المادة')}</TableHead>
@@ -259,33 +259,33 @@ const ResultView = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {subjectRows.map(row => (
-                      <TableRow key={row.subject.id}>
-                        <TableCell className="font-medium align-top">
-                          <div className="flex justify-between items-start">
+                    {subjectRows.map((row, idx) => (
+                      <TableRow key={row.subject.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50'}>
+                        <TableCell className="font-medium align-top py-3">
+                          <div className="flex justify-between items-start gap-4">
                             <div className="text-sm">{row.subject.name_en}</div>
-                            <div className="text-sm text-right" dir="rtl">{row.subject.name_ar}</div>
+                            <div className="text-sm text-right text-slate-700" dir="rtl">{row.subject.name_ar}</div>
                           </div>
                         </TableCell>
                         {!isCumulative && (
                           <>
-                            <TableCell className="text-center">{row.currentScore?.ca1 ?? '—'}</TableCell>
-                            <TableCell className="text-center">{row.currentScore?.ca2 ?? '—'}</TableCell>
-                            <TableCell className="text-center">{row.currentScore?.exam ?? '—'}</TableCell>
-                            <TableCell className="text-center font-bold">{row.currentScore?.total ?? '—'}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center py-3">{row.currentScore?.ca1 ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.currentScore?.ca2 ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.currentScore?.exam ?? '—'}</TableCell>
+                            <TableCell className="text-center font-bold py-3">{row.currentScore?.total ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">
                               <Badge variant="outline">{row.currentScore?.grade ?? '—'}</Badge>
                             </TableCell>
                           </>
                         )}
                         {isCumulative && (
                           <>
-                            <TableCell className="text-center">{row.t1Total ?? '—'}</TableCell>
-                            <TableCell className="text-center">{row.t2Total ?? '—'}</TableCell>
-                            <TableCell className="text-center">{row.t3Total ?? '—'}</TableCell>
-                            <TableCell className="text-center font-bold">{row.cumulativeTotal}</TableCell>
-                            <TableCell className="text-center font-bold">{row.cumulativeAvg}</TableCell>
-                            <TableCell className="text-center">
+                            <TableCell className="text-center py-3">{row.t1Total ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.t2Total ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.t3Total ?? '—'}</TableCell>
+                            <TableCell className="text-center font-bold py-3">{row.cumulativeTotal}</TableCell>
+                            <TableCell className="text-center font-bold py-3">{row.cumulativeAvg}</TableCell>
+                            <TableCell className="text-center py-3">
                               <Badge variant="outline">{row.finalGrade}</Badge>
                             </TableCell>
                           </>
