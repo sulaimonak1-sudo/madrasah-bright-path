@@ -102,8 +102,13 @@ const AdminStudents = () => {
 
   const getClassName = (levelId: string, armId: string) => {
     const level = classLevels.find(c => c.id === levelId);
+    if (!level) return '';
+    if (!armId) {
+      // No arm assigned, just show class level
+      return bilingualText(level.name_en, level.name_ar);
+    }
     const arm = classArms.find(a => a.id === armId);
-    return `${bilingualText(level?.name_en, level?.name_ar)} ${arm?.name || ''}`;
+    return `${bilingualText(level.name_en, level.name_ar)}${arm ? ' - ' + arm.name : ''}`;
   };
 
   const addStudent = async () => {
@@ -231,7 +236,7 @@ const AdminStudents = () => {
                   <TableRow key={student.id}>
                     <TableCell className="font-mono text-sm">{student.student_uid || '—'}</TableCell>
                     <TableCell className="font-medium">{bilingualText(student.name_en || student.full_name, student.name_ar)}</TableCell>
-                    <TableCell>{student.class_level_id && student.class_arm_id ? getClassName(student.class_level_id, student.class_arm_id) : '—'}</TableCell>
+                    <TableCell>{student.class_level_id ? getClassName(student.class_level_id, student.class_arm_id) : '—'}</TableCell>
                     <TableCell className="capitalize">{student.gender ? t(student.gender, student.gender === 'male' ? 'ذكر' : 'أنثى') : '—'}</TableCell>
                     <TableCell>
                       <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
