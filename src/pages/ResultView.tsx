@@ -40,6 +40,7 @@ const ResultView = () => {
   const [remarksEnabled, setRemarksEnabled] = useState(true);
   const [defaultTeacherRemark, setDefaultTeacherRemark] = useState('');
   const [defaultHeadRemark, setDefaultHeadRemark] = useState('');
+  const [printDateAuto, setPrintDateAuto] = useState(true);
   const [printDate, setPrintDate] = useState<string | null>(null);
 
   // Try to load result from query params on mount
@@ -69,6 +70,7 @@ const ResultView = () => {
         (data || []).forEach((r: any) => { map[r.key] = r.value; });
         setIncludeQr(map['report.include_qr'] !== 'false');
         setRemarksEnabled(map['report.remarks_enabled'] !== 'false');
+        setPrintDateAuto(map['report.print_date_auto'] !== 'false');
         setDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
         setDefaultHeadRemark(map['report.default_head_remark'] || '');
       } catch (err) {
@@ -422,20 +424,20 @@ const ResultView = () => {
 
             {/* SIGNATURE SECTION */}
             <div className="mb-8">
-              <div className="grid grid-cols-3 gap-8 text-sm text-center">
-                <div>
-                  <div className="border-b border-gray-800 h-10 mb-2" />
-                  <p className="font-semibold text-gray-800">Class Teacher</p>
+                <div className="grid grid-cols-3 gap-8 text-sm text-center">
+                  <div>
+                    <div className="border-b border-gray-800 h-10 mb-2" />
+                    <p className="font-semibold text-gray-800">{report?.teacher_name || report?.teacher || 'Class Teacher'}</p>
+                  </div>
+                  <div>
+                    <div className="border-b border-gray-800 h-10 mb-2" />
+                    <p className="font-semibold text-gray-800">{report?.head_name || report?.head || 'Head Teacher'}</p>
+                  </div>
+                  <div>
+                    <div className="border-b border-gray-800 h-10 mb-2" />
+                    <p className="font-semibold text-gray-800">{printDateAuto ? (printDate || new Date().toLocaleDateString()) : (printDate || '_________________')}</p>
+                  </div>
                 </div>
-                <div>
-                  <div className="border-b border-gray-800 h-10 mb-2" />
-                  <p className="font-semibold text-gray-800">Head Teacher</p>
-                </div>
-                <div>
-                  <div className="border-b border-gray-800 h-10 mb-2" />
-                  <p className="font-semibold text-gray-800">{printDate || '_________________'}</p>
-                </div>
-              </div>
             </div>
 
             {/* FOOTER */}
