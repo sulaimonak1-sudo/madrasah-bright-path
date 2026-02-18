@@ -391,7 +391,6 @@ const ResultView = () => {
                       <td className="text-center px-2 py-2 border">{row.currentScore?.ca2 ?? '—'}</td>
                       <td className="text-center px-2 py-2 border">{row.currentScore?.exam ?? '—'}</td>
                       <td className="text-center px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
-                      <td className="text-center px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
                       <td className="text-center px-2 py-2 border font-bold">{row.currentScore?.grade ?? '—'}</td>
                     </tr>
                   ))}

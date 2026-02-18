@@ -67,6 +67,29 @@ const AdminReports = () => {
         // ignore
       }
     })();
+
+    // subscribe to realtime changes so settings update when changed elsewhere
+    const channel = supabase
+      .channel('public:school_settings')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'school_settings' }, () => {
+        (async () => {
+          try {
+            const { data } = await supabase.from('school_settings').select('*');
+            const map: Record<string, string> = {};
+            (data || []).forEach((r: any) => { map[r.key] = r.value; });
+            setReportIncludeQr(map['report.include_qr'] !== 'false');
+            setReportDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
+            setReportDefaultHeadRemark(map['report.default_head_remark'] || '');
+          } catch (err) {
+            // ignore
+          }
+        })();
+      })
+      .subscribe();
+
+    return () => {
+      try { channel.unsubscribe(); } catch (e) { /* ignore */ }
+    };
   }, []);
 
   useEffect(() => {
