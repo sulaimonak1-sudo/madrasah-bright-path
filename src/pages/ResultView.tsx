@@ -64,8 +64,8 @@ const ResultView = () => {
       try {
         const sessId = data?.term?.session_id;
         if (sessId) {
-          const { data: sess } = await supabase.from('sessions').select('name_en').eq('id', sessId).maybeSingle();
-          setSessionName(sess?.name_en || null);
+          const { data: sess } = await supabase.from('sessions').select('name').eq('id', sessId).maybeSingle();
+          setSessionName(sess?.name || null);
         }
       } catch (err) {
         // ignore
@@ -168,8 +168,8 @@ const ResultView = () => {
             <div className="p-6">
               <div className="max-w-4xl mx-auto text-center border-t-2 border-emerald-100 pt-6">
                 <div className="flex items-center justify-center">
-                  <div className="rounded-full bg-emerald-900/10 border border-emerald-900 p-3 flex items-center justify-center" style={{width:72, height:72}}>
-                    <GraduationCap className="h-8 w-8 text-emerald-900" />
+                  <div className="rounded-full overflow-hidden" style={{width:72, height:72}}>
+                    <img src="/images/school-logo.png" alt="Al-Bari Logo" className="w-full h-full object-contain" />
                   </div>
                 </div>
                 <h1 className="text-3xl font-extrabold tracking-wide uppercase mt-4 text-emerald-900">Al-Bari Group of Schools</h1>
@@ -294,9 +294,9 @@ const ResultView = () => {
                         )}
                         {isCumulative && (
                           <>
-                            <TableCell className="text-center py-3">{row.t1Total ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">{row.t2Total ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">{row.t3Total ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.currentScore?.total ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.currentScore?.total ?? '—'}</TableCell>
+                            <TableCell className="text-center py-3">{row.currentScore?.total ?? '—'}</TableCell>
                             <TableCell className="text-center font-bold py-3">{row.cumulativeTotal}</TableCell>
                             <TableCell className="text-center font-bold py-3">{row.cumulativeAvg}</TableCell>
                             <TableCell className="text-center py-3">

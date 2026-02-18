@@ -53,8 +53,8 @@ const AdminLogin = () => {
       <div className="flex min-h-[60vh] items-center justify-center py-12">
         <Card className="w-full max-w-md shadow-card-lg animate-fade-in">
           <CardHeader className="text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
-              <Lock className="h-7 w-7 text-primary-foreground" />
+            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-xl overflow-hidden">
+              <img src="/images/school-logo.png" alt="Al-Bari Logo" className="h-full w-full object-contain" />
             </div>
             <CardTitle className="text-xl">
               {t('Admin Login', 'تسجيل دخول المسؤول')}

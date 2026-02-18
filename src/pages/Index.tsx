@@ -34,7 +34,7 @@ const Index = () => {
         <div className="container text-center">
           <div className="mx-auto max-w-2xl animate-fade-in">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground backdrop-blur-sm">
-              <img src="/al-bari-logo.png" alt="Al-Bari Logo" className="h-4 w-4 object-contain" />
+              <img src="/images/school-logo.png" alt="Al-Bari Logo" className="h-6 w-6 object-contain" />
               {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
             </div>
             <h1 className="mb-4 text-3xl font-extrabold tracking-tight text-primary-foreground md:text-5xl">
