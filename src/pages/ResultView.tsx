@@ -28,6 +28,7 @@ const ResultView = () => {
   const [classLevel, setClassLevel] = useState<any | null>(null);
   const [classArm, setClassArm] = useState<any | null>(null);
   const [sessionName, setSessionName] = useState<string | null>(null);
+  const [report, setReport] = useState<any | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -71,6 +72,7 @@ const ResultView = () => {
       }
       setSubjects(data.subjects || []);
       setScores(data.scores || []);
+      setReport(data.report || null);
       // generate QR for verification URL (student uid + term id)
       try {
         const verifyUrl = `${window.location.origin}/verify-result?student_uid=${encodeURIComponent(data.student.student_uid)}&term_id=${encodeURIComponent(data.term.id)}`;
@@ -317,12 +319,13 @@ const ResultView = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <p className="font-semibold">{t("Class Teacher's Remark:", "ملاحظة معلم الفصل:")}</p>
-                    <p className="mt-2 text-sm text-slate-700">{student?.teacher_remark || ''}</p>
-                    <p className="mt-3 text-sm text-right" dir="rtl">{''}</p>
+                    <p className="mt-2 text-sm text-slate-700">{report?.teacher_remark || ''}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{report?.teacher_signed_at ? new Date(report.teacher_signed_at).toLocaleString() : ''}</p>
                   </div>
                   <div>
                     <p className="font-semibold">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</p>
-                    <p className="mt-2 text-sm text-slate-700">{''}</p>
+                    <p className="mt-2 text-sm text-slate-700">{report?.head_remark || ''}</p>
+                    <p className="mt-2 text-xs text-muted-foreground">{report?.head_signed_at ? new Date(report.head_signed_at).toLocaleString() : ''}</p>
                     <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
                       <div>
                         <div className="border-b h-6" />

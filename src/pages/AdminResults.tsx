@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { FileSpreadsheet, Save, Loader2, ArrowLeft, BookOpen, Users, ChevronRight } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -49,16 +50,78 @@ const AdminResults = () => {
 
   // State for viewing/generating a student's result
   const [selectedStudentResult, setSelectedStudentResult] = useState<ScoreEntry | null>(null);
+  const [showReportDialog, setShowReportDialog] = useState(false);
+  const [reportData, setReportData] = useState<any | null>(null);
+  const [teacherRemark, setTeacherRemark] = useState('');
+  const [headRemark, setHeadRemark] = useState('');
+  const [loadingReport, setLoadingReport] = useState(false);
 
   // Handler for generating/viewing result
-  const handleGenerateResult = (student: ScoreEntry) => {
+  const handleGenerateResult = async (student: ScoreEntry) => {
     setSelectedStudentResult(student);
-    // Here you can trigger a modal or further logic to generate/display the result
-    // For now, just show a toast as a placeholder
-    toast({
-      title: t('Result Generated', 'تم إنشاء النتيجة'),
-      description: t(`Result for ${student.student_name} generated.`, `تم إنشاء نتيجة ${student.student_name}.`)
-    });
+    // open dialog and load report for this student+term
+    setShowReportDialog(true);
+    setLoadingReport(true);
+    try {
+      const { data } = await supabase.from('term_reports').select('*').eq('student_id', student.student_id).eq('term_id', termId).maybeSingle();
+      setReportData(data || null);
+      setTeacherRemark(data?.teacher_remark || '');
+      setHeadRemark(data?.head_remark || '');
+    } catch (err: any) {
+      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  const closeReportDialog = () => {
+    setShowReportDialog(false);
+    setSelectedStudentResult(null);
+    setReportData(null);
+    setTeacherRemark(''); setHeadRemark('');
+  };
+
+  const saveTeacherRemark = async () => {
+    if (!selectedStudentResult) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = (userData as any)?.user;
+      const upsertObj: any = {
+        student_id: selectedStudentResult.student_id,
+        term_id: termId,
+        teacher_remark: teacherRemark,
+      };
+      if (user?.id) upsertObj.teacher_signed_by = user.id;
+      const { error } = await supabase.from('term_reports').upsert(upsertObj, { onConflict: 'student_id,term_id' });
+      if (error) throw error;
+      toast({ title: t('Saved!', 'تم الحفظ!') });
+      // refresh report data
+      const { data } = await supabase.from('term_reports').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId).maybeSingle();
+      setReportData(data || null);
+    } catch (err: any) {
+      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+    }
+  };
+
+  const saveHeadRemark = async () => {
+    if (!selectedStudentResult) return;
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = (userData as any)?.user;
+      const upsertObj: any = {
+        student_id: selectedStudentResult.student_id,
+        term_id: termId,
+        head_remark: headRemark,
+      };
+      if (user?.id) upsertObj.head_signed_by = user.id;
+      const { error } = await supabase.from('term_reports').upsert(upsertObj, { onConflict: 'student_id,term_id' });
+      if (error) throw error;
+      toast({ title: t('Saved!', 'تم الحفظ!') });
+      const { data } = await supabase.from('term_reports').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId).maybeSingle();
+      setReportData(data || null);
+    } catch (err: any) {
+      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+    }
   };
 
   // Fetch sessions and class levels
@@ -262,6 +325,39 @@ const AdminResults = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Report dialog for teacher/head remarks */}
+        <Dialog open={showReportDialog} onOpenChange={(o) => { if (!o) closeReportDialog(); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('Teacher / Head Remarks', 'ملاحظات المعلم/المدير')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm font-medium">{t("Class Teacher's Remark:", 'ملاحظة معلم الفصل:')}</label>
+                <textarea className="w-full mt-1 p-2 border rounded" rows={4} value={teacherRemark} onChange={(e) => setTeacherRemark(e.target.value)} />
+                <div className="mt-2 flex gap-2">
+                  <Button onClick={saveTeacherRemark} disabled={loadingReport}>{loadingReport ? '...' : t('Save', 'حفظ')}</Button>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{reportData?.teacher_signed_at ? `Signed at ${new Date(reportData.teacher_signed_at).toLocaleString()}` : ''}</div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</label>
+                <textarea className="w-full mt-1 p-2 border rounded" rows={3} value={headRemark} onChange={(e) => setHeadRemark(e.target.value)} />
+                <div className="mt-2 flex gap-2">
+                  <Button onClick={saveHeadRemark} disabled={loadingReport}>{loadingReport ? '...' : t('Save', 'حفظ')}</Button>
+                </div>
+                <div className="text-xs text-muted-foreground mt-1">{reportData?.head_signed_at ? `Signed at ${new Date(reportData.head_signed_at).toLocaleString()}` : ''}</div>
+              </div>
+            </div>
+            <DialogFooter>
+              <DialogClose asChild>
+                <Button variant="ghost">{t('Close', 'إغلاق')}</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {isLocked && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-destructive text-sm">
