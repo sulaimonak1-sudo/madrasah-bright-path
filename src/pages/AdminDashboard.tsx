@@ -1,9 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { dashboardStats } from '@/data/mockData';
 import { Users, Layers, BookOpen, TrendingUp, Calendar, FolderOpen, Award, BarChart3 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 const statCards = [
   { key: 'totalStudents', icon: Users, label_en: 'Total Students', label_ar: 'إجمالي الطلاب', color: 'text-primary' },
@@ -21,6 +23,52 @@ const AdminDashboard = () => {
   const [generatedPin, setGeneratedPin] = useState('');
   const [loadingPin, setLoadingPin] = useState(false);
   const [pinError, setPinError] = useState('');
+
+  // Report settings
+  const [includeQr, setIncludeQr] = useState(true);
+  const [remarksEnabled, setRemarksEnabled] = useState(true);
+  const [printDateAuto, setPrintDateAuto] = useState(true);
+  const [defaultTeacherRemark, setDefaultTeacherRemark] = useState('');
+  const [defaultHeadRemark, setDefaultHeadRemark] = useState('');
+  const [savingSettings, setSavingSettings] = useState(false);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const { data } = await supabase.from('school_settings').select('*');
+        const map: Record<string, string> = {};
+        (data || []).forEach((r: any) => { map[r.key] = r.value; });
+        setIncludeQr(map['report.include_qr'] !== 'false');
+        setRemarksEnabled(map['report.remarks_enabled'] !== 'false');
+        setPrintDateAuto(map['report.print_date_auto'] !== 'false');
+        setDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
+        setDefaultHeadRemark(map['report.default_head_remark'] || '');
+      } catch (err) {
+        // ignore
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      const payload = [
+        { key: 'report.include_qr', value: includeQr ? 'true' : 'false' },
+        { key: 'report.remarks_enabled', value: remarksEnabled ? 'true' : 'false' },
+        { key: 'report.print_date_auto', value: printDateAuto ? 'true' : 'false' },
+        { key: 'report.default_teacher_remark', value: defaultTeacherRemark || '' },
+        { key: 'report.default_head_remark', value: defaultHeadRemark || '' },
+      ];
+      await supabase.from('school_settings').upsert(payload, { onConflict: 'key' });
+      toast({ title: 'Saved', description: 'Report settings saved.' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || String(err), variant: 'destructive' });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   // Example: Generate random 6-digit PIN
   function randomPin() {
@@ -151,6 +199,46 @@ const AdminDashboard = () => {
             {pinError && (
               <div className="mt-2 text-destructive text-sm text-center">{pinError}</div>
             )}
+          </CardContent>
+        </Card>
+        {/* Report Settings */}
+        <Card className="shadow-card max-w-xl mx-auto">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-lg">{t('Report Settings', 'إعدادات التقرير')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3">
+                <input type="checkbox" checked={includeQr} onChange={e => setIncludeQr(e.target.checked)} />
+                <span className="text-sm">{t('Include QR on report', 'إظهار رمز الاستجابة السريعة في التقرير')}</span>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input type="checkbox" checked={remarksEnabled} onChange={e => setRemarksEnabled(e.target.checked)} />
+                <span className="text-sm">{t("Enable remarks fields", 'تفعيل حقل الملاحظات')}</span>
+              </label>
+
+              <label className="flex items-center gap-3">
+                <input type="checkbox" checked={printDateAuto} onChange={e => setPrintDateAuto(e.target.checked)} />
+                <span className="text-sm">{t('Auto set report date on print', 'تعيين تاريخ التقرير تلقائياً عند الطباعة')}</span>
+              </label>
+
+              <div>
+                <label className="text-sm text-muted-foreground">{t("Default Class Teacher's Remark", 'ملاحظة معلم الفصل الافتراضية')}</label>
+                <textarea className="w-full border rounded px-2 py-1 mt-1" value={defaultTeacherRemark} onChange={e => setDefaultTeacherRemark(e.target.value)} rows={2} />
+              </div>
+
+              <div>
+                <label className="text-sm text-muted-foreground">{t("Default Head Teacher's Remark", 'ملاحظة مدير المدرسة الافتراضية')}</label>
+                <textarea className="w-full border rounded px-2 py-1 mt-1" value={defaultHeadRemark} onChange={e => setDefaultHeadRemark(e.target.value)} rows={2} />
+              </div>
+
+              <div className="flex justify-end">
+                <button className="btn bg-primary text-white px-4 py-2 rounded" onClick={saveSettings} disabled={savingSettings}>
+                  {savingSettings ? t('Saving...', 'جارٍ الحفظ...') : t('Save Settings', 'حفظ الإعدادات')}
+                </button>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

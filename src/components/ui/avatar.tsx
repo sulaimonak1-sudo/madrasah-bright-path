@@ -31,7 +31,17 @@ const AvatarFallback = React.forwardRef<
     ref={ref}
     className={cn("flex h-full w-full items-center justify-center rounded-full bg-muted", className)}
     {...props}
-  />
+  >
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      aria-hidden="true"
+      className="h-6 w-6 text-muted-foreground"
+    >
+      <path d="M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-4.418 0-8 2.239-8 5v1a1 1 0 001 1h14a1 1 0 001-1v-1c0-2.761-3.582-5-8-5z" />
+    </svg>
+  </AvatarPrimitive.Fallback>
 ));
 AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName;
 

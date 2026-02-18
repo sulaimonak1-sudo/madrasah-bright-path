@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Printer, GraduationCap, ArrowLeft } from 'lucide-react';
 import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import html2pdf from 'html2pdf.js';
 
 const ResultView = () => {
@@ -35,6 +36,11 @@ const ResultView = () => {
   const [sessionName, setSessionName] = useState<string | null>(null);
   const [report, setReport] = useState<any | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [includeQr, setIncludeQr] = useState(true);
+  const [remarksEnabled, setRemarksEnabled] = useState(true);
+  const [defaultTeacherRemark, setDefaultTeacherRemark] = useState('');
+  const [defaultHeadRemark, setDefaultHeadRemark] = useState('');
+  const [printDate, setPrintDate] = useState<string | null>(null);
 
   // Try to load result from query params on mount
   useEffect(() => {
@@ -50,6 +56,30 @@ const ResultView = () => {
       // Auto-fetch result
       performLookup(student, pin_param || '', term);
     }
+  }, []);
+
+  // load report-related settings
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const { data } = await supabase.from('school_settings').select('*');
+        if (!mounted) return;
+        const map: Record<string, string> = {};
+        (data || []).forEach((r: any) => { map[r.key] = r.value; });
+        setIncludeQr(map['report.include_qr'] !== 'false');
+        setRemarksEnabled(map['report.remarks_enabled'] !== 'false');
+        setDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
+        setDefaultHeadRemark(map['report.default_head_remark'] || '');
+      } catch (err) {
+        // ignore
+      }
+    })();
+    const onBeforePrint = () => setPrintDate(new Date().toLocaleDateString());
+    const onAfterPrint = () => setPrintDate(null);
+    window.addEventListener('beforeprint', onBeforePrint);
+    window.addEventListener('afterprint', onAfterPrint);
+    return () => { mounted = false; window.removeEventListener('beforeprint', onBeforePrint); window.removeEventListener('afterprint', onAfterPrint); };
   }, []);
 
   const performLookup = async (uid: string, pinValue: string, tid: string) => {
@@ -211,22 +241,26 @@ const ResultView = () => {
   const downloadResultPDF = () => {
     const element = document.querySelector('.result-printable-content');
     if (!element) return;
-    
     const options = {
-      margin: 10,
+      margin: [10,10,10,10],
       filename: `result-${student?.student_id || 'report'}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
     };
-    
-    html2pdf().set(options).from(element).save();
+
+    // set print date in DOM then generate PDF
+    setPrintDate(new Date().toLocaleDateString());
+    setTimeout(() => {
+      html2pdf().set(options).from(element).save();
+      setPrintDate(null);
+    }, 100);
   };
 
   return (
     <PublicLayout>
       <div className="container py-8">
-        <div className="mx-auto max-w-4xl min-h-screen bg-white">
+          <div className="mx-auto max-w-4xl min-h-screen bg-white print:mx-0 print:max-w-[190mm]">
           {/* Print button */}
           <div className="mb-4 flex justify-end no-print">
             <Button onClick={downloadResultPDF} variant="outline">
@@ -236,7 +270,7 @@ const ResultView = () => {
           </div>
 
           {/* Printable Report */}
-          <div className="bg-white p-8 print:p-0 result-printable-content">
+          <div className="bg-white p-6 print:p-4 result-printable-content">
             {/* HEADER */}
             <div className="text-center pb-6 border-b-2 border-gray-300 mb-6">
               <div className="flex justify-center mb-3">
@@ -259,7 +293,7 @@ const ResultView = () => {
                 <div className="flex-1 border-t border-gray-400" />
               </div>
               
-              <p className="text-xs text-gray-600 mb-4">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com | 🌐 albarischools.com</p>
+              <p className="text-xs text-gray-600 mb-4">1, Al-bari cl, Behind UBA, Badagry, lagos, 08028152097, albarischools@Gmail.com</p>
               
               <h2 className="text-lg font-bold text-gray-800 tracking-wider uppercase mb-2 mt-3">STUDENT ACADEMIC REPORT</h2>
               <p className="text-sm text-gray-700">
@@ -272,14 +306,10 @@ const ResultView = () => {
               <div className="flex gap-6">
                 {/* Photo */}
                 <div className="flex-shrink-0">
-                  <div className="w-24 h-32 bg-gray-100 border-2 border-gray-400 rounded overflow-hidden">
-                    <img 
-                      src={student.photo_url || '/images/placeholder-student.png'}
-                      alt="Student Photo"
-                      className="w-full h-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-                    />
-                  </div>
+                  <Avatar className="w-24 h-32 rounded overflow-hidden border-2 border-gray-400 bg-gray-100">
+                    <AvatarImage src={student.photo_url ?? ''} alt="Student Photo" className="h-full w-full object-cover" />
+                    <AvatarFallback />
+                  </Avatar>
                 </div>
 
                 {/* Student Info */}
@@ -335,18 +365,17 @@ const ResultView = () => {
 
             {/* ACADEMIC PERFORMANCE SECTION */}
             <div className="mb-6">
-              <div className="bg-gray-700 text-white text-center py-2 px-4 font-bold tracking-wide mb-4 rounded-t">
+              <div className="bg-green-700 text-white text-center py-2 px-4 font-bold tracking-wide mb-4 rounded-t">
                 ACADEMIC PERFORMANCE
               </div>
               
               <table className="w-full text-sm border-collapse">
                 <thead>
-                  <tr className="bg-gray-700 text-white">
+                  <tr className="bg-green-700 text-white">
                     <th className="text-left px-3 py-2 font-semibold">Subject</th>
                     <th className="text-center px-2 py-2 font-semibold">CA1</th>
                     <th className="text-center px-2 py-2 font-semibold">CA2</th>
                     <th className="text-center px-2 py-2 font-semibold">Exam</th>
-                    <th className="text-center px-2 py-2 font-semibold">المجموع</th>
                     <th className="text-center px-2 py-2 font-semibold">المجموع</th>
                     <th className="text-center px-2 py-2 font-semibold">Grade</th>
                   </tr>
@@ -376,19 +405,21 @@ const ResultView = () => {
             </div>
 
             {/* REMARKS SECTION */}
-            <div className="mb-6 pb-6 border-t-2 border-b-2 border-gray-300 py-4">
-              <div className="mb-4">
-                <p className="font-bold text-gray-800 mb-2">Class Teacher's Remark:</p>
-                <p className="text-sm text-gray-700 mb-1">{report?.teacher_remark || '_________________________'}</p>
-                <p className="text-xs text-gray-600 text-right" dir="rtl">{report?.teacher_remark ? 'ملاحظة معلم الفصل:' : ''}</p>
+            {remarksEnabled && (
+              <div className="mb-6 pb-6 border-t-2 border-b-2 border-gray-300 py-4">
+                <div className="mb-4">
+                  <p className="font-bold text-gray-800 mb-2">Class Teacher's Remark:</p>
+                  <p className="text-sm text-gray-700 mb-1">{report?.teacher_remark || defaultTeacherRemark || '_________________________'}</p>
+                  <p className="text-xs text-gray-600 text-right" dir="rtl">{(report?.teacher_remark || defaultTeacherRemark) ? 'ملاحظة معلم الفصل:' : ''}</p>
+                </div>
+
+                <div>
+                  <p className="font-bold text-gray-800 mb-2">Head Teacher's Remark:</p>
+                  <p className="text-sm text-gray-700 mb-1">{report?.head_remark || defaultHeadRemark || '_________________________'}</p>
+                  <p className="text-xs text-gray-600 text-right" dir="rtl">{(report?.head_remark || defaultHeadRemark) ? 'كلمة مدير المدرسة:' : ''}</p>
+                </div>
               </div>
-              
-              <div>
-                <p className="font-bold text-gray-800 mb-2">Head Teacher's Remark:</p>
-                <p className="text-sm text-gray-700 mb-1">{report?.head_remark || '_________________________'}</p>
-                <p className="text-xs text-gray-600 text-right" dir="rtl">{report?.head_remark ? 'كلمة مدير المدرسة:' : ''}</p>
-              </div>
-            </div>
+            )}
 
             {/* SIGNATURE SECTION */}
             <div className="mb-8">
@@ -403,7 +434,7 @@ const ResultView = () => {
                 </div>
                 <div>
                   <div className="border-b border-gray-800 h-10 mb-2" />
-                  <p className="font-semibold text-gray-800">Date:</p>
+                  <p className="font-semibold text-gray-800">{printDate || '_________________'}</p>
                 </div>
               </div>
             </div>
@@ -416,7 +447,7 @@ const ResultView = () => {
               </div>
               
               <div className="flex-shrink-0 flex justify-center">
-                {qrDataUrl && (
+                {includeQr && qrDataUrl && (
                   <div className="w-20 h-20 border-2 border-gray-300 p-1">
                     <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
                   </div>
@@ -430,7 +461,7 @@ const ResultView = () => {
             </div>
 
             {/* GREEN FOOTER BAR */}
-            <div className="h-3 bg-gray-700 rounded" />
+            <div className="h-3 bg-green-700 rounded" />
           </div>
         </div>
       </div>

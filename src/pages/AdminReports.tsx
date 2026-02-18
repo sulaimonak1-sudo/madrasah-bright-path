@@ -12,6 +12,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateGrade, GRADE_CONFIG } from '@/types';
 import html2pdf from 'html2pdf.js';
+import QRCode from 'qrcode';
 
 type Step = 'select' | 'students';
 
@@ -32,6 +33,9 @@ const AdminReports = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [printingId, setPrintingId] = useState<string | null>(null);
+  const [reportIncludeQr, setReportIncludeQr] = useState(true);
+  const [reportDefaultTeacherRemark, setReportDefaultTeacherRemark] = useState('');
+  const [reportDefaultHeadRemark, setReportDefaultHeadRemark] = useState('');
 
   useEffect(() => {
     const fetch = async () => {
@@ -50,6 +54,19 @@ const AdminReports = () => {
       setClassArms(grouped);
     };
     fetch();
+    // load report settings
+    (async () => {
+      try {
+        const { data } = await supabase.from('school_settings').select('*');
+        const map: Record<string, string> = {};
+        (data || []).forEach((r: any) => { map[r.key] = r.value; });
+        setReportIncludeQr(map['report.include_qr'] !== 'false');
+        setReportDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
+        setReportDefaultHeadRemark(map['report.default_head_remark'] || '');
+      } catch (err) {
+        // ignore
+      }
+    })();
   }, []);
 
   useEffect(() => {
@@ -116,6 +133,21 @@ const AdminReports = () => {
       const className = `${classLevelRes.data?.name_en || ''}${classArmRes.data ? ' - ' + classArmRes.data.name : ''}`;
       const classNameAr = `${classLevelRes.data?.name_ar || ''}${classArmRes.data ? ' - ' + classArmRes.data.name : ''}`;
 
+      const printDate = new Date().toLocaleDateString();
+      // generate verification QR if enabled
+      let qrSrc = '';
+      try {
+        if (reportIncludeQr) {
+          const verifyUrl = `${window.location.origin}/#/result?student=${encodeURIComponent(student.student_uid)}&term=${encodeURIComponent(termId)}`;
+          qrSrc = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
+        }
+      } catch (err) {
+        qrSrc = '';
+      }
+
+      const teacherRemarkText = reportDefaultTeacherRemark || '_________________________________________';
+      const headRemarkText = reportDefaultHeadRemark || '_________________________________________';
+
       const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -145,9 +177,9 @@ const AdminReports = () => {
     .info-label { color: #555; font-weight: 600; }
     .info-value { color: #1f2937; font-weight: 700; }
     
-    .academic-header { background: #374151; color: white; text-align: center; padding: 6px; font-weight: 700; tracking-wider; margin-bottom: 4px; }
+    .academic-header { background: #047857; color: white; text-align: center; padding: 6px; font-weight: 700; tracking-wider; margin-bottom: 4px; }
     .scores-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 10px; }
-    .scores-table th { background: #374151; color: white; padding: 6px 4px; text-align: center; font-weight: 700; text-transform: uppercase; }
+    .scores-table th { background: #047857; color: white; padding: 6px 4px; text-align: center; font-weight: 700; text-transform: uppercase; }
     .scores-table th:first-child { text-align: left; }
     .scores-table td { padding: 6px 4px; border: 1px solid #d1d5db; text-align: center; }
     .scores-table td:first-child { text-align: left; font-weight: 500; }
@@ -171,7 +203,7 @@ const AdminReports = () => {
     .qr-container { flex-shrink: 0; width: 50px; height: 50px; border: 1px solid #999; display: flex; align-items: center; justify-content: center; }
     .qr-container img { width: 100%; height: 100%; object-fit: contain; }
     
-    .footer-bar { margin-top: 8px; height: 3px; background: #374151; }
+    .footer-bar { margin-top: 8px; height: 3px; background: #047857; }
   </style>
 </head>
 <body>
@@ -181,7 +213,7 @@ const AdminReports = () => {
   <h1 class="school-name">AL-BARI GROUP OF SCHOOLS</h1>
   <div class="section-label">Madrasah Section</div>
   <div class="divider"></div>
-  <div class="contact-info">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com | 🌐 albarischools.com</div>
+  <div class="contact-info">1, Al-bari cl, Behind UBA, Badagry, lagos, 08028152097, albarischools@Gmail.com</div>
   <h2 class="report-title">STUDENT ACADEMIC REPORT</h2>
   <div class="session-info">Session: ${selectedSession?.name || ''} | Term: ${selectedTerm?.name_en || ''}</div>
 </div>
@@ -236,7 +268,6 @@ const AdminReports = () => {
       <th>CA2</th>
       <th>Exam</th>
       <th>المجموع</th>
-      <th>المجموع</th>
       <th>Grade</th>
     </tr>
   </thead>
@@ -251,7 +282,6 @@ const AdminReports = () => {
       <td>${r.ca2}</td>
       <td>${r.exam}</td>
       <td style="font-weight: 700;">${r.total}</td>
-      <td style="font-weight: 700;">${r.total}</td>
       <td style="font-weight: 700;">${r.grade}</td>
     </tr>
     `).join('')}
@@ -260,14 +290,14 @@ const AdminReports = () => {
 
 <div class="term-avg">Term Average: <strong>${avg}%</strong></div>
 
-<div class="remarks-section">
+  <div class="remarks-section">
   <div class="remark-block">
     <div class="remark-label">Class Teacher's Remark:</div>
-    <div class="remark-text">_________________________________________</div>
+    <div class="remark-text">${teacherRemarkText}</div>
   </div>
   <div class="remark-block">
     <div class="remark-label">Head Teacher's Remark:</div>
-    <div class="remark-text">_________________________________________</div>
+    <div class="remark-text">${headRemarkText}</div>
   </div>
 </div>
 
@@ -282,7 +312,7 @@ const AdminReports = () => {
   </div>
   <div class="sig-item">
     <div class="sig-line"></div>
-    <div class="sig-name">Date:</div>
+    <div class="sig-name">${printDate}</div>
   </div>
 </div>
 
@@ -292,7 +322,7 @@ const AdminReports = () => {
     Madrasah Portal | Student ID: PIN
   </div>
   <div class="qr-container">
-    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='white' width='100' height='100'/%3E%3C/svg%3E" alt="QR" />
+    ${qrSrc ? `<img src="${qrSrc}" alt="QR" />` : `<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='white' width='100' height='100'/%3E%3C/svg%3E" alt="QR" />`}
   </div>
   <div class="footer-text">
     <strong>Scan here to verify result</strong><br/>
