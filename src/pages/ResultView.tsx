@@ -425,28 +425,28 @@ const ResultView = () => {
             {/* SIGNATURE SECTION */}
             <div className="mb-8">
                 <div className="grid grid-cols-3 gap-8 text-sm text-center">
-                  <div>
-                    <div className="border-b border-gray-800 h-10 mb-2" />
-                    <p className="font-semibold text-gray-800">{report?.teacher_name || report?.teacher || 'Class Teacher'}</p>
+                  <div className="relative">
+                    <div className="border-b border-gray-800 h-10" />
+                    <p className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 italic text-gray-800">
+                      {report?.teacher_name || report?.teacher || 'Class Teacher'}
+                    </p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center mb-2">
-                      <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-100">
-                        <img
-                          src={report?.head_photo || report?.head_photo_url || '/images/head-teacher.png'}
-                          alt="Head Teacher"
-                          className="w-full h-full object-cover"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      </div>
+                      <Avatar className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-100">
+                        {(report?.head_photo || report?.head_photo_url)
+                          ? <AvatarImage src={report?.head_photo || report?.head_photo_url} alt="Head Teacher" />
+                          : <AvatarFallback>{(report?.head_name || report?.head || 'HT').split(' ').map((s: string) => s?.[0] || '').join('').slice(0,2)}</AvatarFallback>
+                        }
+                      </Avatar>
                     </div>
                     <div className="border-b border-gray-800 h-10 mb-2" />
                     <p className="font-semibold text-gray-800">{report?.head_name || report?.head || 'Head Teacher'}</p>
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-800">{printDateAuto ? (printDate || new Date().toLocaleDateString()) : (printDate || '_________________')}</p>
-                    <div className="border-b border-gray-800 h-10 my-2" />
-                    <p className="text-sm text-gray-600">Date</p>
+                    <p className="font-semibold text-gray-800 mb-1">{printDateAuto ? (printDate || new Date().toLocaleDateString()) : (printDate || '_________________')}</p>
+                    <div className="border-b border-gray-800 h-6 mb-1" />
+                    <p className="text-sm text-gray-600 mt-0">Date</p>
                   </div>
                 </div>
             </div>
