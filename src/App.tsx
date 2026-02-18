@@ -21,7 +21,6 @@ import AdminReports from "./pages/AdminReports";
 import AdminLocking from "./pages/AdminLocking";
 import ResultView from "./pages/ResultView";
 import StaffSignup from "./pages/StaffSignup";
-import PinGenerate from "./pages/PinGenerate";
 
 const queryClient = new QueryClient();
 
@@ -40,7 +39,6 @@ const App = () => (
 
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/staff/signup" element={<StaffSignup />} />
-              <Route path="/generate-pin" element={<PinGenerate />} />
 
               {/* Admin & Teacher */}
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />

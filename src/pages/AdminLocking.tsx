@@ -1,6 +1,6 @@
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -23,8 +23,8 @@ const AdminLocking = () => {
       try {
         const { data: s } = await supabase.from('sessions').select('*').order('name');
         setSessions((s as any[]) || []);
-        const { data: t } = await supabase.from('terms').select('*');
-        setTerms((t as any[]) || []);
+        const { data: termsData } = await supabase.from('terms').select('*');
+        setTerms((termsData as any[]) || []);
       } catch (err) {
         toast({ title: t('Error loading data', 'خطأ في تحميل البيانات'), description: String(err) });
       } finally {
@@ -36,14 +36,13 @@ const AdminLocking = () => {
 
   const handleToggleLock = async (term: any) => {
     const newLocked = !term.is_locked;
-    const toastRef = toast({ title: newLocked ? t('Locking...', 'قفل...') : t('Unlocking...', 'فتح...') });
     try {
       const { error } = await supabase.from('terms').update({ is_locked: newLocked }).eq('id', term.id);
       if (error) throw error;
       setTerms((prev) => prev.map((p) => (p.id === term.id ? { ...p, is_locked: newLocked } : p)));
-      toastRef.update({ title: newLocked ? t('Locked', 'مقفل') : t('Unlocked', 'مفتوح') });
+      toast({ title: newLocked ? t('Locked', 'مقفل') : t('Unlocked', 'مفتوح') });
     } catch (err) {
-      toastRef.update({ title: t('Action failed', 'فشل الإجراء'), description: String(err) });
+      toast({ title: t('Action failed', 'فشل الإجراء'), description: String(err) });
     }
   };
 

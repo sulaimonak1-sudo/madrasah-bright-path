@@ -221,25 +221,10 @@ const AdminStudents = () => {
       class_arm_id: finalArmId,
       guardian_name: guardianName.trim() || null,
       guardian_phone: guardianPhone.trim() || null,
-      photo_url: null,
     }).select().maybeSingle();
     if (insertErr) { toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' }); return; }
 
-    // If a photo file was provided, upload to storage and update student record
-    if (photoFile && inserted?.id) {
-      try {
-        const ext = photoFile.name.split('.').pop() || 'jpg';
-        const filePath = `students/${inserted.id}/photo.${ext}`;
-        const { error: uploadErr } = await supabase.storage.from('student-photos').upload(filePath, photoFile, { cacheControl: '3600', upsert: true });
-        if (uploadErr) throw uploadErr;
-        const { data: urlData } = supabase.storage.from('student-photos').getPublicUrl(filePath);
-        const publicUrl = urlData.publicUrl;
-        await supabase.from('students').update({ photo_url: publicUrl }).eq('id', inserted.id);
-      } catch (upErr: any) {
-        // Non-fatal: continue but notify
-        toast({ title: t('Warning', 'تحذير'), description: t('Photo upload failed', 'فشل رفع الصورة'), variant: 'destructive' });
-      }
-    }
+    // Photo upload not supported yet (no photo_url column)
     toast({ title: t('Student added', 'تمت إضافة الطالب') });
     setFullName(''); setNameEn(''); setNameAr(''); setStudentUid('');
     setGender(''); setClassLevelId(''); setClassArmId('');

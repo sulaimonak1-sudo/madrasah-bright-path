@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { FileSpreadsheet, Save, Loader2, ArrowLeft, BookOpen, Users, ChevronRight } from 'lucide-react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -29,251 +28,22 @@ const AdminResults = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
 
-  // Global filters
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
   const [sessions, setSessions] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
 
-  // Drill-down state
   const [step, setStep] = useState<Step>('classes');
   const [selectedClassLevel, setSelectedClassLevel] = useState<any>(null);
   const [selectedClassArm, setSelectedClassArm] = useState<any>(null);
   const [selectedSubject, setSelectedSubject] = useState<any>(null);
 
-  // Data
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<Record<string, any[]>>({});
   const [subjects, setSubjects] = useState<any[]>([]);
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [saving, setSaving] = useState(false);
 
-  // State for viewing/generating a student's result
-  const [selectedStudentResult, setSelectedStudentResult] = useState<ScoreEntry | null>(null);
-  const [showReportDialog, setShowReportDialog] = useState(false);
-  const [reportData, setReportData] = useState<any | null>(null);
-  const [teacherRemark, setTeacherRemark] = useState('');
-  const [headRemark, setHeadRemark] = useState('');
-  const [loadingReport, setLoadingReport] = useState(false);
-  const [teacherSignatureFile, setTeacherSignatureFile] = useState<File | null>(null);
-  const [headSignatureFile, setHeadSignatureFile] = useState<File | null>(null);
-
-  const uploadSignature = async (file: File | null, destPath: string) => {
-    if (!file) return null;
-    try {
-      const { error } = await supabase.storage.from('signatures').upload(destPath, file, { upsert: true });
-      if (error) throw error;
-      const { data } = supabase.storage.from('signatures').getPublicUrl(destPath);
-      return data.publicUrl;
-    } catch (err) {
-      console.error('Signature upload error', err);
-      throw err;
-    }
-  };
-
-  // Bulk auto-remarks UI state
-  const [autoDialogOpen, setAutoDialogOpen] = useState(false);
-  const [autoTemplate, setAutoTemplate] = useState('');
-  const [autoSign, setAutoSign] = useState(false);
-  const [generatingRemarks, setGeneratingRemarks] = useState(false);
-
-  const defaultRemarkFromGrade = (grade: string, total: number, name: string) => {
-    if (grade === 'A') return `${name} performed excellently with ${total} marks.`;
-    if (grade === 'B') return `${name} performed well with ${total} marks.`;
-    if (grade === 'C') return `${name} showed satisfactory performance with ${total} marks.`;
-    return `${name} needs improvement; scored ${total} marks.`;
-  };
-
-  const applyAutoRemarks = async () => {
-    if (!termId) { toast({ title: t('Select term first', 'اختر الفصل أولاً') }); return; }
-    setGeneratingRemarks(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = (userData as any)?.user;
-      const upserts = scores.map(s => {
-        const total = s.ca1 + s.ca2 + s.exam;
-        const grade = calculateGrade(total);
-        const name = s.student_name;
-        const remark = autoTemplate
-          ? autoTemplate.replace(/{name}/g, name).replace(/{total}/g, String(total)).replace(/{grade}/g, grade)
-          : defaultRemarkFromGrade(grade, total, name);
-        const obj: any = { student_id: s.student_id, term_id: termId, teacher_remark: remark };
-        if (autoSign && user?.id) obj.teacher_signed_by = user.id;
-        return obj;
-      });
-      const { error } = await supabase.from('term_reports').upsert(upserts, { onConflict: 'student_id,term_id' });
-      if (error) throw error;
-      toast({ title: t('Remarks applied', 'تم تطبيق الملاحظات') });
-      setAutoDialogOpen(false);
-    } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
-    } finally {
-      setGeneratingRemarks(false);
-    }
-  };
-
-  // Handler for generating/viewing result
-  const handleGenerateResult = async (student: ScoreEntry) => {
-    setSelectedStudentResult(student);
-    // open dialog and load report for this student+term
-    setShowReportDialog(true);
-    setLoadingReport(true);
-    try {
-      const { data } = await supabase.from('term_reports').select('*').eq('student_id', student.student_id).eq('term_id', termId).maybeSingle();
-      setReportData(data || null);
-      setTeacherRemark(data?.teacher_remark || '');
-      setHeadRemark(data?.head_remark || '');
-    } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
-    } finally {
-      setLoadingReport(false);
-    }
-  };
-
-  const closeReportDialog = () => {
-    setShowReportDialog(false);
-    setSelectedStudentResult(null);
-    setReportData(null);
-    setTeacherRemark(''); setHeadRemark('');
-  };
-
-  const openPrintableReport = async () => {
-    if (!selectedStudentResult || !termId) return;
-    try {
-      // Fetch full student + term data to build printable sheet
-      const { data: studentRow } = await supabase.from('students').select('id, full_name, name_en, name_ar, student_uid, class_level_id, class_arm_id').eq('id', selectedStudentResult.student_id).maybeSingle();
-      const { data: termRow } = await supabase.from('terms').select('*').eq('id', termId).maybeSingle();
-      const { data: subjects } = await supabase.from('subjects').select('*').eq('class_level_id', studentRow.class_level_id).order('id');
-      const { data: scoresRows } = await supabase.from('term_scores').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId);
-      const { data: reportRow } = await supabase.from('term_reports').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId).maybeSingle();
-
-      const scoresMap: Record<string, any> = {};
-      (scoresRows || []).forEach((r: any) => { scoresMap[r.subject_id] = r; });
-
-      const html = `
-        <html>
-        <head>
-          <meta charset="utf-8" />
-          <title>Result - ${studentRow.name_en || studentRow.full_name}</title>
-          <style>
-            body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
-            .header { text-align: center; margin-bottom: 12px }
-            .student { display:flex; justify-content:space-between; margin-bottom:12px }
-            table { width:100%; border-collapse: collapse }
-            th, td { border:1px solid #222; padding:6px; text-align:left }
-            .signatures { margin-top:18px; display:flex; justify-content:space-between }
-            .small { font-size:12px; color:#555 }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h2>${termRow?.school_name || ''}</h2>
-            <div class="small">${termRow?.name || ''} — ${termRow?.session_name || ''}</div>
-          </div>
-          <div class="student">
-            <div>
-              <div><strong>${studentRow.name_en || studentRow.full_name}</strong></div>
-              <div class="small">${studentRow.name_ar || ''}</div>
-            </div>
-            <div class="small">ID: ${studentRow.student_uid || ''}</div>
-          </div>
-          <table>
-            <thead>
-              <tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th></tr>
-            </thead>
-            <tbody>
-              ${ (subjects || []).map((sub: any) => {
-                const sc = scoresMap[sub.id] || { ca1: 0, ca2: 0, exam: 0 };
-                const total = (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam || 0);
-                return `<tr><td>${sub.name}</td><td>${sc.ca1 || 0}</td><td>${sc.ca2 || 0}</td><td>${sc.exam || 0}</td><td>${total}</td></tr>`;
-              }).join('') }
-            </tbody>
-          </table>
-          <div style="margin-top:12px"> <strong>Teacher Remark:</strong> ${reportRow?.teacher_remark || ''}</div>
-          <div style="margin-top:6px"> <strong>Head Remark:</strong> ${reportRow?.head_remark || ''}</div>
-          <div class="signatures">
-            <div>
-              <div class="small">Class Teacher</div>
-              ${ reportRow?.teacher_signature_url ? `<img src="${reportRow.teacher_signature_url}" style="height:60px" />` : '' }
-              <div class="small">${reportRow?.teacher_signed_at ? new Date(reportRow.teacher_signed_at).toLocaleString() : ''}</div>
-            </div>
-            <div>
-              <div class="small">Head Teacher</div>
-              ${ reportRow?.head_signature_url ? `<img src="${reportRow.head_signature_url}" style="height:60px" />` : '' }
-              <div class="small">${reportRow?.head_signed_at ? new Date(reportRow.head_signed_at).toLocaleString() : ''}</div>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
-      const w = window.open('', '_blank');
-      if (!w) { toast({ title: t('Popup blocked', 'تم حظر النافذة') }); return; }
-      w.document.open();
-      w.document.write(html);
-      w.document.close();
-      // Wait for images to load then trigger print
-      w.onload = () => { w.focus(); w.print(); };
-    } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
-    }
-  };
-
-  const saveTeacherRemark = async () => {
-    if (!selectedStudentResult) return;
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = (userData as any)?.user;
-      const upsertObj: any = {
-        student_id: selectedStudentResult.student_id,
-        term_id: termId,
-        teacher_remark: teacherRemark,
-      };
-      if (user?.id) upsertObj.teacher_signed_by = user.id;
-      // upload signature image if provided
-      if (teacherSignatureFile) {
-        const path = `signatures/${termId}/${selectedStudentResult.student_id}/teacher_${Date.now()}.png`;
-        const url = await uploadSignature(teacherSignatureFile, path);
-        if (url) upsertObj.teacher_signature_url = url;
-      }
-      const { error } = await supabase.from('term_reports').upsert(upsertObj, { onConflict: 'student_id,term_id' });
-      if (error) throw error;
-      toast({ title: t('Saved!', 'تم الحفظ!') });
-      // refresh report data
-      const { data } = await supabase.from('term_reports').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId).maybeSingle();
-      setReportData(data || null);
-    } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
-    }
-  };
-
-  const saveHeadRemark = async () => {
-    if (!selectedStudentResult) return;
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      const user = (userData as any)?.user;
-      const upsertObj: any = {
-        student_id: selectedStudentResult.student_id,
-        term_id: termId,
-        head_remark: headRemark,
-      };
-      if (user?.id) upsertObj.head_signed_by = user.id;
-      if (headSignatureFile) {
-        const path = `signatures/${termId}/${selectedStudentResult.student_id}/head_${Date.now()}.png`;
-        const url = await uploadSignature(headSignatureFile, path);
-        if (url) upsertObj.head_signature_url = url;
-      }
-      const { error } = await supabase.from('term_reports').upsert(upsertObj, { onConflict: 'student_id,term_id' });
-      if (error) throw error;
-      toast({ title: t('Saved!', 'تم الحفظ!') });
-      const { data } = await supabase.from('term_reports').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId).maybeSingle();
-      setReportData(data || null);
-    } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
-    }
-  };
-
-  // Fetch sessions and class levels
   useEffect(() => {
     const fetch = async () => {
       const [sessRes, clRes, armsRes] = await Promise.all([
@@ -283,7 +53,6 @@ const AdminResults = () => {
       ]);
       setSessions(sessRes.data || []);
       setClassLevels(clRes.data || []);
-      // Group arms by class_level_id
       const grouped: Record<string, any[]> = {};
       (armsRes.data || []).forEach((arm: any) => {
         if (!grouped[arm.class_level_id]) grouped[arm.class_level_id] = [];
@@ -294,7 +63,6 @@ const AdminResults = () => {
     fetch();
   }, []);
 
-  // Fetch terms when session changes
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
     supabase.from('terms').select('*').eq('session_id', sessionId).order('term_number')
@@ -302,19 +70,15 @@ const AdminResults = () => {
     setTermId('');
   }, [sessionId]);
 
-  // When class is selected, fetch subjects
   useEffect(() => {
     if (!selectedClassLevel) { setSubjects([]); return; }
     supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id)
       .then(({ data }) => setSubjects(data || []));
   }, [selectedClassLevel]);
 
-  // When subject is selected, fetch students & scores. Support classes without arms
-  // by querying students where `class_arm_id IS NULL` when `selectedClassArm` is null.
   useEffect(() => {
     if (!selectedSubject || !termId || !selectedClassLevel) { setScores([]); return; }
     const fetchData = async () => {
-      // Fetch students by class level, then filter client-side for arms.
       const [studRes, scoresRes] = await Promise.all([
         supabase.from('students').select('id, full_name, name_en, name_ar, student_uid, class_arm_id')
           .eq('class_level_id', selectedClassLevel.id)
@@ -324,7 +88,6 @@ const AdminResults = () => {
           .eq('term_id', termId).eq('subject_id', selectedSubject.id),
       ]);
       let students = studRes.data || [];
-      // Normalize: treat undefined/empty-string/null as no arm
       if (selectedClassArm) {
         students = students.filter((s: any) => s.class_arm_id === selectedClassArm.id);
       } else {
@@ -374,7 +137,6 @@ const AdminResults = () => {
       });
       if (error) throw error;
       toast({ title: t('Saved!', 'تم الحفظ!'), description: t(`${scores.length} scores saved`, `تم حفظ ${scores.length} درجة`) });
-      // Refresh IDs
       const { data } = await supabase.from('term_scores').select('*').eq('term_id', termId).eq('subject_id', selectedSubject.id);
       if (data) {
         setScores(prev => prev.map(s => {
@@ -410,11 +172,10 @@ const AdminResults = () => {
   const isLocked = selectedTerm?.is_locked;
   const hasSessionTerm = sessionId && termId;
 
-  // Breadcrumb
   const breadcrumb = () => {
     const parts = [t('Results', 'النتائج')];
-    if (step !== 'classes' && selectedClassLevel && selectedClassArm) {
-      parts.push(`${bilingualText(selectedClassLevel.name_en, selectedClassLevel.name_ar)} - ${selectedClassArm.name}`);
+    if (step !== 'classes' && selectedClassLevel) {
+      parts.push(`${bilingualText(selectedClassLevel.name_en, selectedClassLevel.name_ar)}${selectedClassArm ? ' - ' + selectedClassArm.name : ''}`);
     }
     if (step === 'scores' && selectedSubject) {
       parts.push(t(selectedSubject.name, selectedSubject.name_ar));
@@ -425,7 +186,6 @@ const AdminResults = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
-        {/* Header with breadcrumb */}
         <div className="flex items-center gap-3">
           {step !== 'classes' && (
             <Button variant="ghost" size="icon" onClick={goBack}>
@@ -445,7 +205,6 @@ const AdminResults = () => {
           </div>
         </div>
 
-        {/* Session & Term selector - always visible */}
         <Card className="shadow-card">
           <CardContent className="py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
@@ -453,9 +212,7 @@ const AdminResults = () => {
                 <Label className="text-xs">{t('Session', 'السنة')}</Label>
                 <Select value={sessionId} onValueChange={setSessionId}>
                   <SelectTrigger className="h-9"><SelectValue placeholder={t('Select session', 'اختر السنة')} /></SelectTrigger>
-                  <SelectContent>
-                    {sessions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                  </SelectContent>
+                  <SelectContent>{sessions.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
@@ -475,77 +232,6 @@ const AdminResults = () => {
           </CardContent>
         </Card>
 
-        {/* Report dialog for teacher/head remarks */}
-        <Dialog open={showReportDialog} onOpenChange={(o) => { if (!o) closeReportDialog(); }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('Teacher / Head Remarks', 'ملاحظات المعلم/المدير')}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">{t("Class Teacher's Remark:", 'ملاحظة معلم الفصل:')}</label>
-                <textarea className="w-full mt-1 p-2 border rounded" rows={4} value={teacherRemark} onChange={(e) => setTeacherRemark(e.target.value)} />
-                <div className="mt-2 flex gap-2 items-center">
-                  <input type="file" accept="image/*" onChange={(e) => setTeacherSignatureFile(e.target.files ? e.target.files[0] : null)} />
-                  <Button onClick={saveTeacherRemark} disabled={loadingReport}>{loadingReport ? '...' : t('Save', 'حفظ')}</Button>
-                </div>
-                {teacherSignatureFile && (
-                  <div className="mt-2 text-xs text-muted-foreground">{teacherSignatureFile.name}</div>
-                )}
-                {reportData?.teacher_signature_url && !teacherSignatureFile && (
-                  <img src={reportData.teacher_signature_url} alt="teacher signature" className="mt-2 h-16" />
-                )}
-                <div className="text-xs text-muted-foreground mt-1">{reportData?.teacher_signed_at ? `Signed at ${new Date(reportData.teacher_signed_at).toLocaleString()}` : ''}</div>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</label>
-                <textarea className="w-full mt-1 p-2 border rounded" rows={3} value={headRemark} onChange={(e) => setHeadRemark(e.target.value)} />
-                <div className="mt-2 flex gap-2 items-center">
-                  <input type="file" accept="image/*" onChange={(e) => setHeadSignatureFile(e.target.files ? e.target.files[0] : null)} />
-                  <Button onClick={saveHeadRemark} disabled={loadingReport}>{loadingReport ? '...' : t('Save', 'حفظ')}</Button>
-                </div>
-                {headSignatureFile && (
-                  <div className="mt-2 text-xs text-muted-foreground">{headSignatureFile.name}</div>
-                )}
-                {reportData?.head_signature_url && !headSignatureFile && (
-                  <img src={reportData.head_signature_url} alt="head signature" className="mt-2 h-16" />
-                )}
-                <div className="text-xs text-muted-foreground mt-1">{reportData?.head_signed_at ? `Signed at ${new Date(reportData.head_signed_at).toLocaleString()}` : ''}</div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={openPrintableReport}>{t('Print / Download', 'طباعة / تحميل')}</Button>
-              <DialogClose asChild>
-                <Button variant="ghost">{t('Close', 'إغلاق')}</Button>
-              </DialogClose>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Auto Remarks dialog (bulk) */}
-        <Dialog open={autoDialogOpen} onOpenChange={(o) => { if (!o) setAutoDialogOpen(false); }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('Auto Remarks', 'تطبيق ملاحظات تلقائياً')}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3">
-              <div>
-                <label className="text-sm font-medium">{t('Template (use {name}, {total}, {grade})', 'قالب (استخدم {name}، {total}، {grade})')}</label>
-                <textarea className="w-full mt-1 p-2 border rounded" rows={4} value={autoTemplate} onChange={(e) => setAutoTemplate(e.target.value)} placeholder="{name} scored {total} ({grade})" />
-              </div>
-              <div className="flex items-center gap-3">
-                <input id="autoSign" type="checkbox" checked={autoSign} onChange={(e) => setAutoSign(e.target.checked)} />
-                <label htmlFor="autoSign" className="text-sm">{t('Sign remarks as current teacher', 'توقيع الملاحظات باسم المعلم الحالي')}</label>
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button variant="ghost" onClick={() => setAutoDialogOpen(false)}>{t('Close', 'إغلاق')}</Button>
-                <Button onClick={applyAutoRemarks} disabled={generatingRemarks}>{generatingRemarks ? t('Applying...', 'جارٍ التطبيق') : t('Apply to all', 'تطبيق على الكل')}</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {isLocked && (
           <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-destructive text-sm">
             {t('⚠ This term is locked. Scores cannot be edited.', '⚠ هذا الفصل مقفل. لا يمكن تعديل الدرجات.')}
@@ -560,7 +246,6 @@ const AdminResults = () => {
           </Card>
         )}
 
-        {/* Step 1: All classes */}
         {hasSessionTerm && step === 'classes' && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {classLevels.map(level => {
@@ -573,11 +258,7 @@ const AdminResults = () => {
                   </CardHeader>
                   <CardContent className="space-y-2">
                     {arms.length === 0 ? (
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                        onClick={() => selectClass(level, null)}
-                      >
+                      <Button variant="outline" className="w-full justify-between" onClick={() => selectClass(level, null)}>
                         <span className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           {bilingualText(level.name_en, level.name_ar)}
@@ -586,12 +267,7 @@ const AdminResults = () => {
                       </Button>
                     ) : (
                       arms.map(arm => (
-                        <Button
-                          key={arm.id}
-                          variant="outline"
-                          className="w-full justify-between"
-                          onClick={() => selectClass(level, arm)}
-                        >
+                        <Button key={arm.id} variant="outline" className="w-full justify-between" onClick={() => selectClass(level, arm)}>
                           <span className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-muted-foreground" />
                             {bilingualText(level.name_en, level.name_ar)} - {arm.name}
@@ -607,7 +283,6 @@ const AdminResults = () => {
           </div>
         )}
 
-        {/* Step 2: Subjects for selected class */}
         {hasSessionTerm && step === 'subjects' && (
           <Card className="shadow-card">
             <CardHeader>
@@ -623,12 +298,7 @@ const AdminResults = () => {
               ) : (
                 <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
                   {subjects.map(sub => (
-                    <Button
-                      key={sub.id}
-                      variant="outline"
-                      className="justify-between h-auto py-3"
-                      onClick={() => selectSubject(sub)}
-                    >
+                    <Button key={sub.id} variant="outline" className="justify-between h-auto py-3" onClick={() => selectSubject(sub)}>
                       <div className="text-left">
                         <div className="font-medium">{sub.name}</div>
                         {sub.name_ar && <div className="text-xs text-muted-foreground">{sub.name_ar}</div>}
@@ -642,7 +312,6 @@ const AdminResults = () => {
           </Card>
         )}
 
-        {/* Step 3: Score entry */}
         {hasSessionTerm && step === 'scores' && (
           <Card className="shadow-card">
             <CardHeader className="flex flex-row items-center justify-between">
@@ -655,19 +324,16 @@ const AdminResults = () => {
                   {bilingualText(selectedClassLevel?.name_en, selectedClassLevel?.name_ar)} {selectedClassArm?.name} — {scores.length} {t('students', 'طالب')}
                 </CardDescription>
               </div>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" onClick={() => setAutoDialogOpen(true)} disabled={scores.length === 0 || !termId}>{t('Auto Remarks', 'تطبيق ملاحظات تلقائياً')}</Button>
-                <Button onClick={handleSave} disabled={saving || isLocked || scores.length === 0}>
-                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {t('Save All', 'حفظ الكل')}
-                </Button>
-              </div>
+              <Button onClick={handleSave} disabled={saving || isLocked || scores.length === 0}>
+                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {t('Save All', 'حفظ الكل')}
+              </Button>
             </CardHeader>
             <CardContent>
               {scores.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-6 text-center">{t('No students found in this class arm.', 'لا يوجد طلاب في هذه الشعبة.')}</p>
               ) : (
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -714,7 +380,6 @@ const AdminResults = () => {
                           </TableRow>
                         );
                       })}
-                      
                     </TableBody>
                   </Table>
                 </div>
