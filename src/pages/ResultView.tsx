@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Printer, GraduationCap } from 'lucide-react';
 import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
+import html2pdf from 'html2pdf.js';
 
 const ResultView = () => {
   const { t, bilingualText, isRTL } = useLanguage();
@@ -150,215 +151,230 @@ const ResultView = () => {
   const cumulativeAvg = subjectRows.length > 0 ? Math.round(subjectRows.reduce((s, r) => s + (r.cumulativeAvg || 0), 0) / subjectRows.length) : 0;
   const promoted = cumulativeAvg >= 50;
 
+  const downloadResultPDF = () => {
+    const element = document.querySelector('.result-printable-content');
+    if (!element) return;
+    
+    const options = {
+      margin: 10,
+      filename: `result-${student?.student_id || 'report'}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+    
+    html2pdf().set(options).from(element).save();
+  };
+
   return (
     <PublicLayout>
       <div className="container py-8">
-        <div className="mx-auto max-w-4xl">
+        <div className="mx-auto max-w-4xl min-h-screen bg-white">
           {/* Print button */}
           <div className="mb-4 flex justify-end no-print">
-            <Button onClick={() => window.print()} variant="outline">
+            <Button onClick={downloadResultPDF} variant="outline">
               <Printer className="mr-2 h-4 w-4" />
-              {t('Print Result', 'طباعة النتيجة')}
+              {t('Download Result', 'تحميل النتيجة')}
             </Button>
           </div>
 
-          <Card className="shadow-card-lg overflow-hidden">
-            {/* Header: English left, Arabic right */}
-            {/* Polished centered header */}
-            <div className="p-6">
-              <div className="max-w-4xl mx-auto text-center border-t-2 border-emerald-100 pt-6">
-                <div className="flex items-center justify-center">
-                  <div className="rounded-full overflow-hidden" style={{width:72, height:72}}>
-                    <img src="/images/school-logo.png" alt="Al-Bari Logo" className="w-full h-full object-contain" />
-                  </div>
+          {/* Printable Report */}
+          <div className="bg-white p-8 print:p-0 result-printable-content">
+            {/* HEADER */}
+            <div className="text-center pb-6 border-b-2 border-gray-300 mb-6">
+              <div className="flex justify-center mb-3">
+                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                  <img 
+                    src="/images/school-logo.png" 
+                    alt="Logo" 
+                    className="w-full h-full object-contain"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                  />
                 </div>
-                <h1 className="text-3xl font-extrabold tracking-wide uppercase mt-4 text-emerald-900">Al-Bari Group of Schools</h1>
-                <p className="text-lg mt-1 text-emerald-800">Madrasah Section</p>
-                <div className="my-2 flex items-center justify-center">
-                  <div className="w-2/5 border-t border-emerald-200" />
-                  <div className="mx-3 text-emerald-900">◈</div>
-                  <div className="w-2/5 border-t border-emerald-200" />
-                </div>
-                <p className="text-sm mt-1 text-slate-600">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com</p>
-                <h2 className="text-xl font-semibold mt-4">STUDENT ACADEMIC REPORT</h2>
-                <p className="mt-2 text-sm text-slate-600">{sessionName ? `Session: ${sessionName}` : ''} {term?.name_en ? ` | Term: ${term?.name_en}` : ''}</p>
               </div>
+              
+              <h1 className="text-3xl font-bold text-gray-800 tracking-wide uppercase mb-1">AL-BARI GROUP OF SCHOOLS</h1>
+              <p className="text-lg text-gray-700 mb-3">Madrasah Section</p>
+              
+              <div className="flex items-center justify-center gap-3 my-2">
+                <div className="flex-1 border-t border-gray-400" />
+                <span className="text-gray-600">◆</span>
+                <div className="flex-1 border-t border-gray-400" />
+              </div>
+              
+              <p className="text-xs text-gray-600 mb-4">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com | 🌐 albarischools.com</p>
+              
+              <h2 className="text-lg font-bold text-gray-800 tracking-wider uppercase mb-2 mt-3">STUDENT ACADEMIC REPORT</h2>
+              <p className="text-sm text-gray-700">
+                Session: {sessionName || '—'} | Term: {term?.name_en || '—'}
+              </p>
             </div>
 
-            {/* Student Info block with photo */}
-            <div className="p-6 border-b bg-white text-sm">
-              <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-                <div className="md:col-span-1 flex justify-center">
-                  <div className="w-28 h-28 bg-slate-100 border rounded overflow-hidden">
-                    {/* Show uploaded photo if available, otherwise gender-specific silhouette */}
-                    <img
-                      src={
-                        student.photo_url || (student.gender === 'female' ? '/female-silhouette.svg' : '/male-silhouette.svg')
-                      }
-                      alt="photo"
+            {/* STUDENT INFO SECTION */}
+            <div className="mb-6 pb-6 border-b-2 border-gray-300">
+              <div className="flex gap-6">
+                {/* Photo */}
+                <div className="flex-shrink-0">
+                  <div className="w-24 h-32 bg-gray-100 border-2 border-gray-400 rounded overflow-hidden">
+                    <img 
+                      src={student.photo_url || '/images/placeholder-student.png'}
+                      alt="Student Photo"
                       className="w-full h-full object-cover"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                     />
                   </div>
                 </div>
-                <div className="md:col-span-3 grid grid-cols-2 gap-x-6">
-                  <div className="space-y-2">
-                    <div>
-                      <span className="text-muted-foreground">Student Name:</span>
-                      <div className="font-semibold">{student.name_en}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Student ID:</span>
-                      <div className="font-semibold">{student.student_id}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Class:</span>
-                      <div className="font-semibold">{classLevel?.name_en || '—'} {classArm?.name ? `- ${classArm?.name}` : ''}</div>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Gender:</span>
-                      <div className="font-semibold">{student.gender === 'male' ? 'Male' : 'Female'}</div>
-                    </div>
-                  </div>
 
-                  <div className="space-y-2 text-right" dir="rtl">
-                    <div>
-                      <div className="font-semibold">{student.name_ar || '—'}</div>
-                      <span className="text-muted-foreground">:الاسم</span>
+                {/* Student Info */}
+                <div className="flex-1">
+                  <div className="grid grid-cols-1 gap-3 text-sm">
+                    <div className="flex">
+                      <div className="w-1/2">
+                        <span className="font-semibold">Student Name:</span>
+                        <div className="text-gray-800">{student.name_en || '—'}</div>
+                      </div>
+                      <div className="w-1/2 text-right" dir="rtl">
+                        <div className="text-gray-800">{student.name_ar || '—'}</div>
+                        <span className="text-gray-600 text-xs">الاسم</span>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold">{student.student_id}</div>
-                      <span className="text-muted-foreground">:رقم الطالب</span>
+
+                    <div className="flex">
+                      <div className="w-1/2">
+                        <span className="font-semibold">Student ID:</span>
+                        <div className="text-gray-800">{student.student_uid || student.student_id || '—'}</div>
+                      </div>
+                      <div className="w-1/2 text-right" dir="rtl">
+                        <div className="text-gray-800">{student.student_uid || student.student_id || '—'}</div>
+                        <span className="text-gray-600 text-xs">رقم الطالب</span>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold">{classLevel?.name_ar || '—'} {classArm?.name ? `- ${classArm?.name}` : ''}</div>
-                      <span className="text-muted-foreground">:الصف</span>
+
+                    <div className="flex">
+                      <div className="w-1/2">
+                        <span className="font-semibold">Class:</span>
+                        <div className="text-gray-800">{classLevel?.name_en || '—'}{classArm?.name ? ` - ${classArm.name}` : ''}</div>
+                      </div>
+                      <div className="w-1/2 text-right" dir="rtl">
+                        <div className="text-gray-800">{classLevel?.name_ar || '—'}{classArm?.name ? ` - ${classArm.name}` : ''}</div>
+                        <span className="text-gray-600 text-xs">الصف</span>
+                      </div>
                     </div>
-                    <div>
-                      <div className="font-semibold">{student.gender === 'male' ? 'ذكر' : 'أنثى'}</div>
-                      <span className="text-muted-foreground">:الجنس</span>
+
+                    <div className="flex">
+                      <div className="w-1/2">
+                        <span className="font-semibold">Gender:</span>
+                        <div className="text-gray-800">{student.gender === 'male' ? 'Male' : 'Female'}</div>
+                      </div>
+                      <div className="w-1/2 text-right" dir="rtl">
+                        <div className="text-gray-800">{student.gender === 'male' ? 'ذكر' : 'أنثى'}</div>
+                        <span className="text-gray-600 text-xs">الجنس</span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Scores Table */}
-            <CardContent className="p-0">
-              <div className="overflow-x-auto px-6">
-                <div className="border border-emerald-200 rounded-md overflow-hidden">
-                <Table className="min-w-full table-auto">
-                  <TableHeader>
-                    <TableRow className="bg-emerald-900 text-white">
-                      <TableHead className="font-semibold uppercase tracking-wide text-sm">{t('Subject', 'المادة')}</TableHead>
-                      {!isCumulative && (
-                        <>
-                          <TableHead className="text-center">{t('CA1', 'د.أ١')}</TableHead>
-                          <TableHead className="text-center">{t('CA2', 'د.أ٢')}</TableHead>
-                          <TableHead className="text-center">{t('Exam', 'الامتحان')}</TableHead>
-                          <TableHead className="text-center font-semibold">{t('Total', 'المجموع')}</TableHead>
-                          <TableHead className="text-center">{t('Grade', 'التقدير')}</TableHead>
-                        </>
-                      )}
-                      {isCumulative && (
-                        <>
-                          <TableHead className="text-center">{t('T1', 'ف١')}</TableHead>
-                          <TableHead className="text-center">{t('T2', 'ف٢')}</TableHead>
-                          <TableHead className="text-center">{t('T3', 'ف٣')}</TableHead>
-                          <TableHead className="text-center">{t('Cum. Total', 'المجموع التراكمي')}</TableHead>
-                          <TableHead className="text-center">{t('Cum. Avg', 'المتوسط')}</TableHead>
-                          <TableHead className="text-center">{t('Grade', 'التقدير')}</TableHead>
-                        </>
-                      )}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {subjectRows.map((row, idx) => (
-                      <TableRow key={row.subject.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-emerald-50'}>
-                        <TableCell className="font-medium align-top py-3">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="text-sm">{row.subject.name_en}</div>
-                            <div className="text-sm text-right text-slate-700" dir="rtl">{row.subject.name_ar}</div>
-                          </div>
-                        </TableCell>
-                        {!isCumulative && (
-                          <>
-                            <TableCell className="text-center py-3">{row.currentScore?.ca1 ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">{row.currentScore?.ca2 ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">{row.currentScore?.exam ?? '—'}</TableCell>
-                            <TableCell className="text-center font-bold py-3">{row.currentScore?.total ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">
-                              <Badge variant="outline">{row.currentScore?.grade ?? '—'}</Badge>
-                            </TableCell>
-                          </>
-                        )}
-                        {isCumulative && (
-                          <>
-                            <TableCell className="text-center py-3">{row.currentScore?.total ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">{row.currentScore?.total ?? '—'}</TableCell>
-                            <TableCell className="text-center py-3">{row.currentScore?.total ?? '—'}</TableCell>
-                            <TableCell className="text-center font-bold py-3">{row.cumulativeTotal}</TableCell>
-                            <TableCell className="text-center font-bold py-3">{row.cumulativeAvg}</TableCell>
-                            <TableCell className="text-center py-3">
-                              <Badge variant="outline">{row.finalGrade}</Badge>
-                            </TableCell>
-                          </>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+            {/* ACADEMIC PERFORMANCE SECTION */}
+            <div className="mb-6">
+              <div className="bg-gray-700 text-white text-center py-2 px-4 font-bold tracking-wide mb-4 rounded-t">
+                ACADEMIC PERFORMANCE
+              </div>
+              
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr className="bg-gray-700 text-white">
+                    <th className="text-left px-3 py-2 font-semibold">Subject</th>
+                    <th className="text-center px-2 py-2 font-semibold">CA1</th>
+                    <th className="text-center px-2 py-2 font-semibold">CA2</th>
+                    <th className="text-center px-2 py-2 font-semibold">Exam</th>
+                    <th className="text-center px-2 py-2 font-semibold">المجموع</th>
+                    <th className="text-center px-2 py-2 font-semibold">المجموع</th>
+                    <th className="text-center px-2 py-2 font-semibold">Grade</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subjectRows.map((row, idx) => (
+                    <tr key={row.subject.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-amber-50'}>
+                      <td className="text-left px-3 py-2 font-medium border">
+                        <div>{row.subject.name_en}</div>
+                        <div className="text-xs text-gray-600">{row.subject.name_ar}</div>
+                      </td>
+                      <td className="text-center px-2 py-2 border">{row.currentScore?.ca1 ?? '—'}</td>
+                      <td className="text-center px-2 py-2 border">{row.currentScore?.ca2 ?? '—'}</td>
+                      <td className="text-center px-2 py-2 border">{row.currentScore?.exam ?? '—'}</td>
+                      <td className="text-center px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
+                      <td className="text-center px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
+                      <td className="text-center px-2 py-2 border font-bold">{row.currentScore?.grade ?? '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* TERM AVERAGE */}
+            <div className="text-right mb-6 text-lg font-bold">
+              Term Average: <span className="text-gray-800">{termAvg}%</span>
+            </div>
+
+            {/* REMARKS SECTION */}
+            <div className="mb-6 pb-6 border-t-2 border-b-2 border-gray-300 py-4">
+              <div className="mb-4">
+                <p className="font-bold text-gray-800 mb-2">Class Teacher's Remark:</p>
+                <p className="text-sm text-gray-700 mb-1">{report?.teacher_remark || '_________________________'}</p>
+                <p className="text-xs text-gray-600 text-right" dir="rtl">{report?.teacher_remark ? 'ملاحظة معلم الفصل:' : ''}</p>
+              </div>
+              
+              <div>
+                <p className="font-bold text-gray-800 mb-2">Head Teacher's Remark:</p>
+                <p className="text-sm text-gray-700 mb-1">{report?.head_remark || '_________________________'}</p>
+                <p className="text-xs text-gray-600 text-right" dir="rtl">{report?.head_remark ? 'كلمة مدير المدرسة:' : ''}</p>
+              </div>
+            </div>
+
+            {/* SIGNATURE SECTION */}
+            <div className="mb-8">
+              <div className="grid grid-cols-3 gap-8 text-sm text-center">
+                <div>
+                  <div className="border-b border-gray-800 h-10 mb-2" />
+                  <p className="font-semibold text-gray-800">Class Teacher</p>
+                </div>
+                <div>
+                  <div className="border-b border-gray-800 h-10 mb-2" />
+                  <p className="font-semibold text-gray-800">Head Teacher</p>
+                </div>
+                <div>
+                  <div className="border-b border-gray-800 h-10 mb-2" />
+                  <p className="font-semibold text-gray-800">Date:</p>
                 </div>
               </div>
-            </CardContent>
+            </div>
 
-            {/* Footer */}
-              <div className="border-t p-6 space-y-6">
-                <div className="pt-2">
-                  <div className="grid grid-cols-2 items-center">
-                    <div />
-                    <div className="text-right text-lg font-bold">
-                      {t('Term Average:', 'متوسط الفصل:')} <span className="text-emerald-900">{termAvg}%</span>
-                    </div>
+            {/* FOOTER */}
+            <div className="flex items-center justify-between gap-6 mb-4 pb-4 border-b-2 border-gray-300 text-xs">
+              <div className="flex-1 text-center">
+                <p className="text-gray-700 mb-1">Result generated via Al-Bari</p>
+                <p className="text-gray-700">Madrasah Portal | Student ID: PIN</p>
+              </div>
+              
+              <div className="flex-shrink-0 flex justify-center">
+                {qrDataUrl && (
+                  <div className="w-20 h-20 border-2 border-gray-300 p-1">
+                    <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
                   </div>
-                </div>
+                )}
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <p className="font-semibold">{t("Class Teacher's Remark:", "ملاحظة معلم الفصل:")}</p>
-                    <p className="mt-2 text-sm text-slate-700">{report?.teacher_remark || ''}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">{report?.teacher_signed_at ? new Date(report.teacher_signed_at).toLocaleString() : ''}</p>
-                  </div>
-                  <div>
-                    <p className="font-semibold">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</p>
-                    <p className="mt-2 text-sm text-slate-700">{report?.head_remark || ''}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">{report?.head_signed_at ? new Date(report.head_signed_at).toLocaleString() : ''}</p>
-                    <div className="mt-6 grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <div className="border-b h-6" />
-                        <div className="text-muted-foreground">Class Teacher</div>
-                      </div>
-                      <div>
-                        <div className="border-b h-6" />
-                        <div className="text-muted-foreground">Head Teacher</div>
-                      </div>
-                      <div>
-                        <div className="border-b h-6" />
-                        <div className="text-muted-foreground">Date</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="flex-1 text-center">
+                <p className="text-gray-700 mb-1">Scan here to verify result</p>
+                <p className="text-gray-700 text-right" dir="rtl">اضغط هنا للتحقق من النتيجة</p>
+              </div>
+            </div>
 
-                <div className="mt-6 flex items-center justify-between">
-                  <div className="text-sm text-slate-600">Result generated via Al-Bari Madrasah Portal</div>
-                  <div className="w-24 h-24 border grid place-items-center">
-                    {qrDataUrl ? <img src={qrDataUrl} alt="verify-qr" className="w-20 h-20 object-contain" /> : <span>QR</span>}
-                  </div>
-                </div>
-                <div className="mt-6 h-6 bg-emerald-900" />
-                </div>
-              </Card>
+            {/* GREEN FOOTER BAR */}
+            <div className="h-3 bg-gray-700 rounded" />
+          </div>
         </div>
       </div>
     </PublicLayout>

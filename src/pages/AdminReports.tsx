@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateGrade, GRADE_CONFIG } from '@/types';
+import html2pdf from 'html2pdf.js';
 
 type Step = 'select' | 'students';
 
@@ -81,20 +82,13 @@ const AdminReports = () => {
     }
   };
 
-  const generateAutoRemark = (avg: number): string => {
-    if (avg >= 70) return 'An excellent performance. Keep it up!';
-    if (avg >= 60) return 'A very good performance. Well done!';
-    if (avg >= 50) return 'A good performance. Keep working hard.';
-    if (avg >= 40) return 'A fair performance. More effort is needed.';
-    return 'Needs significant improvement. Please work harder.';
-  };
-
   const printStudentReport = async (student: any) => {
     if (!termId) return;
     setPrintingId(student.id);
     try {
       const selectedSession = sessions.find(s => s.id === sessionId);
       const selectedTerm = terms.find(t => t.id === termId);
+      const isTermThree = selectedTerm?.term_number === 3;
 
       const [subjectsRes, scoresRes, classLevelRes, classArmRes] = await Promise.all([
         supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id).order('name'),
@@ -117,81 +111,199 @@ const AdminReports = () => {
       const totalSum = subjectRows.reduce((s, r) => s + r.total, 0);
       const avg = subjectRows.length > 0 ? Math.round(totalSum / subjectRows.length) : 0;
       const overallGrade = calculateGrade(avg);
-      const autoRemark = generateAutoRemark(avg);
+      const promoted = avg >= 50;
 
       const className = `${classLevelRes.data?.name_en || ''}${classArmRes.data ? ' - ' + classArmRes.data.name : ''}`;
+      const classNameAr = `${classLevelRes.data?.name_ar || ''}${classArmRes.data ? ' - ' + classArmRes.data.name : ''}`;
 
       const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"/><title>Report - ${student.name_en || student.full_name}</title>
-<style>
-  @page { size: A4; margin: 15mm; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; color: #1a1a1a; }
-  .header { text-align: center; margin-bottom: 16px; border-bottom: 3px solid #166534; padding-bottom: 12px; }
-  .logo { width: 80px; height: 80px; margin: 0 auto 8px; }
-  .logo img { width: 100%; height: 100%; object-fit: contain; }
-  .school-name { font-size: 22px; font-weight: 800; color: #166534; text-transform: uppercase; letter-spacing: 1px; }
-  .section-label { font-size: 14px; color: #166534; margin-top: 2px; }
-  .motto { font-size: 11px; color: #666; margin-top: 4px; font-style: italic; }
-  .report-title { font-size: 16px; font-weight: 700; margin-top: 10px; text-transform: uppercase; letter-spacing: 0.5px; }
-  .session-info { font-size: 12px; color: #555; margin-top: 4px; }
-  .student-info { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; padding: 12px; background: #f8faf8; border: 1px solid #e5e7eb; border-radius: 6px; font-size: 13px; }
-  .student-info div span:first-child { color: #666; }
-  .student-info div span:last-child { font-weight: 600; }
-  table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px; }
-  th { background: #166534; color: white; padding: 8px 6px; text-align: center; font-size: 11px; text-transform: uppercase; }
-  th:first-child { text-align: left; }
-  td { padding: 7px 6px; border: 1px solid #d1d5db; text-align: center; }
-  td:first-child { text-align: left; font-weight: 500; }
-  tr:nth-child(even) { background: #f0fdf4; }
-  .summary { margin-top: 16px; padding: 12px; border: 2px solid #166534; border-radius: 6px; }
-  .summary-row { display: flex; justify-content: space-between; font-size: 14px; padding: 4px 0; }
-  .summary-row strong { color: #166534; }
-  .remark { margin-top: 16px; padding: 10px; background: #f8faf8; border-left: 4px solid #166534; font-size: 13px; }
-  .remark-label { font-weight: 700; color: #166534; margin-bottom: 4px; }
-  .signatures { margin-top: 24px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; font-size: 12px; }
-  .sig-line { border-bottom: 1px solid #333; height: 30px; }
-  .sig-label { color: #666; margin-top: 4px; }
-  .grade-key { margin-top: 12px; font-size: 10px; color: #888; text-align: center; }
-  .footer-bar { margin-top: 20px; height: 8px; background: #166534; border-radius: 4px; }
-</style></head><body>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Report - ${student.name_en || student.full_name}</title>
+  <style>
+    @page { size: A4; margin: 20mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.5; }
+    
+    .header { text-align: center; padding: 20px 0 16px; border-bottom: 2px solid #374151; margin-bottom: 16px; }
+    .logo { width: 60px; height: 60px; margin: 0 auto 8px; }
+    .logo img { width: 100%; height: 100%; object-fit: contain; }
+    .school-name { font-size: 26px; font-weight: 800; color: #1f2937; text-transform: uppercase; letter-spacing: 1.5px; margin: 4px 0; }
+    .section-label { font-size: 13px; color: #4b5563; margin: 2px 0; font-weight: 600; }
+    
+    .divider { width: 50%; margin: 6px auto; border-top: 1px solid #d1d5db; }
+    .contact-info { font-size: 10px; color: #666; margin: 4px 0; }
+    .report-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; }
+    .session-info { font-size: 11px; color: #555; margin-top: 3px; }
+    
+    .student-section { margin-top: 16px; margin-bottom: 16px; display: flex; gap: 12px; }
+    .student-photo { width: 70px; height: 90px; background: #f3f4f6; border: 1px solid #d1d5db; flex-shrink: 0; overflow: hidden; }
+    .student-photo img { width: 100%; height: 100%; object-fit: cover; }
+    .student-info-grid { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: 3px 8px; font-size: 11px; }
+    .info-row { display: flex; justify-content: space-between; align-items: center; }
+    .info-label { color: #555; font-weight: 600; }
+    .info-value { color: #1f2937; font-weight: 700; }
+    
+    .academic-header { background: #374151; color: white; text-align: center; padding: 6px; font-weight: 700; tracking-wider; margin-bottom: 4px; }
+    .scores-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 10px; }
+    .scores-table th { background: #374151; color: white; padding: 6px 4px; text-align: center; font-weight: 700; text-transform: uppercase; }
+    .scores-table th:first-child { text-align: left; }
+    .scores-table td { padding: 6px 4px; border: 1px solid #d1d5db; text-align: center; }
+    .scores-table td:first-child { text-align: left; font-weight: 500; }
+    .scores-table tbody tr:nth-child(odd) { background: white; }
+    .scores-table tbody tr:nth-child(even) { background: #fafaf8; }
+    
+    .term-avg { margin-top: 8px; text-align: right; font-weight: bold; font-size: 11px; }
+    
+    .remarks-section { margin-top: 12px; padding-top: 12px; border-top: 2px solid #d1d5db; border-bottom: 2px solid #d1d5db; padding-bottom: 12px; font-size: 11px; }
+    .remark-block { margin-bottom: 8px; }
+    .remark-label { font-weight: 700; color: #1f2937; margin-bottom: 2px; }
+    .remark-text { color: #555; }
+    
+    .signatures { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 10px; text-align: center; }
+    .sig-item { }
+    .sig-line { border-bottom: 1px solid #333; height: 25px; margin-bottom: 2px; }
+    .sig-name { color: #555; font-weight: 600; }
+    
+    .footer { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 2px solid #d1d5db; font-size: 9px; }
+    .footer-text { flex: 1; text-align: center; color: #666; }
+    .qr-container { flex-shrink: 0; width: 50px; height: 50px; border: 1px solid #999; display: flex; align-items: center; justify-content: center; }
+    .qr-container img { width: 100%; height: 100%; object-fit: contain; }
+    
+    .footer-bar { margin-top: 8px; height: 3px; background: #374151; }
+  </style>
+</head>
+<body>
+
 <div class="header">
-  <div class="logo"><img src="${window.location.origin}/images/school-logo.png" /></div>
-  <div class="school-name">Al-Bari Group of Schools</div>
+  <div class="logo"><img src="${window.location.origin}/images/school-logo.png" alt="Logo" onerror="this.style.display='none'" /></div>
+  <h1 class="school-name">AL-BARI GROUP OF SCHOOLS</h1>
   <div class="section-label">Madrasah Section</div>
-  <div class="motto">Motto: Education Is Future</div>
-  <div class="report-title">Student Academic Report</div>
+  <div class="divider"></div>
+  <div class="contact-info">123 Islamic Road, Lagos | Tel: 08012345678 | Email: info@albarischools.com | 🌐 albarischools.com</div>
+  <h2 class="report-title">STUDENT ACADEMIC REPORT</h2>
   <div class="session-info">Session: ${selectedSession?.name || ''} | Term: ${selectedTerm?.name_en || ''}</div>
 </div>
-<div class="student-info">
-  <div><span>Student Name: </span><span>${student.name_en || student.full_name}</span></div>
-  <div><span>Arabic Name: </span><span>${student.name_ar || '—'}</span></div>
-  <div><span>Student ID: </span><span>${student.student_uid || '—'}</span></div>
-  <div><span>Class: </span><span>${className}</span></div>
-  <div><span>Gender: </span><span>${student.gender === 'male' ? 'Male' : 'Female'}</span></div>
-  <div><span>No. of Subjects: </span><span>${subjectRows.length}</span></div>
+
+<div class="student-section">
+  <div class="student-photo">
+    <img src="${window.location.origin}/images/placeholder-student.png" alt="Photo" onerror="this.style.display='none'" />
+  </div>
+  <div class="student-info-grid">
+    <div class="info-row">
+      <span class="info-label">Student Name:</span>
+      <span class="info-value">${student.name_en || student.full_name}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الاسم:</span>
+      <span class="info-value">${student.name_ar || '—'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Student ID:</span>
+      <span class="info-value">${student.student_uid || '—'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">رقم الطالب:</span>
+      <span class="info-value">${student.student_uid || '—'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Class:</span>
+      <span class="info-value">${className}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الصف:</span>
+      <span class="info-value">${classNameAr}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Gender:</span>
+      <span class="info-value">${student.gender === 'male' ? 'Male' : 'Female'}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">الجنس:</span>
+      <span class="info-value">${student.gender === 'male' ? 'ذكر' : 'أنثى'}</span>
+    </div>
+  </div>
 </div>
-<table>
-  <thead><tr><th>Subject</th><th>CA1 (15)</th><th>CA2 (15)</th><th>Exam (60)</th><th>Total (100)</th><th>Grade</th></tr></thead>
-  <tbody>${subjectRows.map(r => `<tr><td>${r.name}</td><td>${r.ca1}</td><td>${r.ca2}</td><td>${r.exam}</td><td><strong>${r.total}</strong></td><td>${r.grade}</td></tr>`).join('')}</tbody>
+
+<div class="academic-header">ACADEMIC PERFORMANCE</div>
+
+<table class="scores-table">
+  <thead>
+    <tr>
+      <th>Subject</th>
+      <th>CA1</th>
+      <th>CA2</th>
+      <th>Exam</th>
+      <th>المجموع</th>
+      <th>المجموع</th>
+      <th>Grade</th>
+    </tr>
+  </thead>
+  <tbody>
+    ${subjectRows.map((r, i) => `
+    <tr>
+      <td>
+        <div style="font-weight: 600;">${r.name}</div>
+        <div style="font-size: 9px; color: #888;">${r.name_ar}</div>
+      </td>
+      <td>${r.ca1}</td>
+      <td>${r.ca2}</td>
+      <td>${r.exam}</td>
+      <td style="font-weight: 700;">${r.total}</td>
+      <td style="font-weight: 700;">${r.total}</td>
+      <td style="font-weight: 700;">${r.grade}</td>
+    </tr>
+    `).join('')}
+  </tbody>
 </table>
-<div class="summary">
-  <div class="summary-row"><span>Total Marks Obtained:</span><strong>${totalSum} / ${subjectRows.length * 100}</strong></div>
-  <div class="summary-row"><span>Average:</span><strong>${avg}%</strong></div>
-  <div class="summary-row"><span>Overall Grade:</span><strong>${overallGrade}</strong></div>
-  <div class="summary-row"><span>Status:</span><strong>${avg >= 50 ? '✅ PROMOTED' : '❌ NOT PROMOTED'}</strong></div>
+
+<div class="term-avg">Term Average: <strong>${avg}%</strong></div>
+
+<div class="remarks-section">
+  <div class="remark-block">
+    <div class="remark-label">Class Teacher's Remark:</div>
+    <div class="remark-text">_________________________________________</div>
+  </div>
+  <div class="remark-block">
+    <div class="remark-label">Head Teacher's Remark:</div>
+    <div class="remark-text">_________________________________________</div>
+  </div>
 </div>
-<div class="remark">
-  <div class="remark-label">Teacher's Remark:</div>
-  <div>${autoRemark}</div>
-</div>
+
 <div class="signatures">
-  <div><div class="sig-line"></div><div class="sig-label">Class Teacher</div></div>
-  <div><div class="sig-line"></div><div class="sig-label">Head Teacher</div></div>
-  <div><div class="sig-line"></div><div class="sig-label">Date</div></div>
+  <div class="sig-item">
+    <div class="sig-line"></div>
+    <div class="sig-name">Class Teacher</div>
+  </div>
+  <div class="sig-item">
+    <div class="sig-line"></div>
+    <div class="sig-name">Head Teacher</div>
+  </div>
+  <div class="sig-item">
+    <div class="sig-line"></div>
+    <div class="sig-name">Date:</div>
+  </div>
 </div>
-<div class="grade-key">${GRADE_CONFIG.map(g => `${g.grade}: ${g.min}-${g.max}`).join(' | ')}</div>
+
+<div class="footer">
+  <div class="footer-text">
+    <strong>Result generated via Al-Bari</strong><br/>
+    Madrasah Portal | Student ID: PIN
+  </div>
+  <div class="qr-container">
+    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='white' width='100' height='100'/%3E%3C/svg%3E" alt="QR" />
+  </div>
+  <div class="footer-text">
+    <strong>Scan here to verify result</strong><br/>
+    اضغط هنا للتحقق من النتيجة
+  </div>
+</div>
+
 <div class="footer-bar"></div>
-</body></html>`;
+
+</body>
+</html>`;
 
       const w = window.open('', '_blank');
       if (!w) { toast({ title: t('Popup blocked', 'تم حظر النافذة') }); return; }

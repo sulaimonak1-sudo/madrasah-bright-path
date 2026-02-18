@@ -1,11 +1,13 @@
 {
   "compilerOptions": {
     // "types": ["vitest/globals"],
+    "types": [],
     "target": "ES2020",
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
     "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",

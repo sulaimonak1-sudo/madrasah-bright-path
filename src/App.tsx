@@ -21,6 +21,7 @@ import AdminReports from "./pages/AdminReports";
 import AdminLocking from "./pages/AdminLocking";
 import ResultView from "./pages/ResultView";
 import StaffSignup from "./pages/StaffSignup";
+import PinGenerate from "./pages/PinGenerate";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +37,7 @@ const App = () => (
               {/* Public */}
               <Route path="/" element={<Index />} />
               <Route path="/result" element={<ResultView />} />
+              <Route path="/pin-generate" element={<PinGenerate />} />
 
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/staff/signup" element={<StaffSignup />} />
