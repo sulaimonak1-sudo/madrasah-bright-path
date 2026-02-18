@@ -1,31 +1,56 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { mockSessions, mockTerms } from '@/data/mockData';
-import { Search, GraduationCap, BookOpen, Shield } from 'lucide-react';
+import { Search, GraduationCap, BookOpen, Shield, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '@/integrations/supabase/client';
 
 const Index = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
   const [studentId, setStudentId] = useState('');
-  const [sessionId, setSessionId] = useState('');
-  const [termId, setTermId] = useState('');
   const [pin, setPin] = useState('');
+  const [termId, setTermId] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [terms, setTerms] = useState<any[]>([]);
+  const [error, setError] = useState('');
 
-  const handleCheckResult = (e: React.FormEvent) => {
+  useEffect(() => {
+    // Load available terms
+    (async () => {
+      try {
+        const { data } = await supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false });
+        if (data) {
+          setTerms(data);
+          if (data.length > 0) setTermId(data[0].id);
+        }
+      } catch (err) {
+        // ignore
+      }
+    })();
+  }, []);
+
+  const handleCheckResult = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (studentId && sessionId && termId && pin) {
-      navigate(`/result?student=${studentId}&session=${sessionId}&term=${termId}&pin=${pin}`);
+    setError('');
+    
+    if (!studentId.trim()) {
+      setError(t('Please enter your Student ID', 'الرجاء إدخال رقم الطالب'));
+      return;
     }
-  };
+    if (!termId) {
+      setError(t('Please select a term', 'الرجاء اختيار الفصل'));
+      return;
+    }
 
-  const selectedSessionTerms = mockTerms.filter(t => t.session_id === sessionId);
+    setLoading(true);
+    // Navigate to result page with parameters - ResultView will handle the lookup
+    navigate(`/result?student=${encodeURIComponent(studentId.trim())}&term=${encodeURIComponent(termId)}&pin=${encodeURIComponent(pin.trim())}`);
+  };
 
   return (
     <PublicLayout>
@@ -42,8 +67,8 @@ const Index = () => {
             </h1>
             <p className="text-lg text-primary-foreground/80">
               {t(
-                'Check your academic results securely with your Student ID and PIN',
-                'تحقق من نتائجك الأكاديمية بأمان باستخدام رقم الطالب والرقم السري'
+                'Check your academic results securely with your Student ID',
+                'تحقق من نتائجك الأكاديمية بأمان باستخدام رقم الطالب'
               )}
             </p>
           </div>
@@ -52,78 +77,74 @@ const Index = () => {
 
       {/* Result Checker Form */}
       <section className="container -mt-10 relative z-10 pb-16">
-        <Card className="mx-auto max-w-lg shadow-card-lg animate-fade-in">
+        <Card className="mx-auto max-w-md shadow-card-lg animate-fade-in">
           <CardHeader className="text-center">
             <CardTitle className="flex items-center justify-center gap-2 text-xl">
               <Search className="h-5 w-5 text-accent" />
               {t('Check Your Result', 'تحقق من نتيجتك')}
             </CardTitle>
             <CardDescription>
-              {t('Enter your details below to view your result', 'أدخل بياناتك أدناه لعرض نتيجتك')}
+              {t('Enter your Student ID to view your result', 'أدخل رقم الطالب لعرض نتيجتك')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCheckResult} className="space-y-4">
               <div className="space-y-2">
-                <Label>{t('Student ID', 'رقم الطالب')}</Label>
+                <Label>{t('Student ID', 'رقم الطالب')} *</Label>
                 <Input
                   placeholder={t('e.g., ABS-001', 'مثال: ABS-001')}
                   value={studentId}
                   onChange={e => setStudentId(e.target.value)}
-                  required
+                  disabled={loading}
                 />
               </div>
 
               <div className="space-y-2">
-                <Label>{t('Session', 'السنة الدراسية')}</Label>
-                <Select value={sessionId} onValueChange={setSessionId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('Select session', 'اختر السنة الدراسية')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {mockSessions.map(s => (
-                      <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label>{t('Term', 'الفصل الدراسي')} *</Label>
+                <select 
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground" 
+                  value={termId} 
+                  onChange={e => setTermId(e.target.value)}
+                  disabled={loading || terms.length === 0}
+                >
+                  <option value="">{t('Select term...', 'اختر الفصل...')}</option>
+                  {terms.map(term => (
+                    <option key={term.id} value={term.id}>
+                      {`${t('Term', 'الفصل')} ${term.term_number} - ${term.name_en || term.name_ar}`}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="space-y-2">
-                <Label>{t('Term', 'الفصل الدراسي')}</Label>
-                <Select value={termId} onValueChange={setTermId} disabled={!sessionId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder={t('Select term', 'اختر الفصل')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {selectedSessionTerms.map(term => (
-                      <SelectItem key={term.id} value={term.id}>{t(term.name_en, term.name_ar)}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>{t('PIN', 'الرقم السري')}</Label>
+                <Label>{t('PIN', 'الرقم السري')} {t('(optional)', '(اختياري)')}</Label>
                 <Input
                   type="password"
                   placeholder={t('Enter your PIN', 'أدخل الرقم السري')}
                   value={pin}
                   onChange={e => setPin(e.target.value)}
-                  required
+                  disabled={loading}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   className="w-full mt-2"
-                  onClick={() => navigate('/generate-pin')}
+                  onClick={() => navigate('/pin-generate')}
+                  disabled={loading}
                 >
-                  {t('Get/Generate PIN', 'الحصول على الرقم السري')}
+                  {t('generate PIN?', 'هل تريد الحصول على رقم سري؟')}
                 </Button>
               </div>
 
-              <Button type="submit" className="w-full" size="lg">
-                <Search className="mr-2 h-4 w-4" />
-                {t('Check Result', 'عرض النتيجة')}
+              {error && (
+                <div className="p-2 bg-destructive/10 text-destructive text-sm rounded">
+                  {error}
+                </div>
+              )}
+
+              <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                <ArrowRight className="mr-2 h-4 w-4" />
+                {loading ? t('Loading...', 'جارٍ التحميل...') : t('Check Result', 'عرض النتيجة')}
               </Button>
             </form>
           </CardContent>

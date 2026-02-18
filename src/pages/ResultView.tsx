@@ -1,24 +1,28 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { GRADE_CONFIG, calculateGrade } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Printer, GraduationCap } from 'lucide-react';
+import { Printer, GraduationCap, ArrowLeft } from 'lucide-react';
 import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
 import html2pdf from 'html2pdf.js';
 
 const ResultView = () => {
   const { t, bilingualText, isRTL } = useLanguage();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const [studentUid, setStudentUid] = useState('');
   const [pin, setPin] = useState('');
   const [termId, setTermId] = useState('');
-  const [terms, setTerms] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,27 +36,33 @@ const ResultView = () => {
   const [report, setReport] = useState<any | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
+  // Try to load result from query params on mount
   useEffect(() => {
-    // load available terms for selection
-    (async () => {
-      try {
-        const { data, error } = await supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false });
-        if (error) throw error;
-        setTerms(data || []);
-        if (data && data.length > 0) setTermId(prev => prev || data[0].id);
-      } catch (err) {
-        // ignore - user can still enter a term id manually if needed
-      }
-    })();
+    const student = searchParams.get('student');
+    const term = searchParams.get('term');
+    const pin_param = searchParams.get('pin');
+    const session = searchParams.get('session');
+
+    if (student && term) {
+      setStudentUid(student);
+      setTermId(term);
+      setPin(pin_param || '');
+      // Auto-fetch result
+      performLookup(student, pin_param || '', term);
+    }
   }, []);
 
-  const handleLookup = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const performLookup = async (uid: string, pinValue: string, tid: string) => {
     setError('');
-    if (!studentUid.trim() || !termId) return setError(t('Please enter Student ID and select term', 'الرجاء إدخال رقم الطالب واختيار الفصل'));
+    if (!uid.trim() || !tid) {
+      setError(t('Please enter Student ID and select term', 'الرجاء إدخال رقم الطالب واختيار الفصل'));
+      return;
+    }
     setLoading(true);
     try {
-      const { data, error: fnErr } = await supabase.functions.invoke('verify-result', { body: { student_uid: studentUid.trim(), pin: pin.trim(), term_id: termId } });
+      const { data, error: fnErr } = await supabase.functions.invoke('verify-result', {
+        body: { student_uid: uid.trim(), pin: pinValue.trim(), term_id: tid }
+      });
       if (fnErr) throw fnErr;
       if (!data?.ok) {
         setError(data?.error || 'Not found');
@@ -61,7 +71,11 @@ const ResultView = () => {
       }
       setStudent(data.student);
       setTerm(data.term);
-      // fetch session name (for header display)
+      setSubjects(data.subjects || []);
+      setScores(data.scores || []);
+      setReport(data.report || null);
+
+      // fetch session name
       try {
         const sessId = data?.term?.session_id;
         if (sessId) {
@@ -71,18 +85,17 @@ const ResultView = () => {
       } catch (err) {
         // ignore
       }
-      setSubjects(data.subjects || []);
-      setScores(data.scores || []);
-      setReport(data.report || null);
-      // generate QR for verification URL (student uid + term id)
+
+      // generate QR for verification URL
       try {
-        const verifyUrl = `${window.location.origin}/verify-result?student_uid=${encodeURIComponent(data.student.student_uid)}&term_id=${encodeURIComponent(data.term.id)}`;
+        const verifyUrl = `${window.location.origin}/#/result?student=${encodeURIComponent(data.student.student_uid)}&term=${encodeURIComponent(data.term.id)}`;
         const qr = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
         setQrDataUrl(qr);
       } catch (err) {
         setQrDataUrl(null);
       }
-      // fetch class level and arm for display
+
+      // fetch class level and arm
       try {
         const stud = data.student as any;
         if (stud?.class_level_id) {
@@ -103,27 +116,71 @@ const ResultView = () => {
     }
   };
 
+  const handleLookup = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    performLookup(studentUid, pin, termId);
+  };
+
   // If no student loaded, show lookup form
   if (!student) {
     return (
       <PublicLayout>
         <div className="container py-8 flex justify-center">
           <Card className="max-w-md w-full">
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2">
+                <GraduationCap className="h-5 w-5 text-accent" />
+                {t('Check Your Result', 'تحقق من نتيجتك')}
+              </CardTitle>
+              <CardDescription>
+                {t('Enter your Student ID and PIN', 'أدخل رقم الطالب والرقم السري')}
+              </CardDescription>
+            </CardHeader>
             <CardContent>
               <form onSubmit={handleLookup} className="space-y-4">
-                <input className="w-full p-2 border rounded" placeholder={t('Student ID', 'رقم الطالب')} value={studentUid} onChange={e => setStudentUid(e.target.value)} />
-                <input className="w-full p-2 border rounded" placeholder={t('PIN (if provided)', 'الرقم السري (اختياري)')} value={pin} onChange={e => setPin(e.target.value)} />
-                <label className="block text-sm text-muted-foreground">{t('Select Term', 'اختر الفصل')}</label>
-                <select className="w-full p-2 border rounded" value={termId} onChange={e => setTermId(e.target.value)}>
-                  <option value="">{t('Select term...', 'اختر الفصل...')}</option>
-                  {terms.map(tm => (
-                    <option key={tm.id} value={tm.id}>{`${tm.term_number} - ${bilingualText(tm.name_en, tm.name_ar)}`}</option>
-                  ))}
-                </select>
-                {error && <div className="text-destructive text-sm">{error}</div>}
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1" disabled={loading}>{loading ? t('Loading...', 'جارٍ التحميل...') : t('View Result', 'عرض النتيجة')}</Button>
+                <div className="space-y-2">
+                  <Label>{t('Student ID', 'رقم الطالب')}</Label>
+                  <Input
+                    placeholder={t('e.g., ABS-001', 'مثال: ABS-001')}
+                    value={studentUid}
+                    onChange={e => setStudentUid(e.target.value)}
+                    required
+                  />
                 </div>
+                <div className="space-y-2">
+                  <Label>{t('PIN', 'الرقم السري')}</Label>
+                  <Input
+                    type="password"
+                    placeholder={t('Enter your PIN', 'أدخل الرقم السري')}
+                    value={pin}
+                    onChange={e => setPin(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('Term', 'الفصل الدراسي')}</Label>
+                  <Input
+                    placeholder={t('e.g., Term 1 2024/2025', 'مثال: الفصل 1 2024/2025')}
+                    value={termId}
+                    onChange={e => setTermId(e.target.value)}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {t('Ask your teacher if unsure', 'اطلب من معلمك إذا كنت غير متأكد')}
+                  </p>
+                </div>
+                {error && <div className="text-destructive text-sm p-2 bg-destructive/10 rounded">{error}</div>}
+                <Button type="submit" className="w-full" size="lg" disabled={loading}>
+                  {loading ? t('Loading...', 'جارٍ التحميل...') : t('View Result', 'عرض النتيجة')}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => navigate('/')}
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  {t('Back to Home', 'العودة للصفحة الرئيسية')}
+                </Button>
               </form>
             </CardContent>
           </Card>

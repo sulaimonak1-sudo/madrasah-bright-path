@@ -13,7 +13,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
         <div className="container flex items-center justify-between py-4">
           <Link to="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary overflow-hidden">
-              <img src="/al-bari-logo.png" alt="Al-Bari Logo" className="h-full w-full object-contain" />
+              <img src="/images/school-logo.png" alt="Al-Bari Logo" className="h-full w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             </div>
             <div>
               <h1 className="text-lg font-bold text-foreground">
