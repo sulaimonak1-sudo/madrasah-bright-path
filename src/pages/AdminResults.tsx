@@ -137,6 +137,88 @@ const AdminResults = () => {
     setTeacherRemark(''); setHeadRemark('');
   };
 
+  const openPrintableReport = async () => {
+    if (!selectedStudentResult || !termId) return;
+    try {
+      // Fetch full student + term data to build printable sheet
+      const { data: studentRow } = await supabase.from('students').select('id, full_name, name_en, name_ar, student_uid, class_level_id, class_arm_id').eq('id', selectedStudentResult.student_id).maybeSingle();
+      const { data: termRow } = await supabase.from('terms').select('*').eq('id', termId).maybeSingle();
+      const { data: subjects } = await supabase.from('subjects').select('*').eq('class_level_id', studentRow.class_level_id).order('id');
+      const { data: scoresRows } = await supabase.from('term_scores').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId);
+      const { data: reportRow } = await supabase.from('term_reports').select('*').eq('student_id', selectedStudentResult.student_id).eq('term_id', termId).maybeSingle();
+
+      const scoresMap: Record<string, any> = {};
+      (scoresRows || []).forEach((r: any) => { scoresMap[r.subject_id] = r; });
+
+      const html = `
+        <html>
+        <head>
+          <meta charset="utf-8" />
+          <title>Result - ${studentRow.name_en || studentRow.full_name}</title>
+          <style>
+            body { font-family: Arial, Helvetica, sans-serif; padding: 24px; }
+            .header { text-align: center; margin-bottom: 12px }
+            .student { display:flex; justify-content:space-between; margin-bottom:12px }
+            table { width:100%; border-collapse: collapse }
+            th, td { border:1px solid #222; padding:6px; text-align:left }
+            .signatures { margin-top:18px; display:flex; justify-content:space-between }
+            .small { font-size:12px; color:#555 }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h2>${termRow?.school_name || ''}</h2>
+            <div class="small">${termRow?.name || ''} — ${termRow?.session_name || ''}</div>
+          </div>
+          <div class="student">
+            <div>
+              <div><strong>${studentRow.name_en || studentRow.full_name}</strong></div>
+              <div class="small">${studentRow.name_ar || ''}</div>
+            </div>
+            <div class="small">ID: ${studentRow.student_uid || ''}</div>
+          </div>
+          <table>
+            <thead>
+              <tr><th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              ${ (subjects || []).map((sub: any) => {
+                const sc = scoresMap[sub.id] || { ca1: 0, ca2: 0, exam: 0 };
+                const total = (sc.ca1 || 0) + (sc.ca2 || 0) + (sc.exam || 0);
+                return `<tr><td>${sub.name}</td><td>${sc.ca1 || 0}</td><td>${sc.ca2 || 0}</td><td>${sc.exam || 0}</td><td>${total}</td></tr>`;
+              }).join('') }
+            </tbody>
+          </table>
+          <div style="margin-top:12px"> <strong>Teacher Remark:</strong> ${reportRow?.teacher_remark || ''}</div>
+          <div style="margin-top:6px"> <strong>Head Remark:</strong> ${reportRow?.head_remark || ''}</div>
+          <div class="signatures">
+            <div>
+              <div class="small">Class Teacher</div>
+              ${ reportRow?.teacher_signature_url ? `<img src="${reportRow.teacher_signature_url}" style="height:60px" />` : '' }
+              <div class="small">${reportRow?.teacher_signed_at ? new Date(reportRow.teacher_signed_at).toLocaleString() : ''}</div>
+            </div>
+            <div>
+              <div class="small">Head Teacher</div>
+              ${ reportRow?.head_signature_url ? `<img src="${reportRow.head_signature_url}" style="height:60px" />` : '' }
+              <div class="small">${reportRow?.head_signed_at ? new Date(reportRow.head_signed_at).toLocaleString() : ''}</div>
+            </div>
+          </div>
+        </body>
+        </html>
+      `;
+
+      const w = window.open('', '_blank');
+      if (!w) { toast({ title: t('Popup blocked', 'تم حظر النافذة') }); return; }
+      w.document.open();
+      w.document.write(html);
+      w.document.close();
+      // Wait for images to load then trigger print
+      w.onload = () => { w.focus(); w.print(); };
+    } catch (err: any) {
+      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+    }
+  };
+
   const saveTeacherRemark = async () => {
     if (!selectedStudentResult) return;
     try {
@@ -433,6 +515,7 @@ const AdminResults = () => {
               </div>
             </div>
             <DialogFooter>
+              <Button variant="outline" onClick={openPrintableReport}>{t('Print / Download', 'طباعة / تحميل')}</Button>
               <DialogClose asChild>
                 <Button variant="ghost">{t('Close', 'إغلاق')}</Button>
               </DialogClose>
