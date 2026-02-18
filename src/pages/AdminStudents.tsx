@@ -134,6 +134,8 @@ const AdminStudents = () => {
   const [classArmId, setClassArmId] = useState('');
   const [guardianName, setGuardianName] = useState('');
   const [guardianPhone, setGuardianPhone] = useState('');
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
 
   const fetchData = async () => {
     const [studRes, clRes, armsRes] = await Promise.all([
@@ -158,6 +160,7 @@ const AdminStudents = () => {
       setClassArmId(selectedClassArm?.id || '');
       setFullName(''); setNameEn(''); setNameAr(''); setStudentUid('');
       setGender(''); setGuardianName(''); setGuardianPhone('');
+      setPhotoFile(null); setPhotoPreview(null);
     } else {
       setClassLevelId(''); setClassArmId('');
     }
@@ -206,7 +209,8 @@ const AdminStudents = () => {
       return;
     }
     
-    const { error } = await supabase.from('students').insert({
+    // Insert student first (photo upload happens after we have the record id)
+    const { data: inserted, error: insertErr } = await supabase.from('students').insert({
       full_name: fullName.trim(),
       name_en: nameEn.trim() || fullName.trim(),
       name_ar: autoAr,
@@ -217,12 +221,30 @@ const AdminStudents = () => {
       class_arm_id: finalArmId,
       guardian_name: guardianName.trim() || null,
       guardian_phone: guardianPhone.trim() || null,
-    });
-    if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
+      photo_url: null,
+    }).select().maybeSingle();
+    if (insertErr) { toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' }); return; }
+
+    // If a photo file was provided, upload to storage and update student record
+    if (photoFile && inserted?.id) {
+      try {
+        const ext = photoFile.name.split('.').pop() || 'jpg';
+        const filePath = `students/${inserted.id}/photo.${ext}`;
+        const { error: uploadErr } = await supabase.storage.from('student-photos').upload(filePath, photoFile, { cacheControl: '3600', upsert: true });
+        if (uploadErr) throw uploadErr;
+        const { data: urlData } = supabase.storage.from('student-photos').getPublicUrl(filePath);
+        const publicUrl = urlData.publicUrl;
+        await supabase.from('students').update({ photo_url: publicUrl }).eq('id', inserted.id);
+      } catch (upErr: any) {
+        // Non-fatal: continue but notify
+        toast({ title: t('Warning', 'تحذير'), description: t('Photo upload failed', 'فشل رفع الصورة'), variant: 'destructive' });
+      }
+    }
     toast({ title: t('Student added', 'تمت إضافة الطالب') });
     setFullName(''); setNameEn(''); setNameAr(''); setStudentUid('');
     setGender(''); setClassLevelId(''); setClassArmId('');
     setGuardianName(''); setGuardianPhone('');
+    setPhotoFile(null); setPhotoPreview(null);
     setAddOpen(false);
     fetchData();
   };
@@ -354,6 +376,24 @@ const AdminStudents = () => {
                     <div className="space-y-2 col-span-2">
                       <Label>{t('Guardian Phone', 'هاتف ولي الأمر')}</Label>
                       <Input value={guardianPhone} onChange={e => setGuardianPhone(e.target.value)} />
+                    </div>
+                    <div className="space-y-2 col-span-2">
+                      <Label>{t('Photo (optional)', 'صورة (اختيارية)')}</Label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0] || null;
+                          setPhotoFile(f);
+                          setPhotoPreview(f ? URL.createObjectURL(f) : null);
+                        }}
+                        className="w-full"
+                      />
+                      {photoPreview && (
+                        <div className="mt-2 w-24 h-24 border rounded overflow-hidden">
+                          <img src={photoPreview} alt="preview" className="w-full h-full object-cover" />
+                        </div>
+                      )}
                     </div>
                   </div>
                   <DialogFooter>

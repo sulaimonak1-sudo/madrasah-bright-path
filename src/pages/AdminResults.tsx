@@ -55,6 +55,62 @@ const AdminResults = () => {
   const [teacherRemark, setTeacherRemark] = useState('');
   const [headRemark, setHeadRemark] = useState('');
   const [loadingReport, setLoadingReport] = useState(false);
+  const [teacherSignatureFile, setTeacherSignatureFile] = useState<File | null>(null);
+  const [headSignatureFile, setHeadSignatureFile] = useState<File | null>(null);
+
+  const uploadSignature = async (file: File | null, destPath: string) => {
+    if (!file) return null;
+    try {
+      const { error } = await supabase.storage.from('signatures').upload(destPath, file, { upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('signatures').getPublicUrl(destPath);
+      return data.publicUrl;
+    } catch (err) {
+      console.error('Signature upload error', err);
+      throw err;
+    }
+  };
+
+  // Bulk auto-remarks UI state
+  const [autoDialogOpen, setAutoDialogOpen] = useState(false);
+  const [autoTemplate, setAutoTemplate] = useState('');
+  const [autoSign, setAutoSign] = useState(false);
+  const [generatingRemarks, setGeneratingRemarks] = useState(false);
+
+  const defaultRemarkFromGrade = (grade: string, total: number, name: string) => {
+    if (grade === 'A') return `${name} performed excellently with ${total} marks.`;
+    if (grade === 'B') return `${name} performed well with ${total} marks.`;
+    if (grade === 'C') return `${name} showed satisfactory performance with ${total} marks.`;
+    return `${name} needs improvement; scored ${total} marks.`;
+  };
+
+  const applyAutoRemarks = async () => {
+    if (!termId) { toast({ title: t('Select term first', 'اختر الفصل أولاً') }); return; }
+    setGeneratingRemarks(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const user = (userData as any)?.user;
+      const upserts = scores.map(s => {
+        const total = s.ca1 + s.ca2 + s.exam;
+        const grade = calculateGrade(total);
+        const name = s.student_name;
+        const remark = autoTemplate
+          ? autoTemplate.replace(/{name}/g, name).replace(/{total}/g, String(total)).replace(/{grade}/g, grade)
+          : defaultRemarkFromGrade(grade, total, name);
+        const obj: any = { student_id: s.student_id, term_id: termId, teacher_remark: remark };
+        if (autoSign && user?.id) obj.teacher_signed_by = user.id;
+        return obj;
+      });
+      const { error } = await supabase.from('term_reports').upsert(upserts, { onConflict: 'student_id,term_id' });
+      if (error) throw error;
+      toast({ title: t('Remarks applied', 'تم تطبيق الملاحظات') });
+      setAutoDialogOpen(false);
+    } catch (err: any) {
+      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+    } finally {
+      setGeneratingRemarks(false);
+    }
+  };
 
   // Handler for generating/viewing result
   const handleGenerateResult = async (student: ScoreEntry) => {
@@ -92,6 +148,12 @@ const AdminResults = () => {
         teacher_remark: teacherRemark,
       };
       if (user?.id) upsertObj.teacher_signed_by = user.id;
+      // upload signature image if provided
+      if (teacherSignatureFile) {
+        const path = `signatures/${termId}/${selectedStudentResult.student_id}/teacher_${Date.now()}.png`;
+        const url = await uploadSignature(teacherSignatureFile, path);
+        if (url) upsertObj.teacher_signature_url = url;
+      }
       const { error } = await supabase.from('term_reports').upsert(upsertObj, { onConflict: 'student_id,term_id' });
       if (error) throw error;
       toast({ title: t('Saved!', 'تم الحفظ!') });
@@ -114,6 +176,11 @@ const AdminResults = () => {
         head_remark: headRemark,
       };
       if (user?.id) upsertObj.head_signed_by = user.id;
+      if (headSignatureFile) {
+        const path = `signatures/${termId}/${selectedStudentResult.student_id}/head_${Date.now()}.png`;
+        const url = await uploadSignature(headSignatureFile, path);
+        if (url) upsertObj.head_signature_url = url;
+      }
       const { error } = await supabase.from('term_reports').upsert(upsertObj, { onConflict: 'student_id,term_id' });
       if (error) throw error;
       toast({ title: t('Saved!', 'تم الحفظ!') });
@@ -336,18 +403,32 @@ const AdminResults = () => {
               <div>
                 <label className="text-sm font-medium">{t("Class Teacher's Remark:", 'ملاحظة معلم الفصل:')}</label>
                 <textarea className="w-full mt-1 p-2 border rounded" rows={4} value={teacherRemark} onChange={(e) => setTeacherRemark(e.target.value)} />
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex gap-2 items-center">
+                  <input type="file" accept="image/*" onChange={(e) => setTeacherSignatureFile(e.target.files ? e.target.files[0] : null)} />
                   <Button onClick={saveTeacherRemark} disabled={loadingReport}>{loadingReport ? '...' : t('Save', 'حفظ')}</Button>
                 </div>
+                {teacherSignatureFile && (
+                  <div className="mt-2 text-xs text-muted-foreground">{teacherSignatureFile.name}</div>
+                )}
+                {reportData?.teacher_signature_url && !teacherSignatureFile && (
+                  <img src={reportData.teacher_signature_url} alt="teacher signature" className="mt-2 h-16" />
+                )}
                 <div className="text-xs text-muted-foreground mt-1">{reportData?.teacher_signed_at ? `Signed at ${new Date(reportData.teacher_signed_at).toLocaleString()}` : ''}</div>
               </div>
 
               <div>
                 <label className="text-sm font-medium">{t("Head Teacher's Remark:", 'ملاحظة مدير المدرسة:')}</label>
                 <textarea className="w-full mt-1 p-2 border rounded" rows={3} value={headRemark} onChange={(e) => setHeadRemark(e.target.value)} />
-                <div className="mt-2 flex gap-2">
+                <div className="mt-2 flex gap-2 items-center">
+                  <input type="file" accept="image/*" onChange={(e) => setHeadSignatureFile(e.target.files ? e.target.files[0] : null)} />
                   <Button onClick={saveHeadRemark} disabled={loadingReport}>{loadingReport ? '...' : t('Save', 'حفظ')}</Button>
                 </div>
+                {headSignatureFile && (
+                  <div className="mt-2 text-xs text-muted-foreground">{headSignatureFile.name}</div>
+                )}
+                {reportData?.head_signature_url && !headSignatureFile && (
+                  <img src={reportData.head_signature_url} alt="head signature" className="mt-2 h-16" />
+                )}
                 <div className="text-xs text-muted-foreground mt-1">{reportData?.head_signed_at ? `Signed at ${new Date(reportData.head_signed_at).toLocaleString()}` : ''}</div>
               </div>
             </div>
@@ -356,6 +437,29 @@ const AdminResults = () => {
                 <Button variant="ghost">{t('Close', 'إغلاق')}</Button>
               </DialogClose>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Auto Remarks dialog (bulk) */}
+        <Dialog open={autoDialogOpen} onOpenChange={(o) => { if (!o) setAutoDialogOpen(false); }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('Auto Remarks', 'تطبيق ملاحظات تلقائياً')}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3">
+              <div>
+                <label className="text-sm font-medium">{t('Template (use {name}, {total}, {grade})', 'قالب (استخدم {name}، {total}، {grade})')}</label>
+                <textarea className="w-full mt-1 p-2 border rounded" rows={4} value={autoTemplate} onChange={(e) => setAutoTemplate(e.target.value)} placeholder="{name} scored {total} ({grade})" />
+              </div>
+              <div className="flex items-center gap-3">
+                <input id="autoSign" type="checkbox" checked={autoSign} onChange={(e) => setAutoSign(e.target.checked)} />
+                <label htmlFor="autoSign" className="text-sm">{t('Sign remarks as current teacher', 'توقيع الملاحظات باسم المعلم الحالي')}</label>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="ghost" onClick={() => setAutoDialogOpen(false)}>{t('Close', 'إغلاق')}</Button>
+                <Button onClick={applyAutoRemarks} disabled={generatingRemarks}>{generatingRemarks ? t('Applying...', 'جارٍ التطبيق') : t('Apply to all', 'تطبيق على الكل')}</Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
@@ -468,10 +572,13 @@ const AdminResults = () => {
                   {bilingualText(selectedClassLevel?.name_en, selectedClassLevel?.name_ar)} {selectedClassArm?.name} — {scores.length} {t('students', 'طالب')}
                 </CardDescription>
               </div>
-              <Button onClick={handleSave} disabled={saving || isLocked || scores.length === 0}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                {t('Save All', 'حفظ الكل')}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" onClick={() => setAutoDialogOpen(true)} disabled={scores.length === 0 || !termId}>{t('Auto Remarks', 'تطبيق ملاحظات تلقائياً')}</Button>
+                <Button onClick={handleSave} disabled={saving || isLocked || scores.length === 0}>
+                  {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {t('Save All', 'حفظ الكل')}
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {scores.length === 0 ? (
@@ -497,17 +604,7 @@ const AdminResults = () => {
                         return (
                           <TableRow key={s.student_id}>
                             <TableCell className="text-muted-foreground">{i + 1}</TableCell>
-                            <TableCell className="font-medium flex items-center gap-2">
-                              {s.student_name}
-                              <Button
-                                size="sm"
-                                variant="secondary"
-                                className="ml-2"
-                                onClick={() => handleGenerateResult(s)}
-                              >
-                                {t('Generate Result', 'إنشاء النتيجة')}
-                              </Button>
-                            </TableCell>
+                            <TableCell className="font-medium">{s.student_name}</TableCell>
                             <TableCell>
                               <Input type="number" min={0} max={15} value={s.ca1}
                                 onChange={e => updateScore(i, 'ca1', e.target.value)}
@@ -534,7 +631,7 @@ const AdminResults = () => {
                           </TableRow>
                         );
                       })}
-                      // ...existing code...
+                      
                     </TableBody>
                   </Table>
                 </div>

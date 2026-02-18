@@ -190,8 +190,15 @@ const ResultView = () => {
               <div className="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
                 <div className="md:col-span-1 flex justify-center">
                   <div className="w-28 h-28 bg-slate-100 border rounded overflow-hidden">
-                    {/* Placeholder for student photo if available */}
-                    <img src={student.photo_url || '/'} onError={(e)=>{(e.target as HTMLImageElement).style.display='none'}} alt="photo" className="w-full h-full object-cover" />
+                    {/* Show uploaded photo if available, otherwise gender-specific silhouette */}
+                    <img
+                      src={
+                        student.photo_url || (student.gender === 'female' ? '/female-silhouette.svg' : '/male-silhouette.svg')
+                      }
+                      alt="photo"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                    />
                   </div>
                 </div>
                 <div className="md:col-span-3 grid grid-cols-2 gap-x-6">

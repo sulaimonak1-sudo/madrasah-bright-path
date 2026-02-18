@@ -1,8 +1,10 @@
+// @ts-nocheck
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
 }
 
 Deno.serve(async (req) => {
@@ -20,9 +22,16 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ ok: false, error: 'Invalid term_id' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL')
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      return new Response(JSON.stringify({ ok: false, error: 'Missing Supabase environment variables' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    }
+
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY
     )
 
     // Find student by UID
@@ -71,6 +80,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ ok: true, student, term, subjects: subjects || [], scores: scores || [], report: report || null }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
+    console.error('verify-result error', err)
     return new Response(JSON.stringify({ ok: false, error: 'Server error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   }
 })
