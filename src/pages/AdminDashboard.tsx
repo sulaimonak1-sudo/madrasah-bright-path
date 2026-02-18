@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { dashboardStats } from '@/data/mockData';
+// Replace mock dashboard stats with live data fetched from Supabase
 import { Users, Layers, BookOpen, TrendingUp, Calendar, FolderOpen, Award, BarChart3 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +32,63 @@ const AdminDashboard = () => {
   const [defaultHeadRemark, setDefaultHeadRemark] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
   const { toast } = useToast();
+  const [stats, setStats] = useState({
+    totalStudents: 0,
+    totalClasses: 0,
+    totalArms: 0,
+    totalSubjects: 0,
+    activeSession: '',
+    currentTerm: '',
+    promotionRate: 0,
+    averageScore: 0,
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const [{ count: totalStudents }, { count: totalClasses }, { count: totalArms }, { count: totalSubjects }] = await Promise.all([
+          supabase.from('students').select('id', { count: 'exact', head: true }),
+          supabase.from('class_levels').select('id', { count: 'exact', head: true }),
+          supabase.from('class_arms').select('id', { count: 'exact', head: true }),
+          supabase.from('subjects').select('id', { count: 'exact', head: true }),
+        ]);
+
+        // Active session
+        const { data: activeSessionRow } = await supabase.from('sessions').select('*').eq('is_active', true).limit(1).maybeSingle();
+
+        // Current term (attempt to pick first term linked to active session)
+        let currentTermName = '';
+        if (activeSessionRow && (activeSessionRow as any).id) {
+          const { data: termRow } = await supabase
+            .from('terms')
+            .select('name_en')
+            .eq('session_id', (activeSessionRow as any).id)
+            .limit(1)
+            .maybeSingle();
+          currentTermName = termRow ? (termRow as any).name_en || '' : '';
+        }
+
+        // Average score across term_scores (if any)
+        const { data: scores } = await supabase.from('term_scores').select('total');
+        const totals = (scores || []).map((s: any) => Number(s.total) || 0);
+        const averageScore = totals.length ? Math.round((totals.reduce((a: number, b: number) => a + b, 0) / totals.length) * 100) / 100 : 0;
+
+        setStats({
+          totalStudents: totalStudents || 0,
+          totalClasses: totalClasses || 0,
+          totalArms: totalArms || 0,
+          totalSubjects: totalSubjects || 0,
+          activeSession: activeSessionRow ? (activeSessionRow as any).name : '',
+          currentTerm: currentTermName,
+          promotionRate: 0,
+          averageScore,
+        });
+      } catch (err) {
+        // ignore — keep using defaults
+      }
+    };
+    fetchStats();
+  }, []);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -105,7 +162,7 @@ const AdminDashboard = () => {
                 </div>
                 <div>
                   <p className="text-sm text-muted-foreground">{t(card.label_en, card.label_ar)}</p>
-                  <p className="text-2xl font-bold">{(dashboardStats as any)[card.key]}</p>
+                  <p className="text-2xl font-bold">{(stats as any)[card.key]}</p>
                 </div>
               </CardContent>
             </Card>
@@ -124,11 +181,11 @@ const AdminDashboard = () => {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('Session', 'السنة')}</span>
-                <span className="font-semibold">{dashboardStats.activeSession}</span>
+                <span className="font-semibold">{stats.activeSession}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('Current Term', 'الفصل الحالي')}</span>
-                <span className="font-semibold">{dashboardStats.currentTerm}</span>
+                <span className="font-semibold">{stats.currentTerm}</span>
               </div>
             </CardContent>
           </Card>
@@ -143,11 +200,11 @@ const AdminDashboard = () => {
             <CardContent className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('Promotion Rate', 'معدل الترقية')}</span>
-                <span className="font-semibold text-success">{dashboardStats.promotionRate}%</span>
+                <span className="font-semibold text-success">{stats.promotionRate}%</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('Avg. Score', 'متوسط الدرجات')}</span>
-                <span className="font-semibold">{dashboardStats.averageScore}%</span>
+                <span className="font-semibold">{stats.averageScore}%</span>
               </div>
             </CardContent>
           </Card>

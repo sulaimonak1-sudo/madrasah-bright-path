@@ -58,7 +58,7 @@ const Index = () => {
       <section className="gradient-hero geometric-pattern py-16 md:py-24">
         <div className="container text-center">
           <div className="mx-auto max-w-2xl animate-fade-in">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-4 py-2 text-sm text-primary-foreground backdrop-blur-sm">
+            <div className="mb-6 inline-flex items-center gap-2 px-2 py-0 text-sm text-primary-foreground">
               <img src="/images/school-logo.png" alt="Al-Bari Logo" className="h-6 w-6 object-contain" />
               {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
             </div>

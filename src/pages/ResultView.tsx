@@ -273,8 +273,8 @@ const ResultView = () => {
           <div className="bg-white p-6 print:p-4 result-printable-content">
             {/* HEADER */}
             <div className="text-center pb-6 border-b-2 border-gray-300 mb-6">
-              <div className="flex justify-center mb-3">
-                <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                <div className="flex justify-center mb-3">
+                <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
                   <img 
                     src="/images/school-logo.png" 
                     alt="Logo" 
