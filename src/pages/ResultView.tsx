@@ -244,17 +244,17 @@ const ResultView = () => {
     const element = document.querySelector('.result-printable-content');
     if (!element) return;
     const options = {
-      margin: [10,10,10,10],
-      filename: `result-${student?.student_id || 'report'}.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
+      margin: [10,10,10,10] as [number, number, number, number],
+      filename: `result-${student?.student_uid || 'report'}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
       html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      jsPDF: { orientation: 'portrait' as const, unit: 'mm' as const, format: 'a4' as const }
     };
 
     // set print date in DOM then generate PDF
     setPrintDate(new Date().toLocaleDateString());
     setTimeout(() => {
-      html2pdf().set(options).from(element).save();
+      html2pdf().set(options).from(element as HTMLElement).save();
       setPrintDate(null);
     }, 100);
   };
@@ -432,15 +432,14 @@ const ResultView = () => {
                     </p>
                   </div>
                   <div>
-                    <div className="flex items-center justify-center mb-2">
-                      <Avatar className="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-300 bg-gray-100">
-                        {(report?.head_photo || report?.head_photo_url)
-                          ? <AvatarImage src={report?.head_photo || report?.head_photo_url} alt="Head Teacher" />
-                          : <AvatarFallback>{(report?.head_name || report?.head || 'HT').split(' ').map((s: string) => s?.[0] || '').join('').slice(0,2)}</AvatarFallback>
-                        }
-                      </Avatar>
+                    <div className="flex items-center justify-center mb-1">
+                      <img
+                        src="/images/head-teacher-stamp.png"
+                        alt="Head Teacher Stamp"
+                        className="w-24 h-24 object-contain"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
                     </div>
-                    <div className="border-b border-gray-800 h-10 mb-2" />
                     <p className="font-semibold text-gray-800">{report?.head_name || report?.head || 'Head Teacher'}</p>
                   </div>
                   <div>

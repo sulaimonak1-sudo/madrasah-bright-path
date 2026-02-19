@@ -285,6 +285,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          class_teacher_class_arm_id: string | null
           created_at: string
           full_name: string
           id: string
@@ -294,6 +295,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          class_teacher_class_arm_id?: string | null
           created_at?: string
           full_name: string
           id?: string
@@ -303,6 +305,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          class_teacher_class_arm_id?: string | null
           created_at?: string
           full_name?: string
           id?: string
@@ -310,7 +313,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_class_teacher_class_arm_id_fkey"
+            columns: ["class_teacher_class_arm_id"]
+            isOneToOne: false
+            referencedRelation: "class_arms"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       promotion_records: {
         Row: {
@@ -699,6 +710,50 @@ export type Database = {
             columns: ["session_id"]
             isOneToOne: false
             referencedRelation: "sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tiered_remarks: {
+        Row: {
+          class_arm_id: string | null
+          created_at: string
+          id: string
+          max_score: number
+          min_score: number
+          remark_ar: string
+          remark_en: string
+          role: string
+          updated_at: string
+        }
+        Insert: {
+          class_arm_id?: string | null
+          created_at?: string
+          id?: string
+          max_score: number
+          min_score: number
+          remark_ar?: string
+          remark_en?: string
+          role: string
+          updated_at?: string
+        }
+        Update: {
+          class_arm_id?: string | null
+          created_at?: string
+          id?: string
+          max_score?: number
+          min_score?: number
+          remark_ar?: string
+          remark_en?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tiered_remarks_class_arm_id_fkey"
+            columns: ["class_arm_id"]
+            isOneToOne: false
+            referencedRelation: "class_arms"
             referencedColumns: ["id"]
           },
         ]

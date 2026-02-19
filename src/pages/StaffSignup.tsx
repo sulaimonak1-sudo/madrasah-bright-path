@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GraduationCap, KeyRound, UserPlus, Loader2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -20,17 +21,27 @@ const StaffSignup = () => {
   const [step, setStep] = useState<Step>('auth_key');
   const [loading, setLoading] = useState(false);
 
-  // Step 1: Auth key
   const [authKey, setAuthKey] = useState('');
-
-  // Step 2: Signup
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-
-  // Step 3: Profile
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
+  const [classArmId, setClassArmId] = useState('');
+
+  const [classLevels, setClassLevels] = useState<any[]>([]);
+  const [classArms, setClassArms] = useState<any[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      const [clRes, armsRes] = await Promise.all([
+        supabase.from('class_levels').select('*').order('display_order'),
+        supabase.from('class_arms').select('*'),
+      ]);
+      setClassLevels(clRes.data || []);
+      setClassArms(armsRes.data || []);
+    })();
+  }, []);
 
   const validateAuthKey = async () => {
     if (!authKey.trim()) return;
@@ -86,20 +97,18 @@ const StaffSignup = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
-      // Save profile
       const { error: profileErr } = await supabase.from('profiles').upsert({
         user_id: user.id,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
+        class_teacher_class_arm_id: classArmId || null,
       }, { onConflict: 'user_id' });
       if (profileErr) throw profileErr;
 
-      // Assign teacher role
       const { error: roleErr } = await supabase.from('user_roles').insert({
         user_id: user.id,
         role: 'teacher',
       });
-      // Role might fail if RLS blocks it — admin may need to assign
       if (roleErr) {
         console.warn('Role assignment may need admin approval:', roleErr.message);
       }
@@ -111,6 +120,12 @@ const StaffSignup = () => {
       setLoading(false);
     }
   };
+
+  // Build class options: "Level - Arm"
+  const classOptions = classArms.map(arm => {
+    const level = classLevels.find(l => l.id === arm.class_level_id);
+    return { id: arm.id, label: `${level?.name_en || ''} - ${arm.name}` };
+  });
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -132,8 +147,7 @@ const StaffSignup = () => {
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          {/* Step indicators */}
+        <CardContent className="space-y-4 max-h-[70vh] overflow-y-auto">
           <div className="flex items-center justify-center gap-2 mb-4">
             {['auth_key', 'signup', 'profile'].map((s, i) => (
               <div key={s} className={`h-2 w-12 rounded-full transition-colors ${
@@ -204,6 +218,20 @@ const StaffSignup = () => {
               <div className="space-y-2">
                 <Label>{t('Phone Number', 'رقم الهاتف')}</Label>
                 <Input value={phone} onChange={e => setPhone(e.target.value)} placeholder="08012345678" />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('Class Teacher Of', 'معلم فصل')}</Label>
+                <Select value={classArmId} onValueChange={setClassArmId}>
+                  <SelectTrigger><SelectValue placeholder={t('Select class', 'اختر الفصل')} /></SelectTrigger>
+                  <SelectContent>
+                    {classOptions.map(opt => (
+                      <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {t('Select the class you are class teacher of', 'اختر الفصل الذي أنت معلمه')}
+                </p>
               </div>
               <Button className="w-full" onClick={handleProfileSave} disabled={loading || !fullName.trim()}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
