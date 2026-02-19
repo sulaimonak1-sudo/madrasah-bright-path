@@ -11,14 +11,22 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateGrade, GRADE_CONFIG } from '@/types';
-import html2pdf from 'html2pdf.js';
+import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
 
 type Step = 'select' | 'students';
 
+// Tiered remark helper
+function getTieredRemark(avg: number, remarks: any[], role: 'teacher' | 'head'): string {
+  const filtered = remarks.filter(r => r.role === role);
+  const match = filtered.find(r => avg >= r.min_score && avg <= r.max_score);
+  return match?.remark_en || '';
+}
+
 const AdminReports = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { user, isTeacher, isAdmin } = useAuth();
 
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
@@ -34,24 +42,32 @@ const AdminReports = () => {
   const [loadingStudents, setLoadingStudents] = useState(false);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [reportIncludeQr, setReportIncludeQr] = useState(true);
-  const [reportDefaultTeacherRemark, setReportDefaultTeacherRemark] = useState('');
-  const [reportDefaultHeadRemark, setReportDefaultHeadRemark] = useState('');
+  const [tieredRemarks, setTieredRemarks] = useState<any[]>([]);
+  const [teacherClassArmId, setTeacherClassArmId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
-      const [sessRes, clRes, armsRes] = await Promise.all([
+      const [sessRes, clRes, armsRes, remarksRes] = await Promise.all([
         supabase.from('sessions').select('*').order('name', { ascending: false }),
         supabase.from('class_levels').select('*').order('display_order'),
         supabase.from('class_arms').select('*'),
+        supabase.from('tiered_remarks').select('*'),
       ]);
       setSessions(sessRes.data || []);
       setClassLevels(clRes.data || []);
+      setTieredRemarks(remarksRes.data || []);
       const grouped: Record<string, any[]> = {};
       (armsRes.data || []).forEach((arm: any) => {
         if (!grouped[arm.class_level_id]) grouped[arm.class_level_id] = [];
         grouped[arm.class_level_id].push(arm);
       });
       setClassArms(grouped);
+
+      // If teacher, get their assigned class arm
+      if (user) {
+        const { data: profile } = await supabase.from('profiles').select('class_teacher_class_arm_id').eq('user_id', user.id).maybeSingle();
+        setTeacherClassArmId(profile?.class_teacher_class_arm_id || null);
+      }
     };
     fetch();
     // load report settings
@@ -61,36 +77,11 @@ const AdminReports = () => {
         const map: Record<string, string> = {};
         (data || []).forEach((r: any) => { map[r.key] = r.value; });
         setReportIncludeQr(map['report.include_qr'] !== 'false');
-        setReportDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
-        setReportDefaultHeadRemark(map['report.default_head_remark'] || '');
       } catch (err) {
         // ignore
       }
     })();
-
-    // subscribe to realtime changes so settings update when changed elsewhere
-    const channel = supabase
-      .channel('public:school_settings')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'school_settings' }, () => {
-        (async () => {
-          try {
-            const { data } = await supabase.from('school_settings').select('*');
-            const map: Record<string, string> = {};
-            (data || []).forEach((r: any) => { map[r.key] = r.value; });
-            setReportIncludeQr(map['report.include_qr'] !== 'false');
-            setReportDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
-            setReportDefaultHeadRemark(map['report.default_head_remark'] || '');
-          } catch (err) {
-            // ignore
-          }
-        })();
-      })
-      .subscribe();
-
-    return () => {
-      try { channel.unsubscribe(); } catch (e) { /* ignore */ }
-    };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
@@ -98,6 +89,24 @@ const AdminReports = () => {
       .then(({ data }) => setTerms(data || []));
     setTermId('');
   }, [sessionId]);
+
+  // For teachers, filter class levels/arms to only their assigned class
+  const filteredClassLevels = (() => {
+    if (isAdmin) return classLevels;
+    if (!teacherClassArmId) return classLevels; // show all if no assignment
+    // Find the class level that contains the teacher's arm
+    const allArms = Object.values(classArms).flat();
+    const teacherArm = allArms.find(a => a.id === teacherClassArmId);
+    if (!teacherArm) return [];
+    return classLevels.filter(l => l.id === teacherArm.class_level_id);
+  })();
+
+  const getFilteredArms = (levelId: string) => {
+    const arms = classArms[levelId] || [];
+    if (isAdmin) return arms;
+    if (!teacherClassArmId) return arms;
+    return arms.filter(a => a.id === teacherClassArmId);
+  };
 
   const selectClass = async (level: any, arm: any) => {
     setSelectedClassLevel(level);
@@ -128,7 +137,6 @@ const AdminReports = () => {
     try {
       const selectedSession = sessions.find(s => s.id === sessionId);
       const selectedTerm = terms.find(t => t.id === termId);
-      const isTermThree = selectedTerm?.term_number === 3;
 
       const [subjectsRes, scoresRes, classLevelRes, classArmRes] = await Promise.all([
         supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id).order('name'),
@@ -150,13 +158,16 @@ const AdminReports = () => {
 
       const totalSum = subjectRows.reduce((s, r) => s + r.total, 0);
       const avg = subjectRows.length > 0 ? Math.round(totalSum / subjectRows.length) : 0;
-      const overallGrade = calculateGrade(avg);
-      const promoted = avg >= 50;
 
       const className = `${classLevelRes.data?.name_en || ''}${classArmRes.data ? ' - ' + classArmRes.data.name : ''}`;
       const classNameAr = `${classLevelRes.data?.name_ar || ''}${classArmRes.data ? ' - ' + classArmRes.data.name : ''}`;
 
       const printDate = new Date().toLocaleDateString();
+
+      // Get tiered remarks based on overall average
+      const teacherRemarkText = getTieredRemark(avg, tieredRemarks, 'teacher') || '_________________________________________';
+      const headRemarkText = getTieredRemark(avg, tieredRemarks, 'head') || '_________________________________________';
+
       // generate verification QR if enabled
       let qrSrc = '';
       try {
@@ -168,9 +179,6 @@ const AdminReports = () => {
         qrSrc = '';
       }
 
-      const teacherRemarkText = reportDefaultTeacherRemark || '_________________________________________';
-      const headRemarkText = reportDefaultHeadRemark || '_________________________________________';
-
       const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -180,18 +188,15 @@ const AdminReports = () => {
     @page { size: A4; margin: 20mm; }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.5; }
-    
     .header { text-align: center; padding: 20px 0 16px; border-bottom: 2px solid #374151; margin-bottom: 16px; }
     .logo { width: 60px; height: 60px; margin: 0 auto 8px; }
     .logo img { width: 100%; height: 100%; object-fit: contain; }
     .school-name { font-size: 26px; font-weight: 800; color: #1f2937; text-transform: uppercase; letter-spacing: 1.5px; margin: 4px 0; }
     .section-label { font-size: 13px; color: #4b5563; margin: 2px 0; font-weight: 600; }
-    
     .divider { width: 50%; margin: 6px auto; border-top: 1px solid #d1d5db; }
     .contact-info { font-size: 10px; color: #666; margin: 4px 0; }
     .report-title { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 8px; }
     .session-info { font-size: 11px; color: #555; margin-top: 3px; }
-    
     .student-section { margin-top: 16px; margin-bottom: 16px; display: flex; gap: 12px; }
     .student-photo { width: 70px; height: 90px; background: #f3f4f6; border: 1px solid #d1d5db; flex-shrink: 0; overflow: hidden; }
     .student-photo img { width: 100%; height: 100%; object-fit: cover; }
@@ -199,8 +204,7 @@ const AdminReports = () => {
     .info-row { display: flex; justify-content: space-between; align-items: center; }
     .info-label { color: #555; font-weight: 600; }
     .info-value { color: #1f2937; font-weight: 700; }
-    
-    .academic-header { background: #047857; color: white; text-align: center; padding: 6px; font-weight: 700; tracking-wider; margin-bottom: 4px; }
+    .academic-header { background: #047857; color: white; text-align: center; padding: 6px; font-weight: 700; margin-bottom: 4px; }
     .scores-table { width: 100%; border-collapse: collapse; margin: 0; font-size: 10px; }
     .scores-table th { background: #047857; color: white; padding: 6px 4px; text-align: center; font-weight: 700; text-transform: uppercase; }
     .scores-table th:first-child { text-align: left; }
@@ -208,24 +212,19 @@ const AdminReports = () => {
     .scores-table td:first-child { text-align: left; font-weight: 500; }
     .scores-table tbody tr:nth-child(odd) { background: white; }
     .scores-table tbody tr:nth-child(even) { background: #fafaf8; }
-    
     .term-avg { margin-top: 8px; text-align: right; font-weight: bold; font-size: 11px; }
-    
     .remarks-section { margin-top: 12px; padding-top: 12px; border-top: 2px solid #d1d5db; border-bottom: 2px solid #d1d5db; padding-bottom: 12px; font-size: 11px; }
     .remark-block { margin-bottom: 8px; }
     .remark-label { font-weight: 700; color: #1f2937; margin-bottom: 2px; }
     .remark-text { color: #555; }
-    
     .signatures { margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; font-size: 10px; text-align: center; }
     .sig-item { }
     .sig-line { border-bottom: 1px solid #333; height: 25px; margin-bottom: 2px; }
     .sig-name { color: #555; font-weight: 600; }
-    
     .footer { margin-top: 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 0; border-bottom: 2px solid #d1d5db; font-size: 9px; }
     .footer-text { flex: 1; text-align: center; color: #666; }
     .qr-container { flex-shrink: 0; width: 50px; height: 50px; border: 1px solid #999; display: flex; align-items: center; justify-content: center; }
     .qr-container img { width: 100%; height: 100%; object-fit: contain; }
-    
     .footer-bar { margin-top: 8px; height: 3px; background: #047857; }
   </style>
 </head>
@@ -246,38 +245,14 @@ const AdminReports = () => {
     <img src="${window.location.origin}/images/placeholder-student.png" alt="Photo" onerror="this.style.display='none'" />
   </div>
   <div class="student-info-grid">
-    <div class="info-row">
-      <span class="info-label">Student Name:</span>
-      <span class="info-value">${student.name_en || student.full_name}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">الاسم:</span>
-      <span class="info-value">${student.name_ar || '—'}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Student ID:</span>
-      <span class="info-value">${student.student_uid || '—'}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">رقم الطالب:</span>
-      <span class="info-value">${student.student_uid || '—'}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Class:</span>
-      <span class="info-value">${className}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">الصف:</span>
-      <span class="info-value">${classNameAr}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">Gender:</span>
-      <span class="info-value">${student.gender === 'male' ? 'Male' : 'Female'}</span>
-    </div>
-    <div class="info-row">
-      <span class="info-label">الجنس:</span>
-      <span class="info-value">${student.gender === 'male' ? 'ذكر' : 'أنثى'}</span>
-    </div>
+    <div class="info-row"><span class="info-label">Student Name:</span><span class="info-value">${student.name_en || student.full_name}</span></div>
+    <div class="info-row"><span class="info-label">الاسم:</span><span class="info-value">${student.name_ar || '—'}</span></div>
+    <div class="info-row"><span class="info-label">Student ID:</span><span class="info-value">${student.student_uid || '—'}</span></div>
+    <div class="info-row"><span class="info-label">رقم الطالب:</span><span class="info-value">${student.student_uid || '—'}</span></div>
+    <div class="info-row"><span class="info-label">Class:</span><span class="info-value">${className}</span></div>
+    <div class="info-row"><span class="info-label">الصف:</span><span class="info-value">${classNameAr}</span></div>
+    <div class="info-row"><span class="info-label">Gender:</span><span class="info-value">${student.gender === 'male' ? 'Male' : 'Female'}</span></div>
+    <div class="info-row"><span class="info-label">الجنس:</span><span class="info-value">${student.gender === 'male' ? 'ذكر' : 'أنثى'}</span></div>
   </div>
 </div>
 
@@ -286,34 +261,22 @@ const AdminReports = () => {
 <table class="scores-table">
   <thead>
     <tr>
-      <th>Subject</th>
-      <th>CA1</th>
-      <th>CA2</th>
-      <th>Exam</th>
-      <th>المجموع</th>
-      <th>Grade</th>
+      <th>Subject</th><th>CA1</th><th>CA2</th><th>Exam</th><th>المجموع</th><th>Grade</th>
     </tr>
   </thead>
   <tbody>
-    ${subjectRows.map((r, i) => `
+    ${subjectRows.map(r => `
     <tr>
-      <td>
-        <div style="font-weight: 600;">${r.name}</div>
-        <div style="font-size: 9px; color: #888;">${r.name_ar}</div>
-      </td>
-      <td>${r.ca1}</td>
-      <td>${r.ca2}</td>
-      <td>${r.exam}</td>
-      <td style="font-weight: 700;">${r.total}</td>
-      <td style="font-weight: 700;">${r.grade}</td>
-    </tr>
-    `).join('')}
+      <td><div style="font-weight: 600;">${r.name}</div><div style="font-size: 9px; color: #888;">${r.name_ar}</div></td>
+      <td>${r.ca1}</td><td>${r.ca2}</td><td>${r.exam}</td>
+      <td style="font-weight: 700;">${r.total}</td><td style="font-weight: 700;">${r.grade}</td>
+    </tr>`).join('')}
   </tbody>
 </table>
 
 <div class="term-avg">Term Average: <strong>${avg}%</strong></div>
 
-  <div class="remarks-section">
+<div class="remarks-section">
   <div class="remark-block">
     <div class="remark-label">Class Teacher's Remark:</div>
     <div class="remark-text">${teacherRemarkText}</div>
@@ -330,7 +293,7 @@ const AdminReports = () => {
     <div class="sig-name">Class Teacher</div>
   </div>
   <div class="sig-item">
-    <div class="sig-line"></div>
+    <div style="text-align:center;"><img src="${window.location.origin}/images/head-teacher-stamp.png" alt="Stamp" style="width:80px;height:80px;object-fit:contain;margin:0 auto;" onerror="this.style.display='none'" /></div>
     <div class="sig-name">Head Teacher</div>
   </div>
   <div class="sig-item">
@@ -340,17 +303,11 @@ const AdminReports = () => {
 </div>
 
 <div class="footer">
-  <div class="footer-text">
-    <strong>Result generated via Al-Bari</strong><br/>
-    Madrasah Portal | Student ID: PIN
-  </div>
+  <div class="footer-text"><strong>Result generated via Al-Bari</strong><br/>Madrasah Portal | Student ID: PIN</div>
   <div class="qr-container">
     ${qrSrc ? `<img src="${qrSrc}" alt="QR" />` : `<img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect fill='white' width='100' height='100'/%3E%3C/svg%3E" alt="QR" />`}
   </div>
-  <div class="footer-text">
-    <strong>Scan here to verify result</strong><br/>
-    اضغط هنا للتحقق من النتيجة
-  </div>
+  <div class="footer-text"><strong>Scan here to verify result</strong><br/>اضغط هنا للتحقق من النتيجة</div>
 </div>
 
 <div class="footer-bar"></div>
@@ -427,8 +384,8 @@ const AdminReports = () => {
         {/* Class selection */}
         {hasSessionTerm && step === 'select' && (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {classLevels.map(level => {
-              const arms = classArms[level.id] || [];
+            {filteredClassLevels.map(level => {
+              const arms = getFilteredArms(level.id);
               return (
                 <Card key={level.id} className="shadow-card">
                   <CardHeader className="pb-3">

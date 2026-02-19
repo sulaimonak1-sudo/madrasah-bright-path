@@ -2,10 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-// Replace mock dashboard stats with live data fetched from Supabase
-import { Users, Layers, BookOpen, TrendingUp, Calendar, FolderOpen, Award, BarChart3 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Users, Layers, BookOpen, FolderOpen, Calendar, Award, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose, DialogTrigger } from '@/components/ui/dialog';
 
 const statCards = [
   { key: 'totalStudents', icon: Users, label_en: 'Total Students', label_ar: 'إجمالي الطلاب', color: 'text-primary' },
@@ -14,24 +20,27 @@ const statCards = [
   { key: 'totalSubjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد', color: 'text-success' },
 ];
 
+const REMARK_TIERS = [
+  { min: 0, max: 44, label: 'Below 45' },
+  { min: 45, max: 55, label: '45 - 55' },
+  { min: 56, max: 70, label: '56 - 70' },
+  { min: 71, max: 100, label: '71 and above' },
+];
+
 const AdminDashboard = () => {
   const { t } = useLanguage();
-
-  // PIN generation section state
-  const [pinStudentId, setPinStudentId] = useState('');
-  const [pinTermId, setPinTermId] = useState('');
-  const [generatedPin, setGeneratedPin] = useState('');
-  const [loadingPin, setLoadingPin] = useState(false);
-  const [pinError, setPinError] = useState('');
+  const { toast } = useToast();
 
   // Report settings
   const [includeQr, setIncludeQr] = useState(true);
   const [remarksEnabled, setRemarksEnabled] = useState(true);
   const [printDateAuto, setPrintDateAuto] = useState(true);
-  const [defaultTeacherRemark, setDefaultTeacherRemark] = useState('');
-  const [defaultHeadRemark, setDefaultHeadRemark] = useState('');
   const [savingSettings, setSavingSettings] = useState(false);
-  const { toast } = useToast();
+
+  // Tiered head teacher remarks
+  const [headRemarks, setHeadRemarks] = useState<Record<string, string>>({});
+  const [savingRemarks, setSavingRemarks] = useState(false);
+
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalClasses: 0,
@@ -39,7 +48,6 @@ const AdminDashboard = () => {
     totalSubjects: 0,
     activeSession: '',
     currentTerm: '',
-    promotionRate: 0,
     averageScore: 0,
   });
 
@@ -53,22 +61,14 @@ const AdminDashboard = () => {
           supabase.from('subjects').select('id', { count: 'exact', head: true }),
         ]);
 
-        // Active session
         const { data: activeSessionRow } = await supabase.from('sessions').select('*').eq('is_active', true).limit(1).maybeSingle();
 
-        // Current term (attempt to pick first term linked to active session)
         let currentTermName = '';
         if (activeSessionRow && (activeSessionRow as any).id) {
-          const { data: termRow } = await supabase
-            .from('terms')
-            .select('name_en')
-            .eq('session_id', (activeSessionRow as any).id)
-            .limit(1)
-            .maybeSingle();
+          const { data: termRow } = await supabase.from('terms').select('name_en').eq('session_id', (activeSessionRow as any).id).limit(1).maybeSingle();
           currentTermName = termRow ? (termRow as any).name_en || '' : '';
         }
 
-        // Average score across term_scores (if any)
         const { data: scores } = await supabase.from('term_scores').select('total');
         const totals = (scores || []).map((s: any) => Number(s.total) || 0);
         const averageScore = totals.length ? Math.round((totals.reduce((a: number, b: number) => a + b, 0) / totals.length) * 100) / 100 : 0;
@@ -80,18 +80,16 @@ const AdminDashboard = () => {
           totalSubjects: totalSubjects || 0,
           activeSession: activeSessionRow ? (activeSessionRow as any).name : '',
           currentTerm: currentTermName,
-          promotionRate: 0,
           averageScore,
         });
-      } catch (err) {
-        // ignore — keep using defaults
-      }
+      } catch (err) {}
     };
     fetchStats();
   }, []);
 
+  // Load settings + tiered remarks
   useEffect(() => {
-    const fetchSettings = async () => {
+    (async () => {
       try {
         const { data } = await supabase.from('school_settings').select('*');
         const map: Record<string, string> = {};
@@ -99,13 +97,18 @@ const AdminDashboard = () => {
         setIncludeQr(map['report.include_qr'] !== 'false');
         setRemarksEnabled(map['report.remarks_enabled'] !== 'false');
         setPrintDateAuto(map['report.print_date_auto'] !== 'false');
-        setDefaultTeacherRemark(map['report.default_teacher_remark'] || '');
-        setDefaultHeadRemark(map['report.default_head_remark'] || '');
-      } catch (err) {
-        // ignore
-      }
-    };
-    fetchSettings();
+      } catch (err) {}
+    })();
+
+    // Load head teacher tiered remarks
+    (async () => {
+      const { data } = await supabase.from('tiered_remarks').select('*').eq('role', 'head').is('class_arm_id', null);
+      const map: Record<string, string> = {};
+      (data || []).forEach((r: any) => {
+        map[`${r.min_score}-${r.max_score}`] = r.remark_en;
+      });
+      setHeadRemarks(map);
+    })();
   }, []);
 
   const saveSettings = async () => {
@@ -115,8 +118,6 @@ const AdminDashboard = () => {
         { key: 'report.include_qr', value: includeQr ? 'true' : 'false' },
         { key: 'report.remarks_enabled', value: remarksEnabled ? 'true' : 'false' },
         { key: 'report.print_date_auto', value: printDateAuto ? 'true' : 'false' },
-        { key: 'report.default_teacher_remark', value: defaultTeacherRemark || '' },
-        { key: 'report.default_head_remark', value: defaultHeadRemark || '' },
       ];
       await supabase.from('school_settings').upsert(payload, { onConflict: 'key' });
       toast({ title: 'Saved', description: 'Report settings saved.' });
@@ -127,22 +128,30 @@ const AdminDashboard = () => {
     }
   };
 
-  // Example: Generate random 6-digit PIN
-  function randomPin() {
-    return Math.floor(100000 + Math.random() * 900000).toString();
-  }
-
-  // Handler for generating PIN
-  async function handleGeneratePin(e: React.FormEvent) {
-    e.preventDefault();
-    setLoadingPin(true);
-    setPinError('');
-    // Simulate API call
-    setTimeout(() => {
-      setGeneratedPin(randomPin());
-      setLoadingPin(false);
-    }, 800);
-  }
+  const saveHeadRemarks = async () => {
+    setSavingRemarks(true);
+    try {
+      // Delete existing head remarks (global, no class_arm_id)
+      await supabase.from('tiered_remarks').delete().eq('role', 'head').is('class_arm_id', null);
+      // Insert new ones
+      const inserts = REMARK_TIERS.map(tier => ({
+        role: 'head' as const,
+        class_arm_id: null,
+        min_score: tier.min,
+        max_score: tier.max,
+        remark_en: headRemarks[`${tier.min}-${tier.max}`] || '',
+        remark_ar: '',
+      })).filter(r => r.remark_en.trim());
+      if (inserts.length > 0) {
+        await supabase.from('tiered_remarks').insert(inserts);
+      }
+      toast({ title: 'Saved', description: 'Head teacher remarks saved.' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingRemarks(false);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -199,10 +208,6 @@ const AdminDashboard = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('Promotion Rate', 'معدل الترقية')}</span>
-                <span className="font-semibold text-success">{stats.promotionRate}%</span>
-              </div>
-              <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('Avg. Score', 'متوسط الدرجات')}</span>
                 <span className="font-semibold">{stats.averageScore}%</span>
               </div>
@@ -210,90 +215,58 @@ const AdminDashboard = () => {
           </Card>
         </div>
 
-        {/* PIN Generation Section */}
-        <Card className="shadow-card max-w-xl mx-auto">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <BarChart3 className="h-5 w-5 text-accent" />
-              {t('PIN Generation', 'توليد الرقم السري')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleGeneratePin} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">{t('Student ID', 'رقم الطالب')}</label>
-                <input
-                  className="input border rounded px-3 py-2 w-full"
-                  value={pinStudentId}
-                  onChange={e => setPinStudentId(e.target.value)}
-                  placeholder={t('Enter Student ID', 'أدخل رقم الطالب')}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">{t('Term ID', 'رقم الفصل')}</label>
-                <input
-                  className="input border rounded px-3 py-2 w-full"
-                  value={pinTermId}
-                  onChange={e => setPinTermId(e.target.value)}
-                  placeholder={t('Enter Term ID', 'أدخل رقم الفصل')}
-                  required
-                />
-              </div>
-              <button
-                type="submit"
-                className="btn bg-primary text-white px-4 py-2 rounded w-full"
-                disabled={loadingPin}
-              >
-                {loadingPin ? t('Generating...', 'جاري التوليد...') : t('Generate PIN', 'توليد الرقم السري')}
-              </button>
-            </form>
-            {generatedPin && (
-              <div className="mt-4 p-3 bg-muted rounded text-center">
-                <span className="font-semibold text-lg">{t('Generated PIN:', 'الرقم السري المُولد:')} {generatedPin}</span>
-              </div>
-            )}
-            {pinError && (
-              <div className="mt-2 text-destructive text-sm text-center">{pinError}</div>
-            )}
-          </CardContent>
-        </Card>
         {/* Report Settings */}
-        <Card className="shadow-card max-w-xl mx-auto">
+        <Card className="shadow-card">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-lg">{t('Report Settings', 'إعدادات التقرير')}</CardTitle>
+            <CardTitle className="text-lg">{t('Report Settings', 'إعدادات التقرير')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-3">
+            <div className="space-y-3 max-w-lg">
               <label className="flex items-center gap-3">
                 <input type="checkbox" checked={includeQr} onChange={e => setIncludeQr(e.target.checked)} />
                 <span className="text-sm">{t('Include QR on report', 'إظهار رمز الاستجابة السريعة في التقرير')}</span>
               </label>
-
               <label className="flex items-center gap-3">
                 <input type="checkbox" checked={remarksEnabled} onChange={e => setRemarksEnabled(e.target.checked)} />
                 <span className="text-sm">{t("Enable remarks fields", 'تفعيل حقل الملاحظات')}</span>
               </label>
-
               <label className="flex items-center gap-3">
                 <input type="checkbox" checked={printDateAuto} onChange={e => setPrintDateAuto(e.target.checked)} />
                 <span className="text-sm">{t('Auto set report date on print', 'تعيين تاريخ التقرير تلقائياً عند الطباعة')}</span>
               </label>
-
-              <div>
-                <label className="text-sm text-muted-foreground">{t("Default Class Teacher's Remark", 'ملاحظة معلم الفصل الافتراضية')}</label>
-                <textarea className="w-full border rounded px-2 py-1 mt-1" value={defaultTeacherRemark} onChange={e => setDefaultTeacherRemark(e.target.value)} rows={2} />
-              </div>
-
-              <div>
-                <label className="text-sm text-muted-foreground">{t("Default Head Teacher's Remark", 'ملاحظة مدير المدرسة الافتراضية')}</label>
-                <textarea className="w-full border rounded px-2 py-1 mt-1" value={defaultHeadRemark} onChange={e => setDefaultHeadRemark(e.target.value)} rows={2} />
-              </div>
-
               <div className="flex justify-end">
-                <button className="btn bg-primary text-white px-4 py-2 rounded" onClick={saveSettings} disabled={savingSettings}>
-                  {savingSettings ? t('Saving...', 'جارٍ الحفظ...') : t('Save Settings', 'حفظ الإعدادات')}
-                </button>
+                <Button onClick={saveSettings} disabled={savingSettings} size="sm">
+                  {savingSettings ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {t('Save Settings', 'حفظ الإعدادات')}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Head Teacher Tiered Remarks */}
+        <Card className="shadow-card">
+          <CardHeader>
+            <CardTitle className="text-lg">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4 max-w-lg">
+              {REMARK_TIERS.map(tier => (
+                <div key={tier.label} className="space-y-1">
+                  <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
+                  <Textarea
+                    value={headRemarks[`${tier.min}-${tier.max}`] || ''}
+                    onChange={e => setHeadRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
+                    rows={2}
+                    placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
+                  />
+                </div>
+              ))}
+              <div className="flex justify-end">
+                <Button onClick={saveHeadRemarks} disabled={savingRemarks} size="sm">
+                  {savingRemarks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  {t('Save Remarks', 'حفظ الملاحظات')}
+                </Button>
               </div>
             </div>
           </CardContent>

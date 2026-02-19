@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Search, Pencil, Trash2, Users, ChevronRight, ArrowLeft } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Users, ChevronRight, ArrowLeft, Download } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -298,15 +298,49 @@ const AdminStudents = () => {
                 {selectedClassArm ? ` - ${selectedClassArm.name}` : ''}
               </h1>
             </div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
               <div className="relative max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input className="pl-9" placeholder={t('Search students...', 'البحث عن طالب...')} value={search} onChange={e => setSearch(e.target.value)} />
               </div>
-              <Dialog open={addOpen} onOpenChange={handleAddOpenChange}>
-                <DialogTrigger asChild>
-                  <Button size="sm"><Plus className="mr-2 h-4 w-4" />{t('Add Student', 'إضافة طالب')}</Button>
-                </DialogTrigger>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => {
+                  const rows = filtered.map(s => ({
+                    'Student ID': s.student_uid || '',
+                    'Name (EN)': s.name_en || s.full_name,
+                    'Name (AR)': s.name_ar || '',
+                    'Gender': s.gender || '',
+                    'Class': getClassName(s.class_level_id, s.class_arm_id),
+                    'Guardian': s.guardian_name || '',
+                    'Phone': s.guardian_phone || '',
+                    'Status': s.status,
+                  }));
+                  const headers = Object.keys(rows[0] || {});
+                  const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r as any)[h] || ''}"`).join(','))].join('\n');
+                  const blob = new Blob([csv], { type: 'text/csv' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a'); a.href = url; a.download = `students-${selectedClassLevel?.name_en || 'all'}.csv`; a.click();
+                  URL.revokeObjectURL(url);
+                }}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('Export CSV', 'تصدير CSV')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => {
+                  const printHtml = `<html><head><title>Students</title><style>body{font-family:Arial;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px 8px;text-align:left;font-size:12px;} th{background:#047857;color:white;}</style></head><body>
+                  <h2>${selectedClassLevel?.name_en || ''}${selectedClassArm ? ' - ' + selectedClassArm.name : ''}</h2>
+                  <table><thead><tr><th>#</th><th>Student ID</th><th>Name</th><th>Gender</th><th>Guardian</th><th>Phone</th></tr></thead><tbody>
+                  ${filtered.map((s, i) => `<tr><td>${i+1}</td><td>${s.student_uid||''}</td><td>${s.name_en||s.full_name}</td><td>${s.gender||''}</td><td>${s.guardian_name||''}</td><td>${s.guardian_phone||''}</td></tr>`).join('')}
+                  </tbody></table></body></html>`;
+                  const w = window.open('', '_blank');
+                  if (w) { w.document.write(printHtml); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 300); }
+                }}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('Print List', 'طباعة القائمة')}
+                </Button>
+                <Dialog open={addOpen} onOpenChange={handleAddOpenChange}>
+                  <DialogTrigger asChild>
+                    <Button size="sm"><Plus className="mr-2 h-4 w-4" />{t('Add Student', 'إضافة طالب')}</Button>
+                  </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader><DialogTitle>{t('Add Student', 'إضافة طالب')}</DialogTitle></DialogHeader>
                   <div className="grid grid-cols-2 gap-4">
@@ -387,6 +421,7 @@ const AdminStudents = () => {
                   </DialogFooter>
                 </DialogContent>
               </Dialog>
+              </div>
             </div>
             <Card className="shadow-card">
               <CardContent className="p-0">
