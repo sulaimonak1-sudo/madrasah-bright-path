@@ -41,30 +41,32 @@ const StaffSignup = () => {
         console.log('Fetching class_levels and class_arms...');
         const [clRes, armsRes] = await Promise.all([
           supabase.from('class_levels').select('*').order('display_order'),
-          supabase.from('class_arms').select('*'),
+          supabase.from('class_arms').select('*').order('name'),
         ]);
         
         if (clRes.error) {
           console.error('Error fetching class_levels:', clRes.error);
+          toast({ title: t('Error', 'خطأ'), description: 'Failed to fetch class levels', variant: 'destructive' });
         } else {
           console.log('class_levels fetched:', clRes.data);
+          setClassLevels(clRes.data || []);
         }
         
         if (armsRes.error) {
           console.error('Error fetching class_arms:', armsRes.error);
+          toast({ title: t('Error', 'خطأ'), description: 'Failed to fetch class arms', variant: 'destructive' });
         } else {
           console.log('class_arms fetched:', armsRes.data);
+          setClassArms(armsRes.data || []);
         }
-        
-        setClassLevels(clRes.data || []);
-        setClassArms(armsRes.data || []);
       } catch (err) {
         console.error('Error loading classes:', err);
+        toast({ title: t('Error', 'خطأ'), description: 'Failed to load classes', variant: 'destructive' });
       } finally {
         setClassesLoading(false);
       }
     })();
-  }, []);
+  }, [toast, t]);
 
   const validateAuthKey = async () => {
     if (!authKey.trim()) return;
@@ -115,28 +117,40 @@ const StaffSignup = () => {
   };
 
   const handleProfileSave = async () => {
-    if (!fullName.trim() || !currentUserId) return;
+    if (!fullName.trim() || !currentUserId) {
+      toast({ title: t('Error', 'خطأ'), description: t('Please enter your full name', 'يرجى إدخال اسمك الكامل'), variant: 'destructive' });
+      return;
+    }
     setLoading(true);
     try {
+      console.log('Saving profile for user:', currentUserId);
       const { error: profileErr } = await supabase.from('profiles').upsert({
         user_id: currentUserId,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
         class_teacher_class_arm_id: classArmId || null,
       }, { onConflict: 'user_id' });
-      if (profileErr) throw profileErr;
+      
+      if (profileErr) {
+        console.error('Profile error:', profileErr);
+        throw profileErr;
+      }
+      
+      console.log('Profile saved successfully');
 
       const { error: roleErr } = await supabase.from('user_roles').insert({
         user_id: currentUserId,
         role: 'teacher',
       });
+      
       if (roleErr) {
-        console.warn('Role assignment may need admin approval:', roleErr.message);
+        console.warn('Role assignment error (may need admin approval):', roleErr.message);
       }
 
       setStep('done');
     } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+      console.error('Error saving profile:', err);
+      toast({ title: t('Error', 'خطأ'), description: err.message || 'Failed to save profile', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -145,8 +159,16 @@ const StaffSignup = () => {
   // Build class options: "Level - Arm"
   const classOptions = classArms.map(arm => {
     const level = classLevels.find(l => l.id === arm.class_level_id);
-    return { id: arm.id, label: `${level?.name_en || ''} - ${arm.name}` };
+    const label = `${level?.name_en || 'Unknown'} - ${arm.name}`;
+    console.log(`Class option: ${label} (arm: ${arm.id}, level: ${arm.class_level_id})`);
+    return { id: arm.id, label };
   });
+
+  useEffect(() => {
+    console.log('classArms updated:', classArms);
+    console.log('classLevels updated:', classLevels);
+    console.log('classOptions computed:', classOptions);
+  }, [classArms, classLevels]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
