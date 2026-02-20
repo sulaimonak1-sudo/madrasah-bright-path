@@ -152,11 +152,27 @@ const StaffSignup = () => {
     setLoading(true);
     try {
       console.log('Saving profile for user:', currentUserId);
+      
+      // Determine if classArmId is actually a class level or an arm
+      let classTeacherArmId = null;
+      let classTeacherLevelId = null;
+      
+      if (classArmId) {
+        if (classArmId.startsWith('level-')) {
+          // This is a class level without arms
+          classTeacherLevelId = classArmId.replace('level-', '');
+        } else {
+          // This is an actual class arm
+          classTeacherArmId = classArmId;
+        }
+      }
+
       const { error: profileErr } = await supabase.from('profiles').upsert({
         user_id: currentUserId,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
-        class_teacher_class_arm_id: classArmId || null,
+        class_teacher_class_arm_id: classTeacherArmId,
+        class_teacher_class_level_id: classTeacherLevelId,
       }, { onConflict: 'user_id' });
       
       if (profileErr) {
@@ -185,13 +201,26 @@ const StaffSignup = () => {
     }
   };
 
-  // Build class options: "Level - Arm"
-  const classOptions = classArms.map(arm => {
-    const level = classLevels.find(l => l.id === arm.class_level_id);
-    const label = `${level?.name_en || 'Unknown'} - ${arm.name}`;
-    console.log(`Class option: ${label} (arm: ${arm.id}, level: ${arm.class_level_id})`);
-    return { id: arm.id, label };
-  });
+  // Build class options: Show all levels, with their arms as sub-options
+  const classOptions = classLevels.map(level => {
+    const armsForLevel = classArms.filter(arm => arm.class_level_id === level.id);
+    
+    if (armsForLevel.length === 0) {
+      // Class level with no arms - show the level itself
+      return { 
+        id: `level-${level.id}`, 
+        label: level.name_en,
+        isLevel: true
+      };
+    } else {
+      // Class level with arms - create an option for each arm
+      return armsForLevel.map(arm => ({
+        id: arm.id,
+        label: `${level.name_en} - ${arm.name}`,
+        isLevel: false
+      }));
+    }
+  }).flat(); // Flatten the array to merge all options
 
   useEffect(() => {
     console.log('classArms updated:', classArms);
