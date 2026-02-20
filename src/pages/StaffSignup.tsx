@@ -32,24 +32,36 @@ const StaffSignup = () => {
 
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
+  const [classesLoading, setClassesLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
+      setClassesLoading(true);
       try {
+        console.log('Fetching class_levels and class_arms...');
         const [clRes, armsRes] = await Promise.all([
           supabase.from('class_levels').select('*').order('display_order'),
           supabase.from('class_arms').select('*'),
         ]);
+        
         if (clRes.error) {
           console.error('Error fetching class_levels:', clRes.error);
+        } else {
+          console.log('class_levels fetched:', clRes.data);
         }
+        
         if (armsRes.error) {
           console.error('Error fetching class_arms:', armsRes.error);
+        } else {
+          console.log('class_arms fetched:', armsRes.data);
         }
+        
         setClassLevels(clRes.data || []);
         setClassArms(armsRes.data || []);
       } catch (err) {
         console.error('Error loading classes:', err);
+      } finally {
+        setClassesLoading(false);
       }
     })();
   }, []);
@@ -230,16 +242,26 @@ const StaffSignup = () => {
               </div>
               <div className="space-y-2">
                 <Label>{t('Class Teacher Of', 'معلم فصل')}</Label>
-                <Select value={classArmId} onValueChange={setClassArmId}>
-                  <SelectTrigger><SelectValue placeholder={t('Select class', 'اختر الفصل')} /></SelectTrigger>
-                  <SelectContent>
-                    {classOptions.map(opt => (
-                      <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {classesLoading ? (
+                  <div className="p-3 text-sm text-muted-foreground text-center">
+                    {t('Loading classes...', 'جاري تحميل الفصول...')}
+                  </div>
+                ) : classOptions.length === 0 ? (
+                  <div className="p-3 text-sm text-amber-600 bg-amber-50 rounded border border-amber-200">
+                    {t('No classes available. Please contact the admin to set up classes.', 'لا توجد فصول متاحة. يرجى التواصل مع المسؤول لإعداد الفصول.')}
+                  </div>
+                ) : (
+                  <Select value={classArmId} onValueChange={setClassArmId}>
+                    <SelectTrigger><SelectValue placeholder={t('Select class', 'اختر الفصل')} /></SelectTrigger>
+                    <SelectContent>
+                      {classOptions.map(opt => (
+                        <SelectItem key={opt.id} value={opt.id}>{opt.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
                 <p className="text-xs text-muted-foreground">
-                  {t('Select the class you are class teacher of', 'اختر الفصل الذي أنت معلمه')}
+                  {t('Select the class you are class teacher of (optional)', 'اختر الفصل الذي أنت معلمه (اختياري)')}
                 </p>
               </div>
               <Button className="w-full" onClick={handleProfileSave} disabled={loading || !fullName.trim()}>
