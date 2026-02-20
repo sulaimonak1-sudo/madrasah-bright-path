@@ -28,6 +28,7 @@ const StaffSignup = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [classArmId, setClassArmId] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
@@ -81,6 +82,7 @@ const StaffSignup = () => {
       });
       if (error) throw error;
       if (data.user) {
+        setCurrentUserId(data.user.id);
         setStep('profile');
       }
     } catch (err: any) {
@@ -91,14 +93,11 @@ const StaffSignup = () => {
   };
 
   const handleProfileSave = async () => {
-    if (!fullName.trim()) return;
+    if (!fullName.trim() || !currentUserId) return;
     setLoading(true);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('No user');
-
       const { error: profileErr } = await supabase.from('profiles').upsert({
-        user_id: user.id,
+        user_id: currentUserId,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
         class_teacher_class_arm_id: classArmId || null,
@@ -106,7 +105,7 @@ const StaffSignup = () => {
       if (profileErr) throw profileErr;
 
       const { error: roleErr } = await supabase.from('user_roles').insert({
-        user_id: user.id,
+        user_id: currentUserId,
         role: 'teacher',
       });
       if (roleErr) {
