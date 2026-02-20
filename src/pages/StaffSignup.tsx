@@ -172,7 +172,8 @@ const StaffSignup = () => {
       });
       
       if (roleErr) {
-        console.warn('Role assignment error (may need admin approval):', roleErr.message);
+        console.error('Role assignment error:', roleErr);
+        throw new Error(`Failed to assign role: ${roleErr.message}`);
       }
 
       setStep('done');
