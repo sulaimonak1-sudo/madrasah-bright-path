@@ -157,18 +157,20 @@ const StaffSignup = () => {
   };
 
   // Build class options: "Level - Arm"
-  const classOptions = classArms.map(arm => {
-    const level = classLevels.find(l => l.id === arm.class_level_id);
-    const label = `${level?.name_en || 'Unknown'} - ${arm.name}`;
-    console.log(`Class option: ${label} (arm: ${arm.id}, level: ${arm.class_level_id})`);
-    return { id: arm.id, label };
-  });
+  const classOptions = classArms
+    .map(arm => {
+      const level = classLevels.find(l => l.id === arm.class_level_id);
+      const label = `${level?.name_en || 'Unknown'} - ${arm.name}`;
+      return { id: arm.id, label };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
 
   useEffect(() => {
-    console.log('classArms updated:', classArms);
-    console.log('classLevels updated:', classLevels);
-    console.log('classOptions computed:', classOptions);
-  }, [classArms, classLevels]);
+    console.log('=== Class Data Updated ===');
+    console.log('classArms count:', classArms.length, classArms);
+    console.log('classLevels count:', classLevels.length, classLevels);
+    console.log('classOptions computed:', classOptions.length, classOptions);
+  }, [classArms, classLevels, classOptions]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
