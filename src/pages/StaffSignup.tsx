@@ -99,18 +99,46 @@ const StaffSignup = () => {
     }
     setLoading(true);
     try {
+      console.log('Attempting signup with email:', email);
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: { emailRedirectTo: window.location.origin },
       });
-      if (error) throw error;
+      
+      if (error) {
+        console.error('Signup error details:', {
+          message: error.message,
+          status: error.status,
+          code: error.code,
+        });
+        throw error;
+      }
+      
       if (data.user) {
+        console.log('Signup successful. User ID:', data.user.id);
         setCurrentUserId(data.user.id);
         setStep('profile');
       }
     } catch (err: any) {
-      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+      console.error('Signup exception:', err);
+      const errorMsg = err.message || 'Unknown error occurred';
+      
+      // Provide more helpful error messages
+      let userMessage = errorMsg;
+      if (errorMsg.includes('email limit exceeded') || errorMsg.includes('rate limit')) {
+        userMessage = t(
+          'Too many signup attempts. Please try again in a few minutes.',
+          'عدد كبير جداً من محاولات التسجيل. يرجى المحاولة مرة أخرى بعد بضع دقائق.'
+        );
+      } else if (errorMsg.includes('already registered') || errorMsg.includes('duplicate')) {
+        userMessage = t(
+          'This email is already registered. Please try logging in instead.',
+          'هذا البريد الإلكتروني مسجل بالفعل. يرجى محاولة تسجيل الدخول بدلاً من ذلك.'
+        );
+      }
+      
+      toast({ title: t('Error', 'خطأ'), description: userMessage, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -157,20 +185,18 @@ const StaffSignup = () => {
   };
 
   // Build class options: "Level - Arm"
-  const classOptions = classArms
-    .map(arm => {
-      const level = classLevels.find(l => l.id === arm.class_level_id);
-      const label = `${level?.name_en || 'Unknown'} - ${arm.name}`;
-      return { id: arm.id, label };
-    })
-    .sort((a, b) => a.label.localeCompare(b.label));
+  const classOptions = classArms.map(arm => {
+    const level = classLevels.find(l => l.id === arm.class_level_id);
+    const label = `${level?.name_en || 'Unknown'} - ${arm.name}`;
+    console.log(`Class option: ${label} (arm: ${arm.id}, level: ${arm.class_level_id})`);
+    return { id: arm.id, label };
+  });
 
   useEffect(() => {
-    console.log('=== Class Data Updated ===');
-    console.log('classArms count:', classArms.length, classArms);
-    console.log('classLevels count:', classLevels.length, classLevels);
-    console.log('classOptions computed:', classOptions.length, classOptions);
-  }, [classArms, classLevels, classOptions]);
+    console.log('classArms updated:', classArms);
+    console.log('classLevels updated:', classLevels);
+    console.log('classOptions computed:', classOptions);
+  }, [classArms, classLevels]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -242,12 +268,7 @@ const StaffSignup = () => {
                 <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => {
-                  setStep('auth_key');
-                  setEmail('');
-                  setPassword('');
-                  setConfirmPassword('');
-                }} className="flex-1">
+                <Button variant="outline" onClick={() => setStep('auth_key')} className="flex-1">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   {t('Back', 'رجوع')}
                 </Button>
