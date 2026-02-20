@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Search, Pencil, Trash2, Users, ChevronRight, ArrowLeft, Download } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Users, ChevronRight, ArrowLeft, Download, Printer } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -25,11 +25,9 @@ const AdminStudents = () => {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
-  // Step navigation
   const [step, setStep] = useState<'classes' | 'students'>('classes');
   const [selectedClassLevel, setSelectedClassLevel] = useState<any>(null);
   const [selectedClassArm, setSelectedClassArm] = useState<any>(null);
-  // Edit student state
   const [editFields, setEditFields] = useState<any>({});
 
   const openEdit = (student: any) => {
@@ -59,7 +57,6 @@ const AdminStudents = () => {
     fetchData();
   };
 
-  // Delete student
   const openDelete = (student: any) => {
     setSelectedStudent(student);
     setDeleteOpen(true);
@@ -78,13 +75,11 @@ const AdminStudents = () => {
     fetchData();
   };
 
-  // Form fields
   const [fullName, setFullName] = useState('');
   const [nameEn, setNameEn] = useState('');
   const [nameAr, setNameAr] = useState('');
   const [studentUid, setStudentUid] = useState('');
 
-  // Utility: Generate next student ID (e.g. ABS-001, ABS-002...)
   function generateStudentId() {
     const prefix = 'ABS-';
     const nums = students
@@ -96,39 +91,17 @@ const AdminStudents = () => {
     return `${prefix}${String(next).padStart(3, '0')}`;
   }
 
-  // Utility: Simple English to Arabic transliteration (placeholder)
   function transliterateToArabic(text: string): string {
-    // This is a placeholder. For real use, integrate a proper transliteration or translation API.
-    // Here, just return the English text in Arabic letters for demo purposes.
-    // You can replace this with a real library or API call.
     return text
-      .replace(/a/gi, 'ا')
-      .replace(/b/gi, 'ب')
-      .replace(/c/gi, 'ك')
-      .replace(/d/gi, 'د')
-      .replace(/e/gi, 'ي')
-      .replace(/f/gi, 'ف')
-      .replace(/g/gi, 'ج')
-      .replace(/h/gi, 'ه')
-      .replace(/i/gi, 'ي')
-      .replace(/j/gi, 'ج')
-      .replace(/k/gi, 'ك')
-      .replace(/l/gi, 'ل')
-      .replace(/m/gi, 'م')
-      .replace(/n/gi, 'ن')
-      .replace(/o/gi, 'و')
-      .replace(/p/gi, 'ب')
-      .replace(/q/gi, 'ق')
-      .replace(/r/gi, 'ر')
-      .replace(/s/gi, 'س')
-      .replace(/t/gi, 'ت')
-      .replace(/u/gi, 'و')
-      .replace(/v/gi, 'ف')
-      .replace(/w/gi, 'و')
-      .replace(/x/gi, 'كس')
-      .replace(/y/gi, 'ي')
-      .replace(/z/gi, 'ز');
+      .replace(/a/gi, 'ا').replace(/b/gi, 'ب').replace(/c/gi, 'ك').replace(/d/gi, 'د')
+      .replace(/e/gi, 'ي').replace(/f/gi, 'ف').replace(/g/gi, 'ج').replace(/h/gi, 'ه')
+      .replace(/i/gi, 'ي').replace(/j/gi, 'ج').replace(/k/gi, 'ك').replace(/l/gi, 'ل')
+      .replace(/m/gi, 'م').replace(/n/gi, 'ن').replace(/o/gi, 'و').replace(/p/gi, 'ب')
+      .replace(/q/gi, 'ق').replace(/r/gi, 'ر').replace(/s/gi, 'س').replace(/t/gi, 'ت')
+      .replace(/u/gi, 'و').replace(/v/gi, 'ف').replace(/w/gi, 'و').replace(/x/gi, 'كس')
+      .replace(/y/gi, 'ي').replace(/z/gi, 'ز');
   }
+
   const [gender, setGender] = useState('');
   const [classLevelId, setClassLevelId] = useState('');
   const [classArmId, setClassArmId] = useState('');
@@ -150,9 +123,6 @@ const AdminStudents = () => {
 
   useEffect(() => { fetchData(); }, []);
 
-  // When opening the Add Student dialog, prefill class level/arm from the
-  // class page the user clicked into. Also clear fields when opening a new
-  // dialog to ensure a fresh form.
   const handleAddOpenChange = (open: boolean) => {
     setAddOpen(open);
     if (open) {
@@ -165,9 +135,9 @@ const AdminStudents = () => {
       setClassLevelId(''); setClassArmId('');
     }
   };
+
   const filteredArms = useMemo(() => classArms.filter(a => a.class_level_id === classLevelId), [classArms, classLevelId]);
 
-  // Students filtered by selected class
   const studentsInSelectedClass = useMemo(() => {
     if (!selectedClassLevel) return [];
     return students.filter(s =>
@@ -185,22 +155,15 @@ const AdminStudents = () => {
   const getClassName = (levelId: string, armId: string) => {
     const level = classLevels.find(c => c.id === levelId);
     if (!level) return '';
-    if (!armId) {
-      // No arm assigned, just show class level
-      return bilingualText(level.name_en, level.name_ar);
-    }
+    if (!armId) return bilingualText(level.name_en, level.name_ar);
     const arm = classArms.find(a => a.id === armId);
     return `${bilingualText(level.name_en, level.name_ar)}${arm ? ' - ' + arm.name : ''}`;
   };
 
   const addStudent = async (levelId: string = '', armId: string = '') => {
     if (!fullName.trim()) return;
-    // Auto-generate student ID if not provided
     const autoId = studentUid.trim() ? studentUid.trim() : generateStudentId();
-    // Auto-generate Arabic name if not provided
     const autoAr = nameAr.trim() ? nameAr.trim() : transliterateToArabic(nameEn.trim() || fullName.trim());
-    
-    // Use provided parameters, fallback to state variables, then null
     const finalLevelId = levelId || classLevelId || null;
     const finalArmId = armId || classArmId || null;
 
@@ -208,9 +171,8 @@ const AdminStudents = () => {
       toast({ title: t('Error', 'خطأ'), description: t('Please select a class level', 'الرجاء تحديد مستوى الفئة'), variant: 'destructive' });
       return;
     }
-    
-    // Insert student first (photo upload happens after we have the record id)
-    const { data: inserted, error: insertErr } = await supabase.from('students').insert({
+
+    const { error: insertErr } = await supabase.from('students').insert({
       full_name: fullName.trim(),
       name_en: nameEn.trim() || fullName.trim(),
       name_ar: autoAr,
@@ -224,7 +186,6 @@ const AdminStudents = () => {
     }).select().maybeSingle();
     if (insertErr) { toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' }); return; }
 
-    // Photo upload not supported yet (no photo_url column)
     toast({ title: t('Student added', 'تمت إضافة الطالب') });
     setFullName(''); setNameEn(''); setNameAr(''); setStudentUid('');
     setGender(''); setClassLevelId(''); setClassArmId('');
@@ -234,13 +195,97 @@ const AdminStudents = () => {
     fetchData();
   };
 
+  // Master student list print
+  const printMasterList = () => {
+    const allStudents = students.filter(s => s.status === 'active');
+    const rows = allStudents.map((s, i) => {
+      const level = classLevels.find(c => c.id === s.class_level_id);
+      const arm = classArms.find(a => a.id === s.class_arm_id);
+      return `<tr>
+        <td>${i + 1}</td>
+        <td>${s.student_uid || '—'}</td>
+        <td>${s.name_en || s.full_name}</td>
+        <td>${s.name_ar || '—'}</td>
+        <td>${level?.name_en || '—'}</td>
+        <td>${arm?.name || '—'}</td>
+        <td>${s.gender || '—'}</td>
+      </tr>`;
+    });
+
+    const html = `<html><head><title>Master Student List</title>
+    <style>
+      @page { size: A4 landscape; margin: 15mm; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; }
+      .header { text-align: center; margin-bottom: 20px; }
+      .header img { width: 50px; height: 50px; object-fit: contain; }
+      .header h1 { font-size: 20px; margin: 5px 0; text-transform: uppercase; }
+      .header p { font-size: 12px; color: #666; }
+      table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      th { background: #047857; color: white; padding: 8px 6px; text-align: left; font-weight: 700; }
+      td { padding: 6px; border: 1px solid #d1d5db; }
+      tr:nth-child(even) { background: #f9fafb; }
+      .footer { margin-top: 20px; text-align: center; font-size: 10px; color: #888; }
+    </style></head><body>
+    <div class="header">
+      <img src="${window.location.origin}/images/school-logo.png" alt="Logo" onerror="this.style.display='none'" />
+      <h1>AL-BARI GROUP OF SCHOOLS</h1>
+      <p>Madrasah Section — Master Student List</p>
+      <p>Total Students: ${allStudents.length} | Generated: ${new Date().toLocaleDateString()}</p>
+    </div>
+    <table>
+      <thead><tr><th>#</th><th>Student ID</th><th>Name (EN)</th><th>Name (AR)</th><th>Class</th><th>Arm</th><th>Gender</th></tr></thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>
+    <div class="footer">Al-Bari Group of Schools — Master Student List</div>
+    </body></html>`;
+
+    const w = window.open('', '_blank');
+    if (w) { w.document.write(html); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 400); }
+  };
+
+  // Master CSV export
+  const exportMasterCSV = () => {
+    const allStudents = students.filter(s => s.status === 'active');
+    const rows = allStudents.map(s => {
+      const level = classLevels.find(c => c.id === s.class_level_id);
+      const arm = classArms.find(a => a.id === s.class_arm_id);
+      return {
+        'Student ID': s.student_uid || '',
+        'Name (EN)': s.name_en || s.full_name,
+        'Name (AR)': s.name_ar || '',
+        'Class': level?.name_en || '',
+        'Arm': arm?.name || '',
+        'Gender': s.gender || '',
+        'Guardian': s.guardian_name || '',
+        'Phone': s.guardian_phone || '',
+      };
+    });
+    const headers = Object.keys(rows[0] || {});
+    const csv = [headers.join(','), ...rows.map(r => headers.map(h => `"${(r as any)[h] || ''}"`).join(','))].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'master-student-list.csv'; a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
-        {/* Step 1: Show classes */}
         {step === 'classes' && (
           <div>
-            <h1 className="text-2xl font-bold mb-4">{t('Students', 'الطلاب')}</h1>
+            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+              <h1 className="text-2xl font-bold">{t('Students', 'الطلاب')}</h1>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={exportMasterCSV}>
+                  <Download className="mr-2 h-4 w-4" />
+                  {t('Export Master List', 'تصدير قائمة رئيسية')}
+                </Button>
+                <Button size="sm" variant="outline" onClick={printMasterList}>
+                  <Printer className="mr-2 h-4 w-4" />
+                  {t('Print Master List', 'طباعة قائمة رئيسية')}
+                </Button>
+              </div>
+            </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {classLevels.map(level => {
                 const arms = classArms.filter(a => a.class_level_id === level.id);
@@ -251,11 +296,8 @@ const AdminStudents = () => {
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {arms.length === 0 ? (
-                        <Button
-                          variant="outline"
-                          className="w-full justify-between"
-                          onClick={() => { setSelectedClassLevel(level); setSelectedClassArm(null); setStep('students'); }}
-                        >
+                        <Button variant="outline" className="w-full justify-between"
+                          onClick={() => { setSelectedClassLevel(level); setSelectedClassArm(null); setStep('students'); }}>
                           <span className="flex items-center gap-2">
                             <Users className="h-4 w-4 text-muted-foreground" />
                             {bilingualText(level.name_en, level.name_ar)}
@@ -264,12 +306,8 @@ const AdminStudents = () => {
                         </Button>
                       ) : (
                         arms.map(arm => (
-                          <Button
-                            key={arm.id}
-                            variant="outline"
-                            className="w-full justify-between"
-                            onClick={() => { setSelectedClassLevel(level); setSelectedClassArm(arm); setStep('students'); }}
-                          >
+                          <Button key={arm.id} variant="outline" className="w-full justify-between"
+                            onClick={() => { setSelectedClassLevel(level); setSelectedClassArm(arm); setStep('students'); }}>
                             <span className="flex items-center gap-2">
                               <Users className="h-4 w-4 text-muted-foreground" />
                               {bilingualText(level.name_en, level.name_ar)} - {arm.name}
@@ -286,7 +324,6 @@ const AdminStudents = () => {
           </div>
         )}
 
-        {/* Step 2: Show students in selected class */}
         {step === 'students' && (
           <div>
             <div className="flex items-center gap-3 mb-4">
@@ -334,7 +371,7 @@ const AdminStudents = () => {
                   const w = window.open('', '_blank');
                   if (w) { w.document.write(printHtml); w.document.close(); setTimeout(() => { w.focus(); w.print(); }, 300); }
                 }}>
-                  <Download className="mr-2 h-4 w-4" />
+                  <Printer className="mr-2 h-4 w-4" />
                   {t('Print List', 'طباعة القائمة')}
                 </Button>
                 <Dialog open={addOpen} onOpenChange={handleAddOpenChange}>
@@ -343,7 +380,7 @@ const AdminStudents = () => {
                   </DialogTrigger>
                 <DialogContent className="max-w-lg">
                   <DialogHeader><DialogTitle>{t('Add Student', 'إضافة طالب')}</DialogTitle></DialogHeader>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
                     <div className="space-y-2 col-span-2">
                       <Label>{t('Full Name', 'الاسم الكامل')} *</Label>
                       <Input value={fullName} onChange={e => setFullName(e.target.value)} />
@@ -354,11 +391,11 @@ const AdminStudents = () => {
                     </div>
                     <div className="space-y-2">
                       <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                      <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
+                      <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً')} />
                     </div>
                     <div className="space-y-2">
                       <Label>{t('Student ID', 'رقم الطالب')}</Label>
-                      <Input value={studentUid} onChange={e => setStudentUid(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
+                      <Input value={studentUid} onChange={e => setStudentUid(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً')} />
                     </div>
                     <div className="space-y-2">
                       <Label>{t('Gender', 'الجنس')}</Label>
@@ -373,102 +410,122 @@ const AdminStudents = () => {
                     <div className="space-y-2">
                       <Label>{t('Class Level', 'المرحلة')}</Label>
                       <Select value={classLevelId} onValueChange={v => { setClassLevelId(v); setClassArmId(''); }}>
-                        <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
                         <SelectContent>
                           {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>{t('Class Arm', 'الشعبة')}</Label>
+                      <Label>{t('Arm', 'الشعبة')}</Label>
                       <Select value={classArmId} onValueChange={setClassArmId} disabled={!classLevelId}>
-                        <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={t('None', 'لا يوجد')} /></SelectTrigger>
                         <SelectContent>
-                          {classArms.filter(a => a.class_level_id === classLevelId).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                          {filteredArms.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="space-y-2 col-span-2">
+                    <div className="space-y-2">
                       <Label>{t('Guardian Name', 'اسم ولي الأمر')}</Label>
                       <Input value={guardianName} onChange={e => setGuardianName(e.target.value)} />
                     </div>
-                    <div className="space-y-2 col-span-2">
+                    <div className="space-y-2">
                       <Label>{t('Guardian Phone', 'هاتف ولي الأمر')}</Label>
                       <Input value={guardianPhone} onChange={e => setGuardianPhone(e.target.value)} />
-                    </div>
-                    <div className="space-y-2 col-span-2">
-                      <Label>{t('Photo (optional)', 'صورة (اختيارية)')}</Label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const f = e.target.files?.[0] || null;
-                          setPhotoFile(f);
-                          setPhotoPreview(f ? URL.createObjectURL(f) : null);
-                        }}
-                        className="w-full"
-                      />
-                      {photoPreview && (
-                        <div className="mt-2 w-24 h-24 border rounded overflow-hidden">
-                          <img src={photoPreview} alt="preview" className="w-full h-full object-cover" />
-                        </div>
-                      )}
                     </div>
                   </div>
                   <DialogFooter>
                     <DialogClose asChild><Button variant="outline">{t('Cancel', 'إلغاء')}</Button></DialogClose>
-                    <Button onClick={() => { addStudent(); }}>{t('Add', 'إضافة')}</Button>
+                    <Button onClick={() => addStudent()} disabled={!fullName.trim()}>
+                      <Plus className="mr-2 h-4 w-4" />
+                      {t('Add', 'إضافة')}
+                    </Button>
                   </DialogFooter>
                 </DialogContent>
-              </Dialog>
+                </Dialog>
               </div>
             </div>
-            <Card className="shadow-card">
+
+            <Card className="shadow-card mt-2">
               <CardContent className="p-0">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('Student ID', 'رقم الطالب')}</TableHead>
-                      <TableHead>{t('Name', 'الاسم')}</TableHead>
-                      <TableHead>{t('Gender', 'الجنس')}</TableHead>
-                      <TableHead>{t('Status', 'الحالة')}</TableHead>
-                      <TableHead></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.map(student => (
-                      <TableRow key={student.id}>
-                        <TableCell className="font-mono text-sm">{student.student_uid || '—'}</TableCell>
-                        <TableCell className="font-medium">{bilingualText(student.name_en || student.full_name, student.name_ar)}</TableCell>
-                        <TableCell className="capitalize">{student.gender ? t(student.gender, student.gender === 'male' ? 'ذكر' : 'أنثى') : '—'}</TableCell>
-                        <TableCell>
-                          <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
-                            {t(student.status, student.status === 'active' ? 'نشط' : 'غير نشط')}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="flex gap-2">
-                          <Button size="icon" variant="ghost" onClick={() => openEdit(student)}><Pencil className="h-4 w-4" /></Button>
-                          <Button size="icon" variant="ghost" onClick={() => openDelete(student)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                        </TableCell>
+                <div className="overflow-y-auto max-h-[60vh]">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-8">#</TableHead>
+                        <TableHead>{t('Student ID', 'رقم الطالب')}</TableHead>
+                        <TableHead>{t('Name', 'الاسم')}</TableHead>
+                        <TableHead>{t('Gender', 'الجنس')}</TableHead>
+                        <TableHead>{t('Status', 'الحالة')}</TableHead>
+                        <TableHead className="text-right">{t('Actions', 'إجراءات')}</TableHead>
                       </TableRow>
-                    ))}
-                    {filtered.length === 0 && (
-                      <TableRow><TableCell colSpan={5} className="text-center py-8 text-muted-foreground">{t('No students found.', 'لا طلاب.')}</TableCell></TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            {t('No students found', 'لا يوجد طلاب')}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        filtered.map((student, i) => (
+                          <TableRow key={student.id}>
+                            <TableCell className="text-muted-foreground">{i + 1}</TableCell>
+                            <TableCell className="font-mono text-sm">{student.student_uid || '—'}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{student.name_en || student.full_name}</div>
+                              {student.name_ar && <div className="text-xs text-muted-foreground" dir="rtl">{student.name_ar}</div>}
+                            </TableCell>
+                            <TableCell className="capitalize">{student.gender || '—'}</TableCell>
+                            <TableCell>
+                              <Badge variant={student.status === 'active' ? 'default' : 'secondary'}>
+                                {student.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-1">
+                                <Button size="icon" variant="ghost" onClick={() => openEdit(student)}>
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog open={deleteOpen && selectedStudent?.id === student.id} onOpenChange={open => { if (!open) setDeleteOpen(false); }}>
+                                  <AlertDialogTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="text-destructive" onClick={() => openDelete(student)}>
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>{t('Delete Student', 'حذف الطالب')}</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        {t('Are you sure? This action cannot be undone.', 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء.')}
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>{t('Cancel', 'إلغاء')}</AlertDialogCancel>
+                                      <AlertDialogAction onClick={confirmDelete}>{t('Delete', 'حذف')}</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               </CardContent>
             </Card>
           </div>
         )}
 
-        {/* Edit and Delete dialogs remain unchanged */}
+        {/* Edit Student Dialog */}
         <Dialog open={editOpen} onOpenChange={setEditOpen}>
           <DialogContent className="max-w-lg">
-            <DialogHeader><DialogTitle>{t('Edit Student', 'تعديل طالب')}</DialogTitle></DialogHeader>
-            <div className="grid grid-cols-2 gap-4">
+            <DialogHeader><DialogTitle>{t('Edit Student', 'تعديل الطالب')}</DialogTitle></DialogHeader>
+            <div className="grid grid-cols-2 gap-4 max-h-[60vh] overflow-y-auto pr-2">
               <div className="space-y-2 col-span-2">
-                <Label>{t('Full Name', 'الاسم الكامل')} *</Label>
+                <Label>{t('Full Name', 'الاسم الكامل')}</Label>
                 <Input value={editFields.full_name || ''} onChange={e => handleEditChange('full_name', e.target.value)} />
               </div>
               <div className="space-y-2">
@@ -486,28 +543,10 @@ const AdminStudents = () => {
               <div className="space-y-2">
                 <Label>{t('Gender', 'الجنس')}</Label>
                 <Select value={editFields.gender || ''} onValueChange={v => handleEditChange('gender', v)}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="male">{t('Male', 'ذكر')}</SelectItem>
                     <SelectItem value="female">{t('Female', 'أنثى')}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('Class Level', 'المرحلة')}</Label>
-                <Select value={editFields.class_level_id || ''} onValueChange={v => { handleEditChange('class_level_id', v); handleEditChange('class_arm_id', ''); }}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
-                  <SelectContent>
-                    {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>{t('Class Arm', 'الشعبة')}</Label>
-                <Select value={editFields.class_arm_id || ''} onValueChange={v => handleEditChange('class_arm_id', v)} disabled={!editFields.class_level_id}>
-                  <SelectTrigger><SelectValue placeholder={t('Select', 'اختر')} /></SelectTrigger>
-                  <SelectContent>
-                    {classArms.filter(a => a.class_level_id === editFields.class_level_id).map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -519,6 +558,17 @@ const AdminStudents = () => {
                 <Label>{t('Guardian Phone', 'هاتف ولي الأمر')}</Label>
                 <Input value={editFields.guardian_phone || ''} onChange={e => handleEditChange('guardian_phone', e.target.value)} />
               </div>
+              <div className="space-y-2">
+                <Label>{t('Status', 'الحالة')}</Label>
+                <Select value={editFields.status || 'active'} onValueChange={v => handleEditChange('status', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">{t('Active', 'نشط')}</SelectItem>
+                    <SelectItem value="graduated">{t('Graduated', 'متخرج')}</SelectItem>
+                    <SelectItem value="transferred">{t('Transferred', 'منقول')}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <DialogFooter>
               <DialogClose asChild><Button variant="outline">{t('Cancel', 'إلغاء')}</Button></DialogClose>
@@ -526,22 +576,6 @@ const AdminStudents = () => {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
-        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-          <AlertDialogTrigger asChild></AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{t('Delete Student', 'حذف الطالب')}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {t('Are you sure you want to delete this student? This action cannot be undone.', 'هل أنت متأكد أنك تريد حذف هذا الطالب؟ لا يمكن التراجع عن هذا الإجراء.')}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>{t('Cancel', 'إلغاء')}</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete}>{t('Delete', 'حذف')}</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
       </div>
     </AdminLayout>
   );
