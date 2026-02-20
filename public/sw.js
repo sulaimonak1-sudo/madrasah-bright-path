@@ -2,17 +2,19 @@ const CACHE_NAME = 'madrasah-results-v1';
 const urlsToCache = [
   '/',
   '/index.html',
-  '/al-bari-logo.png',
 ];
 
 // Install service worker
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache).catch(() => {
-        // Some assets might not be available during initial install
-        console.log('Some assets could not be cached during install');
-      });
+      return Promise.all(
+        urlsToCache.map(url => {
+          return cache.add(url).catch(() => {
+            console.log('Could not cache: ' + url);
+          });
+        })
+      );
     })
   );
   self.skipWaiting();
