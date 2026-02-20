@@ -1,4 +1,5 @@
 const CACHE_NAME = 'madrasah-results-v1';
+const STATIC_CACHE = 'madrasah-static-v1';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -6,15 +7,17 @@ const urlsToCache = [
 
 // Install service worker
 self.addEventListener('install', (event) => {
+  console.log('[ServiceWorker] Installing...');
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return Promise.all(
-        urlsToCache.map(url => {
-          return cache.add(url).catch(() => {
-            console.log('Could not cache: ' + url);
-          });
-        })
+      console.log('[ServiceWorker] Caching app shell');
+      return Promise.allSettled(
+        urlsToCache.map(url => cache.add(url))
       );
+    }).then(() => {
+      console.log('[ServiceWorker] Install complete');
+    }).catch(err => {
+      console.error('[ServiceWorker] Install failed:', err);
     })
   );
   self.skipWaiting();
@@ -22,15 +25,19 @@ self.addEventListener('install', (event) => {
 
 // Activate service worker
 self.addEventListener('activate', (event) => {
+  console.log('[ServiceWorker] Activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== STATIC_CACHE) {
+            console.log('[ServiceWorker] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => {
+      console.log('[ServiceWorker] Activation complete');
     })
   );
   self.clients.claim();
@@ -43,14 +50,23 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  const url = new URL(event.request.url);
+  
   // Network first for API calls
-  if (event.request.url.includes('/rest/') || event.request.url.includes('supabase')) {
+  if (url.pathname.includes('/rest/') || event.request.url.includes('supabase')) {
     return event.respondWith(
       fetch(event.request)
         .then((response) => {
+          if (response.ok) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
+          }
           return response;
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('[ServiceWorker] Fetch failed for', event.request.url, error);
           return caches.match(event.request);
         })
     );
@@ -62,15 +78,22 @@ self.addEventListener('fetch', (event) => {
       if (response) {
         return response;
       }
+      
       return fetch(event.request).then((response) => {
-        if (!response || response.status !== 200 || response.type !== 'basic') {
+        if (!response || response.status !== 200 || response.type === 'error') {
           return response;
         }
+        
         const responseToCache = response.clone();
-        caches.open(CACHE_NAME).then((cache) => {
-          cache.put(event.request, responseToCache);
+        caches.open(STATIC_CACHE).then((cache) => {
+          cache.put(event.request, responseToCache).catch(() => {
+            console.log('[ServiceWorker] Failed to cache:', event.request.url);
+          });
         });
         return response;
+      }).catch((error) => {
+        console.log('[ServiceWorker] Fetch failed, returning fallback:', event.request.url);
+        return caches.match(event.request);
       });
     })
   );

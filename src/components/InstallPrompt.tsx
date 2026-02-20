@@ -7,18 +7,24 @@ import { useLanguage } from '@/contexts/LanguageContext';
 
 export const InstallPrompt = () => {
   const { t, language } = useLanguage();
-  const { canInstall, promptInstall, dismissInstallPrompt } = useInstallPrompt();
+  const { canInstall, isInstalled, promptInstall, dismissInstallPrompt } = useInstallPrompt();
   const [showPrompt, setShowPrompt] = React.useState(false);
 
   useEffect(() => {
-    if (canInstall) {
+    console.log('[InstallPrompt] canInstall:', canInstall, 'isInstalled:', isInstalled);
+    if (canInstall && !isInstalled) {
       // Show prompt after a short delay to not startle the user
-      const timer = setTimeout(() => setShowPrompt(true), 1000);
+      const timer = setTimeout(() => {
+        console.log('[InstallPrompt] Showing install prompt');
+        setShowPrompt(true);
+      }, 1000);
       return () => clearTimeout(timer);
+    } else if (isInstalled) {
+      setShowPrompt(false);
     }
-  }, [canInstall]);
+  }, [canInstall, isInstalled]);
 
-  if (!showPrompt) {
+  if (!showPrompt || isInstalled) {
     return null;
   }
 
