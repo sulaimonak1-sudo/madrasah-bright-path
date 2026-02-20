@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
+import { InstallPrompt } from '@/components/InstallPrompt';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -160,6 +161,9 @@ const AdminDashboard = () => {
           <h1 className="text-2xl font-bold">{t('Dashboard', 'لوحة التحكم')}</h1>
           <p className="text-muted-foreground">{t('Overview of your Madrasah result portal', 'نظرة عامة على بوابة نتائج المدرسة')}</p>
         </div>
+
+        {/* Install PWA Prompt */}
+        <InstallPrompt />
 
         {/* Stats */}
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
