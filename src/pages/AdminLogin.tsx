@@ -93,9 +93,13 @@ const AdminLogin = () => {
               </Button>
               <p className="text-center text-sm text-muted-foreground">
                 {t('Staff?', 'موظف?')}{' '}
-                <a href="/staff/signup" className="text-primary hover:underline font-medium">
+                <button
+                  type="button"
+                  onClick={() => navigate('/staff/signup')}
+                  className="text-primary hover:underline font-medium bg-transparent border-none cursor-pointer p-0"
+                >
                   {t('Register here', 'سجل هنا')}
-                </a>
+                </button>
               </p>
             </form>
           </CardContent>

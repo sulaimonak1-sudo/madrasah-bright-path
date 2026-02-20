@@ -257,9 +257,13 @@ const StaffSignup = () => {
           {step !== 'done' && (
             <p className="text-center text-xs text-muted-foreground">
               {t('Already have an account?', 'لديك حساب بالفعل?')}{' '}
-              <a href="/admin/login" className="text-primary hover:underline">
+              <button
+                type="button"
+                onClick={() => navigate('/admin/login')}
+                className="text-primary hover:underline bg-transparent border-none cursor-pointer p-0"
+              >
                 {t('Login', 'تسجيل الدخول')}
-              </a>
+              </button>
             </p>
           )}
         </CardContent>
