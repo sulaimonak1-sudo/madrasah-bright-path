@@ -35,12 +35,22 @@ const StaffSignup = () => {
 
   useEffect(() => {
     (async () => {
-      const [clRes, armsRes] = await Promise.all([
-        supabase.from('class_levels').select('*').order('display_order'),
-        supabase.from('class_arms').select('*'),
-      ]);
-      setClassLevels(clRes.data || []);
-      setClassArms(armsRes.data || []);
+      try {
+        const [clRes, armsRes] = await Promise.all([
+          supabase.from('class_levels').select('*').order('display_order'),
+          supabase.from('class_arms').select('*'),
+        ]);
+        if (clRes.error) {
+          console.error('Error fetching class_levels:', clRes.error);
+        }
+        if (armsRes.error) {
+          console.error('Error fetching class_arms:', armsRes.error);
+        }
+        setClassLevels(clRes.data || []);
+        setClassArms(armsRes.data || []);
+      } catch (err) {
+        console.error('Error loading classes:', err);
+      }
     })();
   }, []);
 
