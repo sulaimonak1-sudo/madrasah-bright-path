@@ -28,9 +28,9 @@ const Index = () => {
           if (data.length > 0) setTermId(data[0].id);
         }
       } catch (err) {
+
         // ignore
-      }
-    })();
+      }})();
   }, []);
 
   const handleCheckResult = async (e: React.FormEvent) => {
@@ -62,7 +62,7 @@ const Index = () => {
         <div className="container relative z-10">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-6 inline-flex items-center gap-3 rounded-full bg-primary-foreground/15 px-5 py-2 backdrop-blur-sm">
-              <img src="/images/school-logo.png" alt="Al-Bari Logo" className="h-8 w-8 object-contain" />
+              
               <span className="text-sm font-semibold text-primary-foreground tracking-wide uppercase">
                 {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
               </span>
@@ -99,10 +99,10 @@ const Index = () => {
                 <Input
                   placeholder={t('e.g., ABS-001', 'مثال: ABS-001')}
                   value={studentId}
-                  onChange={e => setStudentId(e.target.value)}
+                  onChange={(e) => setStudentId(e.target.value)}
                   disabled={loading}
-                  className="h-11"
-                />
+                  className="h-11" />
+
               </div>
 
               <div className="space-y-2">
@@ -110,15 +110,15 @@ const Index = () => {
                 <select
                   className="w-full px-3 py-2.5 border border-input rounded-md bg-background text-foreground h-11"
                   value={termId}
-                  onChange={e => setTermId(e.target.value)}
-                  disabled={loading || terms.length === 0}
-                >
+                  onChange={(e) => setTermId(e.target.value)}
+                  disabled={loading || terms.length === 0}>
+
                   <option value="">{t('Select term...', 'اختر الفصل...')}</option>
-                  {terms.map(term => (
-                    <option key={term.id} value={term.id}>
+                  {terms.map((term) =>
+                  <option key={term.id} value={term.id}>
                       {`${t('Term', 'الفصل')} ${term.term_number} - ${term.name_en || term.name_ar}`}
                     </option>
-                  ))}
+                  )}
                 </select>
               </div>
 
@@ -128,17 +128,17 @@ const Index = () => {
                   type="password"
                   placeholder={t('Enter your PIN', 'أدخل الرقم السري')}
                   value={pin}
-                  onChange={e => setPin(e.target.value)}
+                  onChange={(e) => setPin(e.target.value)}
                   disabled={loading}
-                  className="h-11"
-                />
+                  className="h-11" />
+
               </div>
 
-              {error && (
-                <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">
+              {error &&
+              <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">
                   {error}
                 </div>
-              )}
+              }
 
               <Button type="submit" className="w-full h-12 text-base font-semibold" size="lg" disabled={loading}>
                 <ArrowRight className="mr-2 h-5 w-5" />
@@ -157,16 +157,16 @@ const Index = () => {
           </h2>
           <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
             {t('A modern, secure, and bilingual platform for accessing student academic results.',
-               'منصة حديثة وآمنة وثنائية اللغة للوصول إلى نتائج الطلاب الأكاديمية.')}
+            'منصة حديثة وآمنة وثنائية اللغة للوصول إلى نتائج الطلاب الأكاديمية.')}
           </p>
         </div>
         <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3">
           {[
-            { icon: Shield, title_en: 'Secure & Private', title_ar: 'آمن وخاص', desc_en: 'PIN-protected results ensure only authorized access to student records.', desc_ar: 'نتائج محمية بالرقم السري تضمن الوصول المصرح به فقط.' },
-            { icon: BookOpen, title_en: 'Comprehensive Reports', title_ar: 'تقارير شاملة', desc_en: 'View full term results with CA scores, exam marks, and overall grades.', desc_ar: 'عرض نتائج الفصل كاملة مع درجات الأعمال والامتحانات.' },
-            { icon: GraduationCap, title_en: 'Bilingual Support', title_ar: 'دعم ثنائي اللغة', desc_en: 'Full English & Arabic support for all students and parents.', desc_ar: 'دعم كامل للإنجليزية والعربية لجميع الطلاب وأولياء الأمور.' },
-          ].map((f, i) => (
-            <Card key={i} className="text-center border-0 shadow-card hover:shadow-card-lg transition-shadow duration-300">
+          { icon: Shield, title_en: 'Secure & Private', title_ar: 'آمن وخاص', desc_en: 'PIN-protected results ensure only authorized access to student records.', desc_ar: 'نتائج محمية بالرقم السري تضمن الوصول المصرح به فقط.' },
+          { icon: BookOpen, title_en: 'Comprehensive Reports', title_ar: 'تقارير شاملة', desc_en: 'View full term results with CA scores, exam marks, and overall grades.', desc_ar: 'عرض نتائج الفصل كاملة مع درجات الأعمال والامتحانات.' },
+          { icon: GraduationCap, title_en: 'Bilingual Support', title_ar: 'دعم ثنائي اللغة', desc_en: 'Full English & Arabic support for all students and parents.', desc_ar: 'دعم كامل للإنجليزية والعربية لجميع الطلاب وأولياء الأمور.' }].
+          map((f, i) =>
+          <Card key={i} className="text-center border-0 shadow-card hover:shadow-card-lg transition-shadow duration-300">
               <CardContent className="pt-8 pb-6 px-6">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
                   <f.icon className="h-7 w-7 text-primary" />
@@ -175,7 +175,7 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">{t(f.desc_en, f.desc_ar)}</p>
               </CardContent>
             </Card>
-          ))}
+          )}
         </div>
       </section>
 
@@ -184,22 +184,22 @@ const Index = () => {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { icon: Users, value: '500+', label_en: 'Students', label_ar: 'طالب' },
-              { icon: BookOpen, value: '20+', label_en: 'Subjects', label_ar: 'مادة' },
-              { icon: Star, value: '100%', label_en: 'Digital Records', label_ar: 'سجلات رقمية' },
-              { icon: CheckCircle, value: '24/7', label_en: 'Access', label_ar: 'وصول' },
-            ].map((s, i) => (
-              <div key={i} className="flex flex-col items-center gap-2">
+            { icon: Users, value: '500+', label_en: 'Students', label_ar: 'طالب' },
+            { icon: BookOpen, value: '20+', label_en: 'Subjects', label_ar: 'مادة' },
+            { icon: Star, value: '100%', label_en: 'Digital Records', label_ar: 'سجلات رقمية' },
+            { icon: CheckCircle, value: '24/7', label_en: 'Access', label_ar: 'وصول' }].
+            map((s, i) =>
+            <div key={i} className="flex flex-col items-center gap-2">
                 <s.icon className="h-6 w-6 text-primary" />
                 <span className="text-2xl font-bold text-foreground">{s.value}</span>
                 <span className="text-sm text-muted-foreground">{t(s.label_en, s.label_ar)}</span>
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>
-    </PublicLayout>
-  );
+    </PublicLayout>);
+
 };
 
 export default Index;
