@@ -52,6 +52,12 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(event.request.url);
   
+  // Skip PWA-critical files - let browser handle these directly
+  if (url.pathname === '/manifest.json' || url.pathname === '/sw.js') {
+    console.log('[ServiceWorker] Skipping PWA critical file:', url.pathname);
+    return;
+  }
+  
   // Network first for API calls
   if (url.pathname.includes('/rest/') || event.request.url.includes('supabase')) {
     return event.respondWith(
@@ -92,8 +98,24 @@ self.addEventListener('fetch', (event) => {
         });
         return response;
       }).catch((error) => {
-        console.log('[ServiceWorker] Fetch failed, returning fallback:', event.request.url);
-        return caches.match(event.request);
+        console.log('[ServiceWorker] Fetch failed, returning fallback:', event.request.url, error);
+        // Return cached version or a basic offline response
+        return caches.match(event.request).then(cachedResponse => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+          // Return a basic offline page/response if nothing is cached
+          return new Response('Offline - resource not available', {
+            status: 503,
+            statusText: 'Service Unavailable',
+            headers: new Headers({
+              'Content-Type': 'text/plain'
+            })
+          });
+        }).catch(() => {
+          // Final fallback
+          return new Response('Offline', { status: 503 });
+        });
       });
     })
   );
