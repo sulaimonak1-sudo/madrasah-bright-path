@@ -242,7 +242,12 @@ const StaffSignup = () => {
                 <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} placeholder="••••••••" />
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setStep('auth_key')} className="flex-1">
+                <Button variant="outline" onClick={() => {
+                  setStep('auth_key');
+                  setEmail('');
+                  setPassword('');
+                  setConfirmPassword('');
+                }} className="flex-1">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   {t('Back', 'رجوع')}
                 </Button>
