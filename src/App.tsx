@@ -22,6 +22,7 @@ import AdminLocking from "./pages/AdminLocking";
 import ResultView from "./pages/ResultView";
 import StaffSignup from "./pages/StaffSignup";
 import PinGenerate from "./pages/PinGenerate";
+import AdminStaff from "./pages/AdminStaff";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/admin/sessions" element={<ProtectedRoute requiredRole="admin"><AdminSessions /></ProtectedRoute>} />
               <Route path="/admin/promotion" element={<ProtectedRoute requiredRole="admin"><AdminPromotion /></ProtectedRoute>} />
               <Route path="/admin/locking" element={<ProtectedRoute requiredRole="admin"><AdminLocking /></ProtectedRoute>} />
+              <Route path="/admin/staff" element={<ProtectedRoute requiredRole="admin"><AdminStaff /></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

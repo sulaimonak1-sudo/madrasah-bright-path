@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, GraduationCap, BookOpen, Shield, ArrowRight, Users, Star, CheckCircle } from 'lucide-react';
+import { Search, GraduationCap, BookOpen, Shield, ArrowRight, Users, Star, CheckCircle, KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -28,9 +28,9 @@ const Index = () => {
           if (data.length > 0) setTermId(data[0].id);
         }
       } catch (err) {
-
         // ignore
-      }})();
+      }
+    })();
   }, []);
 
   const handleCheckResult = async (e: React.FormEvent) => {
@@ -50,19 +50,23 @@ const Index = () => {
 
   return (
     <PublicLayout>
-      {/* Hero Section */}
+      {/* Hero Section with Background Images */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70 py-20 md:py-28">
-        {/* Decorative elements */}
+        {/* Background images collage */}
+        <div className="absolute inset-0 opacity-[0.12]">
+          <img src="/images/school-front.png" alt="" className="absolute top-0 left-0 w-1/2 h-1/2 object-cover" />
+          <img src="/images/school-building.png" alt="" className="absolute top-0 right-0 w-1/2 h-1/2 object-cover" />
+          <img src="/images/school-students.png" alt="" className="absolute bottom-0 left-1/4 w-1/2 h-1/2 object-cover" />
+        </div>
+        {/* Decorative circles */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-10 left-10 w-32 h-32 border-2 border-primary-foreground rounded-full" />
           <div className="absolute bottom-10 right-10 w-48 h-48 border-2 border-primary-foreground rounded-full" />
-          <div className="absolute top-1/2 left-1/3 w-20 h-20 border border-primary-foreground rounded-full" />
         </div>
         
         <div className="container relative z-10">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-6 inline-flex items-center gap-3 rounded-full bg-primary-foreground/15 px-5 py-2 backdrop-blur-sm">
-              
               <span className="text-sm font-semibold text-primary-foreground tracking-wide uppercase">
                 {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
               </span>
@@ -101,8 +105,8 @@ const Index = () => {
                   value={studentId}
                   onChange={(e) => setStudentId(e.target.value)}
                   disabled={loading}
-                  className="h-11" />
-
+                  className="h-11"
+                />
               </div>
 
               <div className="space-y-2">
@@ -111,14 +115,14 @@ const Index = () => {
                   className="w-full px-3 py-2.5 border border-input rounded-md bg-background text-foreground h-11"
                   value={termId}
                   onChange={(e) => setTermId(e.target.value)}
-                  disabled={loading || terms.length === 0}>
-
+                  disabled={loading || terms.length === 0}
+                >
                   <option value="">{t('Select term...', 'اختر الفصل...')}</option>
-                  {terms.map((term) =>
-                  <option key={term.id} value={term.id}>
+                  {terms.map((term) => (
+                    <option key={term.id} value={term.id}>
                       {`${t('Term', 'الفصل')} ${term.term_number} - ${term.name_en || term.name_ar}`}
                     </option>
-                  )}
+                  ))}
                 </select>
               </div>
 
@@ -130,21 +134,29 @@ const Index = () => {
                   value={pin}
                   onChange={(e) => setPin(e.target.value)}
                   disabled={loading}
-                  className="h-11" />
-
+                  className="h-11"
+                />
               </div>
 
-              {error &&
-              <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">
+              {error && (
+                <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">
                   {error}
                 </div>
-              }
+              )}
 
               <Button type="submit" className="w-full h-12 text-base font-semibold" size="lg" disabled={loading}>
                 <ArrowRight className="mr-2 h-5 w-5" />
                 {loading ? t('Loading...', 'جارٍ التحميل...') : t('Check Result', 'عرض النتيجة')}
               </Button>
             </form>
+
+            {/* PIN Generator Button */}
+            <div className="mt-4 pt-4 border-t border-border text-center">
+              <Button variant="outline" size="sm" onClick={() => navigate('/pin-generate')} className="gap-2">
+                <KeyRound className="h-4 w-4" />
+                {t('Generate Result PIN', 'توليد الرقم السري للنتيجة')}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </section>
@@ -157,16 +169,16 @@ const Index = () => {
           </h2>
           <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
             {t('A modern, secure, and bilingual platform for accessing student academic results.',
-            'منصة حديثة وآمنة وثنائية اللغة للوصول إلى نتائج الطلاب الأكاديمية.')}
+              'منصة حديثة وآمنة وثنائية اللغة للوصول إلى نتائج الطلاب الأكاديمية.')}
           </p>
         </div>
         <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3">
           {[
-          { icon: Shield, title_en: 'Secure & Private', title_ar: 'آمن وخاص', desc_en: 'PIN-protected results ensure only authorized access to student records.', desc_ar: 'نتائج محمية بالرقم السري تضمن الوصول المصرح به فقط.' },
-          { icon: BookOpen, title_en: 'Comprehensive Reports', title_ar: 'تقارير شاملة', desc_en: 'View full term results with CA scores, exam marks, and overall grades.', desc_ar: 'عرض نتائج الفصل كاملة مع درجات الأعمال والامتحانات.' },
-          { icon: GraduationCap, title_en: 'Bilingual Support', title_ar: 'دعم ثنائي اللغة', desc_en: 'Full English & Arabic support for all students and parents.', desc_ar: 'دعم كامل للإنجليزية والعربية لجميع الطلاب وأولياء الأمور.' }].
-          map((f, i) =>
-          <Card key={i} className="text-center border-0 shadow-card hover:shadow-card-lg transition-shadow duration-300">
+            { icon: Shield, title_en: 'Secure & Private', title_ar: 'آمن وخاص', desc_en: 'PIN-protected results ensure only authorized access to student records.', desc_ar: 'نتائج محمية بالرقم السري تضمن الوصول المصرح به فقط.' },
+            { icon: BookOpen, title_en: 'Comprehensive Reports', title_ar: 'تقارير شاملة', desc_en: 'View full term results with CA scores, exam marks, and overall grades.', desc_ar: 'عرض نتائج الفصل كاملة مع درجات الأعمال والامتحانات.' },
+            { icon: GraduationCap, title_en: 'Bilingual Support', title_ar: 'دعم ثنائي اللغة', desc_en: 'Full English & Arabic support for all students and parents.', desc_ar: 'دعم كامل للإنجليزية والعربية لجميع الطلاب وأولياء الأمور.' },
+          ].map((f, i) => (
+            <Card key={i} className="text-center border-0 shadow-card hover:shadow-card-lg transition-shadow duration-300">
               <CardContent className="pt-8 pb-6 px-6">
                 <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
                   <f.icon className="h-7 w-7 text-primary" />
@@ -175,31 +187,31 @@ const Index = () => {
                 <p className="text-sm text-muted-foreground leading-relaxed">{t(f.desc_en, f.desc_ar)}</p>
               </CardContent>
             </Card>
-          )}
+          ))}
         </div>
       </section>
 
-      {/* Quick Stats / Trust Bar */}
+      {/* Quick Stats */}
       <section className="bg-muted/50 py-12">
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-            { icon: Users, value: '500+', label_en: 'Students', label_ar: 'طالب' },
-            { icon: BookOpen, value: '20+', label_en: 'Subjects', label_ar: 'مادة' },
-            { icon: Star, value: '100%', label_en: 'Digital Records', label_ar: 'سجلات رقمية' },
-            { icon: CheckCircle, value: '24/7', label_en: 'Access', label_ar: 'وصول' }].
-            map((s, i) =>
-            <div key={i} className="flex flex-col items-center gap-2">
+              { icon: Users, value: '500+', label_en: 'Students', label_ar: 'طالب' },
+              { icon: BookOpen, value: '20+', label_en: 'Subjects', label_ar: 'مادة' },
+              { icon: Star, value: '100%', label_en: 'Digital Records', label_ar: 'سجلات رقمية' },
+              { icon: CheckCircle, value: '24/7', label_en: 'Access', label_ar: 'وصول' },
+            ].map((s, i) => (
+              <div key={i} className="flex flex-col items-center gap-2">
                 <s.icon className="h-6 w-6 text-primary" />
                 <span className="text-2xl font-bold text-foreground">{s.value}</span>
                 <span className="text-sm text-muted-foreground">{t(s.label_en, s.label_ar)}</span>
               </div>
-            )}
+            ))}
           </div>
         </div>
       </section>
-    </PublicLayout>);
-
+    </PublicLayout>
+  );
 };
 
 export default Index;

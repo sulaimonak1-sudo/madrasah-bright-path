@@ -25,6 +25,7 @@ const navItems = [
   { path: '/admin/promotion', icon: TrendingUp, label_en: 'Promotion', label_ar: 'الترقية' },
   { path: '/admin/reports', icon: FileText, label_en: 'Reports', label_ar: 'التقارير' },
   { path: '/admin/locking', icon: Lock, label_en: 'Result Locking', label_ar: 'قفل النتائج' },
+  { path: '/admin/staff', icon: Users, label_en: 'Staff', label_ar: 'الموظفون' },
 ];
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
