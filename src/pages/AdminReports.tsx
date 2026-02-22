@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { FileText, Printer, Download, Users, ChevronRight, ArrowLeft, Loader2 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
+import { FileText, Printer, Download, Users, ChevronRight, ArrowLeft, Loader2, Save, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -45,6 +46,16 @@ const AdminReports = () => {
   const [tieredRemarks, setTieredRemarks] = useState<any[]>([]);
   const [teacherClassArmId, setTeacherClassArmId] = useState<string | null>(null);
 
+  // Teacher tiered remarks editor
+  const REMARK_TIERS = [
+    { min: 0, max: 44, label: 'Below 45' },
+    { min: 45, max: 55, label: '45 - 55' },
+    { min: 56, max: 70, label: '56 - 70' },
+    { min: 71, max: 100, label: '71 and above' },
+  ];
+  const [teacherRemarks, setTeacherRemarks] = useState<Record<string, string>>({});
+  const [savingTeacherRemarks, setSavingTeacherRemarks] = useState(false);
+
   useEffect(() => {
     const fetch = async () => {
       const [sessRes, clRes, armsRes, remarksRes] = await Promise.all([
@@ -66,7 +77,18 @@ const AdminReports = () => {
       // If teacher, get their assigned class arm
       if (user) {
         const { data: profile } = await supabase.from('profiles').select('class_teacher_class_arm_id').eq('user_id', user.id).maybeSingle();
-        setTeacherClassArmId(profile?.class_teacher_class_arm_id || null);
+        const armId = profile?.class_teacher_class_arm_id || null;
+        setTeacherClassArmId(armId);
+
+        // Load teacher's tiered remarks for their class arm
+        if (armId) {
+          const { data: tRemarks } = await supabase.from('tiered_remarks').select('*').eq('role', 'teacher').eq('class_arm_id', armId);
+          const map: Record<string, string> = {};
+          (tRemarks || []).forEach((r: any) => {
+            map[`${r.min_score}-${r.max_score}`] = r.remark_en;
+          });
+          setTeacherRemarks(map);
+        }
       }
     };
     fetch();
@@ -138,12 +160,15 @@ const AdminReports = () => {
       const selectedSession = sessions.find(s => s.id === sessionId);
       const selectedTerm = terms.find(t => t.id === termId);
 
-      const [subjectsRes, scoresRes, classLevelRes, classArmRes] = await Promise.all([
+      const [subjectsRes, scoresRes, classLevelRes, classArmRes, teacherProfileRes] = await Promise.all([
         supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id).order('name'),
         supabase.from('term_scores').select('*').eq('student_id', student.id).eq('term_id', termId),
         supabase.from('class_levels').select('*').eq('id', selectedClassLevel.id).maybeSingle(),
         selectedClassArm ? supabase.from('class_arms').select('*').eq('id', selectedClassArm.id).maybeSingle() : Promise.resolve({ data: null }),
+        selectedClassArm ? supabase.from('profiles').select('signature_url, full_name').eq('class_teacher_class_arm_id', selectedClassArm.id).maybeSingle() : Promise.resolve({ data: null }),
       ]);
+      const teacherSigUrl = (teacherProfileRes?.data as any)?.signature_url || '';
+      const teacherName = (teacherProfileRes?.data as any)?.full_name || '';
 
       const subjects = subjectsRes.data || [];
       const scores = scoresRes.data || [];
@@ -289,8 +314,8 @@ const AdminReports = () => {
 
 <div class="signatures">
   <div class="sig-item">
-    <div class="sig-line"></div>
-    <div class="sig-name">Class Teacher</div>
+    ${teacherSigUrl ? `<div style="text-align:center;"><img src="${teacherSigUrl}" alt="Teacher Signature" style="width:80px;height:40px;object-fit:contain;margin:0 auto;" onerror="this.style.display='none'" /></div>` : `<div class="sig-line"></div>`}
+    <div class="sig-name">${teacherName || 'Class Teacher'}</div>
   </div>
   <div class="sig-item">
     <div style="text-align:center;"><img src="${window.location.origin}/images/head-teacher-stamp.png" alt="Stamp" style="width:80px;height:80px;object-fit:contain;margin:0 auto;" onerror="this.style.display='none'" /></div>
@@ -334,6 +359,29 @@ const AdminReports = () => {
     }
   };
 
+  const saveTeacherRemarks = async () => {
+    if (!teacherClassArmId) return;
+    setSavingTeacherRemarks(true);
+    try {
+      await supabase.from('tiered_remarks').delete().eq('role', 'teacher').eq('class_arm_id', teacherClassArmId);
+      const inserts = REMARK_TIERS.map(tier => ({
+        role: 'teacher' as const,
+        class_arm_id: teacherClassArmId,
+        min_score: tier.min,
+        max_score: tier.max,
+        remark_en: teacherRemarks[`${tier.min}-${tier.max}`] || '',
+        remark_ar: '',
+      })).filter(r => r.remark_en.trim());
+      if (inserts.length > 0) {
+        await supabase.from('tiered_remarks').insert(inserts);
+      }
+      toast({ title: t('Saved', 'تم الحفظ'), description: t('Teacher remarks saved successfully', 'تم حفظ ملاحظات المعلم بنجاح') });
+    } catch (err: any) {
+      toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingTeacherRemarks(false);
+    }
+  };
   const hasSessionTerm = sessionId && termId;
 
   return (
@@ -372,6 +420,43 @@ const AdminReports = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Teacher Tiered Remarks Editor */}
+        {isTeacher && teacherClassArmId && (
+          <Card className="shadow-card border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                {t("My Class Teacher's Remarks", 'ملاحظات معلم الفصل')}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {t('Set automatic remarks based on student average scores for your assigned class', 'حدد ملاحظات تلقائية بناءً على متوسط درجات الطالب لفصلك المعين')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-w-lg">
+                {REMARK_TIERS.map(tier => (
+                  <div key={tier.label} className="space-y-1">
+                    <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
+                    <Textarea
+                      value={teacherRemarks[`${tier.min}-${tier.max}`] || ''}
+                      onChange={e => setTeacherRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
+                      rows={2}
+                      placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
+                      className="text-sm"
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-end">
+                  <Button onClick={saveTeacherRemarks} disabled={savingTeacherRemarks} size="sm">
+                    {savingTeacherRemarks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {t('Save Remarks', 'حفظ الملاحظات')}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {!hasSessionTerm && (
           <Card className="shadow-card">

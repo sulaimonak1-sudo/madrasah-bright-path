@@ -286,30 +286,36 @@ export type Database = {
         Row: {
           avatar_url: string | null
           class_teacher_class_arm_id: string | null
+          class_teacher_class_level_id: string | null
           created_at: string
           full_name: string
           id: string
           phone: string | null
+          signature_url: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
           class_teacher_class_arm_id?: string | null
+          class_teacher_class_level_id?: string | null
           created_at?: string
           full_name: string
           id?: string
           phone?: string | null
+          signature_url?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
           class_teacher_class_arm_id?: string | null
+          class_teacher_class_level_id?: string | null
           created_at?: string
           full_name?: string
           id?: string
           phone?: string | null
+          signature_url?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -319,6 +325,13 @@ export type Database = {
             columns: ["class_teacher_class_arm_id"]
             isOneToOne: false
             referencedRelation: "class_arms"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profiles_class_teacher_class_level_id_fkey"
+            columns: ["class_teacher_class_level_id"]
+            isOneToOne: false
+            referencedRelation: "class_levels"
             referencedColumns: ["id"]
           },
         ]
