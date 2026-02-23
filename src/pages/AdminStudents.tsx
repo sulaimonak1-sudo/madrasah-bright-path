@@ -17,6 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 const AdminStudents = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { role } = require('@/contexts/AuthContext').useAuth();
   const [students, setStudents] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
@@ -162,6 +163,11 @@ const AdminStudents = () => {
 
   const addStudent = async (levelId: string = '', armId: string = '') => {
     if (!fullName.trim()) return;
+    // Only allow staff (admin or teacher) to add students
+    if (role !== 'admin' && role !== 'teacher') {
+      toast({ title: t('Permission denied', 'تم رفض الإذن'), description: t('Only staff can add students', 'فقط الموظفين يمكنهم إضافة الطلاب'), variant: 'destructive' });
+      return;
+    }
     const autoId = studentUid.trim() ? studentUid.trim() : generateStudentId();
     const autoAr = nameAr.trim() ? nameAr.trim() : transliterateToArabic(nameEn.trim() || fullName.trim());
     const finalLevelId = levelId || classLevelId || null;
