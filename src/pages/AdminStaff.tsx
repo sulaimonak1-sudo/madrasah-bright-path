@@ -289,7 +289,7 @@ const AdminStaff = () => {
           <p className="text-muted-foreground text-sm">{t('Manage staff members, assign classes, and upload signatures', 'إدارة الموظفين، تعيين الفصول، ورفع التوقيعات')}</p>
         </div>
 
-        {/* Staff Add Student Section */}
+        {/* Staff/Admin Add Student Section - always visible for teacher/admin */}
         {myProfile && (myProfile.role === 'teacher' || myProfile.role === 'admin') && (
           <Card className="shadow-card border-primary/20">
             <CardHeader className="pb-3">
