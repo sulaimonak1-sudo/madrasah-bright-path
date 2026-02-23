@@ -11,13 +11,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Plus, Search, Pencil, Trash2, Users, ChevronRight, ArrowLeft, Download, Printer } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const AdminStudents = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
-  const { useAuth } = require('@/contexts/AuthContext');
   const { role } = useAuth();
   const [students, setStudents] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
