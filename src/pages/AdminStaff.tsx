@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { AddStudentForm } from '@/components/AddStudentForm';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -281,6 +282,30 @@ const AdminStaff = () => {
           <h1 className="text-2xl font-bold">{t('Staff Management', 'إدارة الموظفين')}</h1>
           <p className="text-muted-foreground text-sm">{t('Manage staff members, assign classes, and upload signatures', 'إدارة الموظفين، تعيين الفصول، ورفع التوقيعات')}</p>
         </div>
+
+        {/* Staff Add Student Section */}
+        {myProfile && (myProfile.role === 'teacher' || myProfile.role === 'admin') && (
+          <Card className="shadow-card border-primary/20">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <UserPlus className="h-4 w-4 text-primary" />
+                {t('Add Student to My Class', 'إضافة طالب إلى فصلي')}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {t('Add a new student directly to your assigned class.', 'أضف طالبًا جديدًا مباشرة إلى الفصل المعين لك.')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Simple form for adding student */}
+              <AddStudentForm
+                classLevels={classLevels}
+                classArms={classArms}
+                assignedLevelId={myProfile.class_teacher_class_level_id}
+                assignedArmId={myProfile.class_teacher_class_arm_id}
+              />
+            </CardContent>
+          </Card>
+        )}
 
         {/* My Signature Upload section (for any staff) */}
         {myProfile && (
