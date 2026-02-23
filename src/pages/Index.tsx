@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
@@ -12,14 +12,49 @@ import { supabase } from '@/integrations/supabase/client';
 const HeroCarousel = () => {
   const images = ['/images/school-front.png', '/images/school-building.png', '/images/school-students.png', '/images/school-logo.png'];
   const [index, setIndex] = useState(0);
+  const intervalRef = useRef<number | null>(null);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
-    const id = setInterval(() => setIndex(i => (i + 1) % images.length), 4500);
-    return () => clearInterval(id);
+    const start = () => {
+      clear();
+      // @ts-ignore
+      intervalRef.current = window.setInterval(() => setIndex(i => (i + 1) % images.length), 4500);
+    };
+    const clear = () => {
+      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    };
+    start();
+    return () => clear();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const startX = touchStartX.current;
+    const endX = e.changedTouches[0].clientX;
+    touchStartX.current = null;
+    if (startX == null) return;
+    const delta = endX - startX;
+    const threshold = 40; // px
+    if (Math.abs(delta) > threshold) {
+      if (delta < 0) {
+        setIndex(i => (i + 1) % images.length);
+      } else {
+        setIndex(i => (i - 1 + images.length) % images.length);
+      }
+    }
+    // restart interval
+    // @ts-ignore
+    intervalRef.current = window.setInterval(() => setIndex(i => (i + 1) % images.length), 4500);
+  };
+
   return (
-    <div className="h-full">
+    <div className="h-full" onTouchStart={handleTouchStart} onTouchEnd={handleTouchEnd}>
       <div className="absolute inset-0 overflow-hidden">
         {images.map((src, i) => (
           <img

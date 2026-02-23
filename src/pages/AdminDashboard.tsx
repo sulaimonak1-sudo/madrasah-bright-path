@@ -208,7 +208,7 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         <div>
           <h1 className="text-2xl font-bold">{t('Dashboard', 'لوحة التحكم')}</h1>
           <p className="text-muted-foreground">{t('Overview of your Madrasah result portal', 'نظرة عامة على بوابة نتائج المدرسة')}</p>
@@ -218,16 +218,16 @@ const AdminDashboard = () => {
         <InstallPrompt />
 
         {/* Stats */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {statCards.map(card => (
-            <Card key={card.key} className="shadow-card">
-              <CardContent className="flex items-center gap-4 p-5">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  <card.icon className={`h-6 w-6 ${card.color}`} />
+            <Card key={card.key} className="shadow-card rounded-2xl touch-auto transition-transform duration-200 active:scale-95 hover:shadow-lg">
+              <CardContent className="flex items-center gap-4 p-6 md:p-5">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-muted">
+                  <card.icon className={`h-7 w-7 ${card.color}`} />
                 </div>
                 <div>
-                  <p className="text-sm text-muted-foreground">{t(card.label_en, card.label_ar)}</p>
-                  <p className="text-2xl font-bold">{(stats as any)[card.key]}</p>
+                  <p className="text-sm md:text-xs text-muted-foreground">{t(card.label_en, card.label_ar)}</p>
+                  <p className="text-2xl md:text-xl font-bold">{(stats as any)[card.key]}</p>
                 </div>
               </CardContent>
             </Card>
@@ -236,7 +236,7 @@ const AdminDashboard = () => {
 
         {/* Quick Info */}
         <div className="grid gap-4 md:grid-cols-2">
-          <Card className="shadow-card">
+          <Card className="shadow-card rounded-2xl transition-transform duration-200 active:scale-95">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Calendar className="h-5 w-5 text-accent" />
@@ -255,7 +255,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="shadow-card">
+          <Card className="shadow-card rounded-2xl transition-transform duration-200 active:scale-95">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Award className="h-5 w-5 text-accent" />

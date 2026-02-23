@@ -214,12 +214,12 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pb-20 md:pb-0">
           {children}
         </main>
         {/* Mobile bottom navigation (app-like) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 border-t border-border">
-          <div className="max-w-4xl mx-auto flex justify-around py-2">
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/98 border-t border-border" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="max-w-4xl mx-auto flex justify-around py-3">
             <Link to="/admin" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname === '/admin' ? 'text-primary' : 'text-foreground/60')}>
               <LayoutDashboard className="h-5 w-5" />
               <span>{t('Dash', 'الرئيسية')}</span>
