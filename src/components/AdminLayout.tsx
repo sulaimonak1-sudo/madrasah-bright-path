@@ -178,19 +178,32 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
               </div>
             )}
           </div>
-          <button
-            onClick={async () => {
-              await signOut();
-              navigate('/admin/login');
-            }}
-            className={cn(
-              "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-sidebar-foreground/50 hover:bg-destructive/10 hover:text-destructive transition-colors",
-              collapsed && "justify-center px-2"
-            )}
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && t('Logout', 'تسجيل الخروج')}
-          </button>
+          <div className="space-y-2">
+            <Link
+              to="/admin/settings/profile"
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-sidebar-foreground/60 hover:bg-sidebar-accent/40 hover:text-sidebar-foreground",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <UserCog className="h-4 w-4" />
+              {!collapsed && t('Settings', 'الإعدادات')}
+            </Link>
+
+            <button
+              onClick={async () => {
+                await signOut();
+                navigate('/admin/login');
+              }}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2 text-[13px] text-sidebar-foreground/50 hover:bg-destructive/10 hover:text-destructive transition-colors",
+                collapsed && "justify-center px-2"
+              )}
+            >
+              <LogOut className="h-4 w-4" />
+              {!collapsed && t('Logout', 'تسجيل الخروج')}
+            </button>
+          </div>
         </div>
       </aside>
 
