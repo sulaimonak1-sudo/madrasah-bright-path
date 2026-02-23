@@ -17,7 +17,8 @@ import { useToast } from '@/hooks/use-toast';
 const AdminStudents = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
-  const { role } = require('@/contexts/AuthContext').useAuth();
+  const { useAuth } = require('@/contexts/AuthContext');
+  const { role } = useAuth();
   const [students, setStudents] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
