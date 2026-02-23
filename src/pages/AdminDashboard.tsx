@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+// ...existing code...
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Layers, BookOpen, FolderOpen, Calendar, Award, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -21,25 +21,11 @@ const statCards = [
   { key: 'totalSubjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد', color: 'text-success' },
 ];
 
-const REMARK_TIERS = [
-  { min: 0, max: 44, label: 'Below 45' },
-  { min: 45, max: 55, label: '45 - 55' },
-  { min: 56, max: 70, label: '56 - 70' },
-  { min: 71, max: 100, label: '71 and above' },
-];
 
 
 import { useAuth } from '@/contexts/AuthContext';
-import { Textarea } from '@/components/ui/textarea';
 import { MessageSquare, Upload } from 'lucide-react';
 import { useRef } from 'react';
-
-const REMARK_TIERS = [
-  { min: 0, max: 44, label: 'Below 45' },
-  { min: 45, max: 55, label: '45 - 55' },
-  { min: 56, max: 70, label: '56 - 70' },
-  { min: 71, max: 100, label: '71 and above' },
-];
 
 const AdminDashboard = () => {
   const { t } = useLanguage();
