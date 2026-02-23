@@ -232,22 +232,78 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </main>
         {/* Mobile bottom navigation (app-like) */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/98 border-t border-border" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="max-w-4xl mx-auto flex justify-around py-3">
-            <Link to="/admin" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname === '/admin' ? 'text-primary' : 'text-foreground/60')}>
-              <LayoutDashboard className="h-5 w-5" />
-              <span>{t('Dash', 'الرئيسية')}</span>
+          <div className="max-w-4xl mx-auto flex justify-between items-center gap-3 py-3 px-3">
+            {/** Modern pill buttons with white background, shadow, and clear active state */}
+            <Link
+              to="/admin"
+              aria-label={t('Dashboard', 'الرئيسية')}
+              className={cn(
+                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
+                location.pathname === '/admin'
+                  ? 'bg-primary text-white scale-100 shadow-md'
+                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
+              )}
+            >
+              <LayoutDashboard className="h-6 w-6" />
+              <span className="text-[11px] font-medium">{t('Dash', 'الرئيسية')}</span>
             </Link>
-            <Link to="/admin/students" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname.startsWith('/admin/students') ? 'text-primary' : 'text-foreground/60')}>
-              <Users className="h-5 w-5" />
-              <span>{t('Students', 'الطلاب')}</span>
+
+            <Link
+              to="/admin/students"
+              aria-label={t('Students', 'الطلاب')}
+              className={cn(
+                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
+                location.pathname.startsWith('/admin/students')
+                  ? 'bg-primary text-white scale-100 shadow-md'
+                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
+              )}
+            >
+              <Users className="h-6 w-6" />
+              <span className="text-[11px] font-medium">{t('Students', 'الطلاب')}</span>
             </Link>
-            <Link to="/admin/subjects" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname.startsWith('/admin/subjects') ? 'text-primary' : 'text-foreground/60')}>
-              <BookOpen className="h-5 w-5" />
-              <span>{t('Subjects', 'المواد')}</span>
+
+            <Link
+              to="/admin/results"
+              aria-label={t('Results', 'النتائج')}
+              className={cn(
+                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
+                location.pathname.startsWith('/admin/results')
+                  ? 'bg-primary text-white scale-100 shadow-md'
+                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
+              )}
+            >
+              <Upload className="h-6 w-6" />
+              <span className="text-[11px] font-medium">{t('Results', 'النتائج')}</span>
             </Link>
-            <Link to="/admin/reports" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname.startsWith('/admin/reports') ? 'text-primary' : 'text-foreground/60')}>
-              <FileText className="h-5 w-5" />
-              <span>{t('Reports', 'التقارير')}</span>
+
+            {isAdmin && (
+              <Link
+                to="/admin/subjects"
+                aria-label={t('Subjects', 'المواد')}
+                className={cn(
+                  "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
+                  location.pathname.startsWith('/admin/subjects')
+                    ? 'bg-primary text-white scale-100 shadow-md'
+                    : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
+                )}
+              >
+                <BookOpen className="h-6 w-6" />
+                <span className="text-[11px] font-medium">{t('Subjects', 'المواد')}</span>
+              </Link>
+            )}
+
+            <Link
+              to="/admin/reports"
+              aria-label={t('Reports', 'التقارير')}
+              className={cn(
+                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
+                location.pathname.startsWith('/admin/reports')
+                  ? 'bg-primary text-white scale-100 shadow-md'
+                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
+              )}
+            >
+              <FileText className="h-6 w-6" />
+              <span className="text-[11px] font-medium">{t('Reports', 'التقارير')}</span>
             </Link>
           </div>
         </nav>

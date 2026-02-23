@@ -23,6 +23,8 @@ const AdminSubjects = () => {
   const [nameAr, setNameAr] = useState('');
   const [selectedClassLevels, setSelectedClassLevels] = useState<string[]>([]);
   const [allClasses, setAllClasses] = useState(false);
+  const [activeGroup, setActiveGroup] = useState<any | null>(null);
+  const [subjectDialogOpen, setSubjectDialogOpen] = useState(false);
 
   const fetchData = async () => {
     const [subRes, clRes] = await Promise.all([
@@ -179,39 +181,11 @@ const AdminSubjects = () => {
                     const g = grouped[k];
                     return (
                       <TableRow key={k} className="cursor-pointer">
-                        <TableCell className="font-medium" onClick={() => { /* open details */ (window as any).__openSubjectDialog?.(g); }}>{g.name}</TableCell>
-                        <TableCell onClick={() => (window as any).__openSubjectDialog?.(g)}>{g.name_ar || '—'}</TableCell>
-                        <TableCell onClick={() => (window as any).__openSubjectDialog?.(g)}>{g.mappings.length} {t('class(es)', 'شعبة')}</TableCell>
+                        <TableCell className="font-medium" onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); }}>{g.name}</TableCell>
+                        <TableCell onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); }}>{g.name_ar || '—'}</TableCell>
+                        <TableCell onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); }}>{g.mappings.length} {t('class(es)', 'شعبة')}</TableCell>
                         <TableCell className="flex justify-end gap-2">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button size="sm">{t('View', 'عرض')}</Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                              <DialogHeader>
-                                <DialogTitle>{g.name} — {g.name_ar}</DialogTitle>
-                              </DialogHeader>
-                              <div className="space-y-3 mt-2">
-                                {g.mappings.map(m => {
-                                  const level = classLevels.find(l => l.id === m.class_level_id);
-                                  return (
-                                    <div key={m.id} className="flex items-center justify-between">
-                                      <div>{bilingualText(level?.name_en, level?.name_ar) || t('Unknown', 'غير معروف')}</div>
-                                      <div>
-                                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={async () => { await deleteSubject(m.id); fetchData(); }}>
-                                          <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                      </div>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                              <DialogFooter>
-                                <DialogClose asChild><Button variant="outline">{t('Close', 'إغلاق')}</Button></DialogClose>
-                                <Button variant="destructive" onClick={async () => { /* delete whole group */ const ids = g.mappings.map((m:any) => m.id); for (const id of ids) await deleteSubject(id); fetchData(); }}>{t('Delete All', 'حذف الكل')}</Button>
-                              </DialogFooter>
-                            </DialogContent>
-                          </Dialog>
+                          <Button size="sm" onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); }}>{t('View', 'عرض')}</Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -221,6 +195,33 @@ const AdminSubjects = () => {
             </Table>
           </CardContent>
         </Card>
+        {/* Controlled dialog for subject details */}
+        <Dialog open={subjectDialogOpen} onOpenChange={setSubjectDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{activeGroup ? `${activeGroup.name} — ${activeGroup.name_ar || ''}` : ''}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 mt-2">
+              {activeGroup?.mappings?.map((m: any) => {
+                const level = classLevels.find((l: any) => l.id === m.class_level_id);
+                return (
+                  <div key={m.id} className="flex items-center justify-between">
+                    <div>{bilingualText(level?.name_en, level?.name_ar) || t('Unknown', 'غير معروف')}</div>
+                    <div>
+                      <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={async () => { await deleteSubject(m.id); fetchData(); setActiveGroup((ag:any) => ({ ...ag, mappings: (ag?.mappings || []).filter((mm:any) => mm.id !== m.id) })); }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <DialogFooter>
+              <DialogClose asChild><Button variant="outline">{t('Close', 'إغلاق')}</Button></DialogClose>
+              <Button variant="destructive" onClick={async () => { const ids = activeGroup?.mappings?.map((m:any) => m.id) || []; for (const id of ids) await deleteSubject(id); fetchData(); setSubjectDialogOpen(false); }}>{t('Delete All', 'حذف الكل')}</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );

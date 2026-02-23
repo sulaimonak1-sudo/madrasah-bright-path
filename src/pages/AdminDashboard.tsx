@@ -99,14 +99,25 @@ const AdminDashboard = () => {
     setUploadingSig(true);
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `signatures/${user.id}.${fileExt}`;
-      const { error: uploadErr } = await supabase.storage.from('public').upload(filePath, file, { upsert: true });
-      if (uploadErr) throw uploadErr;
-      const { data } = supabase.storage.from('public').getPublicUrl(filePath);
-      const url = data.publicUrl;
+      const filePath = `${user.id}/signature.${fileExt}`;
+      const { data: uploadData, error: uploadErr } = await supabase.storage.from('signatures').upload(filePath, file, { upsert: true });
+      if (uploadErr) {
+        console.error('Signature upload error', uploadErr, { filePath, file, uploadData });
+        toast({ title: t('Error'), description: String((uploadErr as any)?.message || JSON.stringify(uploadErr)), variant: 'destructive' });
+        throw uploadErr;
+      }
+
+      const { data } = supabase.storage.from('signatures').getPublicUrl(filePath);
+      const url = (data?.publicUrl || '') + '?t=' + Date.now();
       setSignatureUrl(url);
-      // Save to profile
-      await supabase.from('profiles').update({ signature_url: url }).eq('user_id', user.id);
+
+      const { error: updErr } = await supabase.from('profiles').update({ signature_url: url }).eq('user_id', user.id);
+      if (updErr) {
+        console.error('Failed to update profile signature_url', updErr);
+        toast({ title: t('Error'), description: String((updErr as any)?.message || JSON.stringify(updErr)), variant: 'destructive' });
+        throw updErr;
+      }
+
       toast({ title: t('Signature uploaded'), description: t('Your signature has been updated.') });
     } catch (err: any) {
       toast({ title: t('Error'), description: err.message || String(err), variant: 'destructive' });

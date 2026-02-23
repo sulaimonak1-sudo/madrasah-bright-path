@@ -225,13 +225,21 @@ const AdminStaff = () => {
     try {
       const ext = file.name.split('.').pop();
       const path = `${authUser.id}/signature.${ext}`;
-      const { error: upErr } = await supabase.storage.from('signatures').upload(path, file, { upsert: true });
-      if (upErr) throw upErr;
+      const { data: uploadData, error: upErr } = await supabase.storage.from('signatures').upload(path, file, { upsert: true });
+      if (upErr) {
+        console.error('Signature upload error', upErr, { path, file, uploadData });
+        toast({ title: t('Error', 'خطأ'), description: String((upErr as any)?.message || JSON.stringify(upErr)), variant: 'destructive' });
+        throw upErr;
+      }
 
       const { data: urlData } = supabase.storage.from('signatures').getPublicUrl(path);
-      const sigUrl = urlData.publicUrl + '?t=' + Date.now();
+      const sigUrl = (urlData?.publicUrl || '') + '?t=' + Date.now();
 
-      await supabase.from('profiles').update({ signature_url: sigUrl } as any).eq('user_id', authUser.id);
+      const { error: updErr } = await supabase.from('profiles').update({ signature_url: sigUrl } as any).eq('user_id', authUser.id);
+      if (updErr) {
+        console.error('Failed to update profile signature_url', updErr);
+        throw updErr;
+      }
       toast({ title: t('Uploaded', 'تم الرفع'), description: t('Signature uploaded successfully', 'تم رفع التوقيع بنجاح') });
       fetchData();
     } catch (err: any) {
