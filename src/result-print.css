@@ -1,0 +1,26 @@
+/* Print styles to force result to fit 1 page */
+@media print {
+  .result-printable-content {
+    /* Shrink content to fit A4 page */
+    zoom: 0.7;
+    width: 100vw;
+    max-width: 100vw;
+    overflow: hidden;
+    page-break-inside: avoid;
+    page-break-after: avoid;
+    page-break-before: avoid;
+  }
+  .result-printable-content * {
+    font-size: 90% !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  body, html {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+}

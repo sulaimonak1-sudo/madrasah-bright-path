@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import '../result-print.css';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
