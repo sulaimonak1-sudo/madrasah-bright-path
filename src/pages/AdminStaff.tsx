@@ -119,25 +119,15 @@ const AdminStaff = () => {
     return null;
   };
 
-  const classOptions = classLevels.map(level => {
-    const armsForLevel = classArms.filter(arm => arm.class_level_id === level.id);
-    if (armsForLevel.length === 0) {
-      return [{ id: `level-${level.id}`, label: level.name_en }];
-    }
-    return armsForLevel.map(arm => ({ id: arm.id, label: `${level.name_en} - ${arm.name}` }));
-  }).flat();
+  // Only offer class level assignment for teachers (no class arm selection)
+  const classOptions = classLevels.map(level => ({ id: level.id, label: level.name_en }));
 
   const openEdit = (s: StaffMember) => {
     setEditStaff(s);
     setEditName(s.full_name);
     setEditPhone(s.phone || '');
-    if (s.class_teacher_class_arm_id) {
-      setEditClassId(s.class_teacher_class_arm_id);
-    } else if (s.class_teacher_class_level_id) {
-      setEditClassId(`level-${s.class_teacher_class_level_id}`);
-    } else {
-      setEditClassId('');
-    }
+    // prefer class level id only
+    setEditClassId(s.class_teacher_class_level_id || '');
     setEditOpen(true);
   };
 
@@ -145,20 +135,12 @@ const AdminStaff = () => {
     if (!editStaff) return;
     setSaving(true);
     try {
-      let classTeacherArmId: string | null = null;
-      let classTeacherLevelId: string | null = null;
-      if (editClassId && editClassId !== 'none') {
-        if (editClassId.startsWith('level-')) {
-          classTeacherLevelId = editClassId.replace('level-', '');
-        } else {
-          classTeacherArmId = editClassId;
-        }
-      }
-
+      // assign only class level; clear any class arm assignment
+      const classTeacherLevelId = editClassId || null;
       const { error } = await supabase.from('profiles').update({
         full_name: editName.trim(),
         phone: editPhone.trim() || null,
-        class_teacher_class_arm_id: classTeacherArmId,
+        class_teacher_class_arm_id: null,
         class_teacher_class_level_id: classTeacherLevelId,
       } as any).eq('id', editStaff.id);
 
@@ -209,21 +191,13 @@ const AdminStaff = () => {
       if (error) throw error;
       if (!data.user) throw new Error('Failed to create user');
 
-      let classTeacherArmId: string | null = null;
-      let classTeacherLevelId: string | null = null;
-      if (addClassId && addClassId !== 'none') {
-        if (addClassId.startsWith('level-')) {
-          classTeacherLevelId = addClassId.replace('level-', '');
-        } else {
-          classTeacherArmId = addClassId;
-        }
-      }
-
+      // Only save class level assignment; clear any arm
+      const classTeacherLevelId = addClassId && addClassId !== 'none' ? addClassId : null;
       await supabase.from('profiles').upsert({
         user_id: data.user.id,
         full_name: addName.trim(),
         phone: addPhone.trim() || null,
-        class_teacher_class_arm_id: classTeacherArmId,
+        class_teacher_class_arm_id: null,
         class_teacher_class_level_id: classTeacherLevelId,
       } as any, { onConflict: 'user_id' });
 

@@ -9,6 +9,37 @@ import { Search, GraduationCap, BookOpen, Shield, ArrowRight, Users, Star, Check
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 
+const HeroCarousel = () => {
+  const images = ['/images/school-front.png', '/images/school-building.png', '/images/school-students.png', '/images/school-logo.png'];
+  const [index, setIndex] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setIndex(i => (i + 1) % images.length), 4500);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <div className="h-full">
+      <div className="absolute inset-0 overflow-hidden">
+        {images.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt=""
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === index ? 'opacity-40 scale-100' : 'opacity-0 scale-105'}`}
+          />
+        ))}
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-primary/40" />
+      </div>
+      <div className="absolute left-4 bottom-6 flex gap-2 z-20">
+        {images.map((_, i) => (
+          <button key={i} onClick={() => setIndex(i)} className={`h-2 w-8 rounded-full ${i === index ? 'bg-white' : 'bg-white/40'}`} aria-label={`Slide ${i + 1}`} />
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const Index = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
@@ -50,20 +81,12 @@ const Index = () => {
 
   return (
     <PublicLayout>
-      {/* Hero Section with Background Images */}
+      {/* Hero Section with sliding images carousel */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70 py-20 md:py-28">
-        {/* Background images collage */}
-        <div className="absolute inset-0 opacity-[0.12]">
-          <img src="/images/school-front.png" alt="" className="absolute top-0 left-0 w-1/2 h-1/2 object-cover" />
-          <img src="/images/school-building.png" alt="" className="absolute top-0 right-0 w-1/2 h-1/2 object-cover" />
-          <img src="/images/school-students.png" alt="" className="absolute bottom-0 left-1/4 w-1/2 h-1/2 object-cover" />
+        {/* Carousel - slides through hero images */}
+        <div className="absolute inset-0">
+          <HeroCarousel />
         </div>
-        {/* Decorative circles */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 border-2 border-primary-foreground rounded-full" />
-          <div className="absolute bottom-10 right-10 w-48 h-48 border-2 border-primary-foreground rounded-full" />
-        </div>
-        
         <div className="container relative z-10">
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-6 inline-flex items-center gap-3 rounded-full bg-primary-foreground/15 px-5 py-2 backdrop-blur-sm">

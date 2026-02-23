@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -156,29 +157,66 @@ const AdminSubjects = () => {
                 <TableRow>
                   <TableHead>{t('Subject (EN)', 'المادة (إنجليزي)')}</TableHead>
                   <TableHead>{t('Subject (AR)', 'المادة (عربي)')}</TableHead>
-                  <TableHead>{t('Class Level', 'المرحلة')}</TableHead>
-                  <TableHead className="w-16"></TableHead>
+                  <TableHead>{t('Assigned Classes', 'الشُعب المعينة')}</TableHead>
+                  <TableHead className="w-40"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {subjects.map(sub => {
-                  const level = classLevels.find(l => l.id === sub.class_level_id);
-                  return (
-                    <TableRow key={sub.id}>
-                      <TableCell className="font-medium">{sub.name}</TableCell>
-                      <TableCell>{sub.name_ar || '—'}</TableCell>
-                      <TableCell>{bilingualText(level?.name_en, level?.name_ar)}</TableCell>
-                      <TableCell>
-                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => deleteSubject(sub.id)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                {(() => {
+                  if (subjects.length === 0) return (
+                    <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('No subjects yet.', 'لا مواد بعد.')}</TableCell></TableRow>
                   );
-                })}
-                {subjects.length === 0 && (
-                  <TableRow><TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('No subjects yet.', 'لا مواد بعد.')}</TableCell></TableRow>
-                )}
+
+                  // Group subjects by name (a subject may have multiple rows for different class levels)
+                  const grouped: Record<string, { name: string; name_ar?: string; mappings: any[] }> = {};
+                  subjects.forEach(s => {
+                    const key = `${s.name}||${s.name_ar || ''}`;
+                    if (!grouped[key]) grouped[key] = { name: s.name, name_ar: s.name_ar, mappings: [] };
+                    grouped[key].mappings.push(s);
+                  });
+
+                  return Object.keys(grouped).map((k) => {
+                    const g = grouped[k];
+                    return (
+                      <TableRow key={k} className="cursor-pointer">
+                        <TableCell className="font-medium" onClick={() => { /* open details */ (window as any).__openSubjectDialog?.(g); }}>{g.name}</TableCell>
+                        <TableCell onClick={() => (window as any).__openSubjectDialog?.(g)}>{g.name_ar || '—'}</TableCell>
+                        <TableCell onClick={() => (window as any).__openSubjectDialog?.(g)}>{g.mappings.length} {t('class(es)', 'شعبة')}</TableCell>
+                        <TableCell className="flex justify-end gap-2">
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button size="sm">{t('View', 'عرض')}</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                              <DialogHeader>
+                                <DialogTitle>{g.name} — {g.name_ar}</DialogTitle>
+                              </DialogHeader>
+                              <div className="space-y-3 mt-2">
+                                {g.mappings.map(m => {
+                                  const level = classLevels.find(l => l.id === m.class_level_id);
+                                  return (
+                                    <div key={m.id} className="flex items-center justify-between">
+                                      <div>{bilingualText(level?.name_en, level?.name_ar) || t('Unknown', 'غير معروف')}</div>
+                                      <div>
+                                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={async () => { await deleteSubject(m.id); fetchData(); }}>
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                              <DialogFooter>
+                                <DialogClose asChild><Button variant="outline">{t('Close', 'إغلاق')}</Button></DialogClose>
+                                <Button variant="destructive" onClick={async () => { /* delete whole group */ const ids = g.mappings.map((m:any) => m.id); for (const id of ids) await deleteSubject(id); fetchData(); }}>{t('Delete All', 'حذف الكل')}</Button>
+                              </DialogFooter>
+                            </DialogContent>
+                          </Dialog>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  });
+                })()}
               </TableBody>
             </Table>
           </CardContent>

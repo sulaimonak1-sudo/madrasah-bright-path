@@ -70,7 +70,8 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     items: isAdmin
       ? group.items
       : group.items.filter(item =>
-          ['/admin', '/admin/results', '/admin/reports'].includes(item.path)
+          // allow teachers access to students, results and reports; admins see everything
+          ['/admin', '/admin/results', '/admin/reports', '/admin/students'].includes(item.path)
         ),
   })).filter(group => group.items.length > 0);
 
@@ -216,6 +217,27 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <main className="flex-1 p-4 md:p-6 lg:p-8">
           {children}
         </main>
+        {/* Mobile bottom navigation (app-like) */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/95 border-t border-border">
+          <div className="max-w-4xl mx-auto flex justify-around py-2">
+            <Link to="/admin" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname === '/admin' ? 'text-primary' : 'text-foreground/60')}>
+              <LayoutDashboard className="h-5 w-5" />
+              <span>{t('Dash', 'الرئيسية')}</span>
+            </Link>
+            <Link to="/admin/students" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname.startsWith('/admin/students') ? 'text-primary' : 'text-foreground/60')}>
+              <Users className="h-5 w-5" />
+              <span>{t('Students', 'الطلاب')}</span>
+            </Link>
+            <Link to="/admin/subjects" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname.startsWith('/admin/subjects') ? 'text-primary' : 'text-foreground/60')}>
+              <BookOpen className="h-5 w-5" />
+              <span>{t('Subjects', 'المواد')}</span>
+            </Link>
+            <Link to="/admin/reports" className={cn("flex flex-col items-center text-xs gap-1 px-2 py-1 rounded-lg", location.pathname.startsWith('/admin/reports') ? 'text-primary' : 'text-foreground/60')}>
+              <FileText className="h-5 w-5" />
+              <span>{t('Reports', 'التقارير')}</span>
+            </Link>
+          </div>
+        </nav>
       </div>
     </div>
   );

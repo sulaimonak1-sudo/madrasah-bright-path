@@ -30,7 +30,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         .select('role')
         .eq('user_id', userId)
         .maybeSingle();
-      setRole(data?.role ?? null);
+      // If a role row exists, use it. Otherwise, fall back to checking the profile
+      // for a teacher assignment (class_teacher_class_level_id or class_teacher_class_arm_id)
+      if (data?.role) {
+        setRole(data.role);
+        return;
+      }
+
+      const { data: profile } = await supabase.from('profiles').select('class_teacher_class_level_id, class_teacher_class_arm_id').eq('user_id', userId).maybeSingle();
+      if (profile && (profile.class_teacher_class_level_id || profile.class_teacher_class_arm_id)) {
+        setRole('teacher');
+        return;
+      }
+
+      setRole(null);
     } catch {
       setRole(null);
     }

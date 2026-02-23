@@ -18,7 +18,7 @@ import { useToast } from '@/hooks/use-toast';
 const AdminStudents = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [students, setStudents] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
@@ -118,9 +118,30 @@ const AdminStudents = () => {
       supabase.from('class_levels').select('*').order('display_order'),
       supabase.from('class_arms').select('*'),
     ]);
-    setStudents(studRes.data || []);
-    setClassLevels(clRes.data || []);
-    setClassArms(armsRes.data || []);
+    let studentsData = studRes.data || [];
+    let levels = clRes.data || [];
+    const arms = armsRes.data || [];
+
+    // If current user is a teacher, limit view to their assigned class level
+    if (role === 'teacher' && user) {
+      try {
+        const { data: profile } = await supabase.from('profiles').select('class_teacher_class_level_id').eq('user_id', user.id).maybeSingle();
+        const assignedLevelId = profile?.class_teacher_class_level_id;
+        if (assignedLevelId) {
+          studentsData = studentsData.filter(s => s.class_level_id === assignedLevelId);
+          levels = levels.filter(l => l.id === assignedLevelId);
+        }
+      } catch (err) {
+        // ignore and fall back to full data
+      }
+    }
+
+    setStudents(studentsData);
+    setClassLevels(levels);
+    if (role === 'teacher' && levels.length > 0) {
+      setSelectedClassLevel(levels[0]);
+    }
+    setClassArms(arms);
   };
 
   useEffect(() => { fetchData(); }, []);

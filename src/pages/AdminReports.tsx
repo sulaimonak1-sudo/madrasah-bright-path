@@ -6,7 +6,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { FileText, Printer, Download, Users, ChevronRight, ArrowLeft, Loader2, Save, MessageSquare } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -438,12 +437,12 @@ const AdminReports = () => {
                 {REMARK_TIERS.map(tier => (
                   <div key={tier.label} className="space-y-1">
                     <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
-                    <Textarea
+                    <textarea
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={teacherRemarks[`${tier.min}-${tier.max}`] || ''}
                       onChange={e => setTeacherRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
                       rows={2}
                       placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
-                      className="text-sm"
                     />
                   </div>
                 ))}

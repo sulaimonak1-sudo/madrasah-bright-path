@@ -48,8 +48,8 @@ const App = () => (
               <Route path="/admin/results" element={<ProtectedRoute><AdminResults /></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
 
-              {/* Admin only */}
-              <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><AdminStudents /></ProtectedRoute>} />
+              {/* Admin only (except students which teachers can access) */}
+              <Route path="/admin/students" element={<ProtectedRoute><AdminStudents /></ProtectedRoute>} />
               <Route path="/admin/class-levels" element={<ProtectedRoute requiredRole="admin"><AdminClassLevels /></ProtectedRoute>} />
               <Route path="/admin/class-arms" element={<ProtectedRoute requiredRole="admin"><AdminClassArms /></ProtectedRoute>} />
               <Route path="/admin/subjects" element={<ProtectedRoute requiredRole="admin"><AdminSubjects /></ProtectedRoute>} />

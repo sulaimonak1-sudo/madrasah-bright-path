@@ -2,18 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { AdminLayout } from '@/components/AdminLayout';
 import { InstallPrompt } from '@/components/InstallPrompt';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 // ...existing code...
-const REMARK_TIERS = [
-  { min: 0, max: 44, label: 'Below 45' },
-  { min: 45, max: 55, label: '45 - 55' },
-  { min: 56, max: 70, label: '56 - 70' },
-  { min: 71, max: 100, label: '71 and above' },
-];
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Users, Layers, BookOpen, FolderOpen, Calendar, Award, Plus, Trash2, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
@@ -32,6 +26,14 @@ const statCards = [
 import { useAuth } from '@/contexts/AuthContext';
 import { MessageSquare, Upload } from 'lucide-react';
 import { useRef } from 'react';
+// using native textarea to avoid runtime bundling issues
+
+const REMARK_TIERS = [
+  { min: 0, max: 44, label: 'Below 45' },
+  { min: 45, max: 55, label: '45 - 55' },
+  { min: 56, max: 70, label: '56 - 70' },
+  { min: 71, max: 100, label: '71 and above' },
+];
 
 const AdminDashboard = () => {
   const { t } = useLanguage();
@@ -298,33 +300,36 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Head Teacher Tiered Remarks */}
-        <Card className="shadow-card">
-          <CardHeader>
-            <CardTitle className="text-lg">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4 max-w-lg">
-              {REMARK_TIERS.map(tier => (
-                <div key={tier.label} className="space-y-1">
-                  <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
-                  <Textarea
-                    value={headRemarks[`${tier.min}-${tier.max}`] || ''}
-                    onChange={e => setHeadRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
-                    rows={2}
-                    placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
-                  />
+        {/* Head Teacher Tiered Remarks (hidden for teachers) */}
+        {!isTeacher && (
+          <Card className="shadow-card">
+            <CardHeader>
+              <CardTitle className="text-lg">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4 max-w-lg">
+                {REMARK_TIERS.map(tier => (
+                  <div key={tier.label} className="space-y-1">
+                    <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
+                    <textarea
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={headRemarks[`${tier.min}-${tier.max}`] || ''}
+                      onChange={e => setHeadRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
+                      rows={2}
+                      placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-end">
+                  <Button onClick={saveHeadRemarks} disabled={savingRemarks} size="sm">
+                    {savingRemarks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {t('Save Remarks', 'حفظ الملاحظات')}
+                  </Button>
                 </div>
-              ))}
-              <div className="flex justify-end">
-                <Button onClick={saveHeadRemarks} disabled={savingRemarks} size="sm">
-                  {savingRemarks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                  {t('Save Remarks', 'حفظ الملاحظات')}
-                </Button>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Teacher Section: Only visible to teachers */}
@@ -418,12 +423,12 @@ const AdminDashboard = () => {
                 {REMARK_TIERS.map(tier => (
                   <div key={tier.label} className="space-y-1">
                     <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
-                    <Textarea
+                    <textarea
+                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={teacherRemarks[`${tier.min}-${tier.max}`] || ''}
                       onChange={e => setTeacherRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
                       rows={2}
                       placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
-                      className="text-sm"
                     />
                   </div>
                 ))}
