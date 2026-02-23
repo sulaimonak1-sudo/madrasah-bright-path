@@ -28,9 +28,30 @@ const REMARK_TIERS = [
   { min: 71, max: 100, label: '71 and above' },
 ];
 
+
+import { useAuth } from '@/contexts/AuthContext';
+import { Textarea } from '@/components/ui/textarea';
+import { MessageSquare, Upload } from 'lucide-react';
+import { useRef } from 'react';
+
+const REMARK_TIERS = [
+  { min: 0, max: 44, label: 'Below 45' },
+  { min: 45, max: 55, label: '45 - 55' },
+  { min: 56, max: 70, label: '56 - 70' },
+  { min: 71, max: 100, label: '71 and above' },
+];
+
 const AdminDashboard = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { user, isTeacher } = useAuth();
+  const [teacherStudents, setTeacherStudents] = useState<any[]>([]);
+  const [teacherClassArmId, setTeacherClassArmId] = useState<string | null>(null);
+  const [signatureUrl, setSignatureUrl] = useState<string | null>(null);
+  const [uploadingSig, setUploadingSig] = useState(false);
+  const [teacherRemarks, setTeacherRemarks] = useState<Record<string, string>>({});
+  const [savingTeacherRemarks, setSavingTeacherRemarks] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Report settings
   const [includeQr, setIncludeQr] = useState(true);
@@ -52,41 +73,78 @@ const AdminDashboard = () => {
     averageScore: 0,
   });
 
+
+  // Fetch teacher's assigned class arm, students, signature, and remarks
   useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const [{ count: totalStudents }, { count: totalClasses }, { count: totalArms }, { count: totalSubjects }] = await Promise.all([
-          supabase.from('students').select('id', { count: 'exact', head: true }),
-          supabase.from('class_levels').select('id', { count: 'exact', head: true }),
-          supabase.from('class_arms').select('id', { count: 'exact', head: true }),
-          supabase.from('subjects').select('id', { count: 'exact', head: true }),
-        ]);
-
-        const { data: activeSessionRow } = await supabase.from('sessions').select('*').eq('is_active', true).limit(1).maybeSingle();
-
-        let currentTermName = '';
-        if (activeSessionRow && (activeSessionRow as any).id) {
-          const { data: termRow } = await supabase.from('terms').select('name_en').eq('session_id', (activeSessionRow as any).id).limit(1).maybeSingle();
-          currentTermName = termRow ? (termRow as any).name_en || '' : '';
-        }
-
-        const { data: scores } = await supabase.from('term_scores').select('total');
-        const totals = (scores || []).map((s: any) => Number(s.total) || 0);
-        const averageScore = totals.length ? Math.round((totals.reduce((a: number, b: number) => a + b, 0) / totals.length) * 100) / 100 : 0;
-
-        setStats({
-          totalStudents: totalStudents || 0,
-          totalClasses: totalClasses || 0,
-          totalArms: totalArms || 0,
-          totalSubjects: totalSubjects || 0,
-          activeSession: activeSessionRow ? (activeSessionRow as any).name : '',
-          currentTerm: currentTermName,
-          averageScore,
+    if (!isTeacher || !user) return;
+    (async () => {
+      // Get teacher's assigned class arm
+      const { data: profile } = await supabase.from('profiles').select('class_teacher_class_arm_id, signature_url').eq('user_id', user.id).maybeSingle();
+      const armId = profile?.class_teacher_class_arm_id || null;
+      setTeacherClassArmId(armId);
+      setSignatureUrl(profile?.signature_url || null);
+      if (armId) {
+        // Get students in this arm
+        const { data: students } = await supabase.from('students').select('*').eq('class_arm_id', armId).eq('status', 'active').order('full_name');
+        setTeacherStudents(students || []);
+        // Get remarks
+        const { data: tRemarks } = await supabase.from('tiered_remarks').select('*').eq('role', 'teacher').eq('class_arm_id', armId);
+        const map: Record<string, string> = {};
+        (tRemarks || []).forEach((r: any) => {
+          map[`${r.min_score}-${r.max_score}`] = r.remark_en;
         });
-      } catch (err) {}
-    };
-    fetchStats();
-  }, []);
+        setTeacherRemarks(map);
+      }
+    })();
+  }, [isTeacher, user]);
+
+  // Signature upload handler
+  const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+    setUploadingSig(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const filePath = `signatures/${user.id}.${fileExt}`;
+      const { error: uploadErr } = await supabase.storage.from('public').upload(filePath, file, { upsert: true });
+      if (uploadErr) throw uploadErr;
+      const { data } = supabase.storage.from('public').getPublicUrl(filePath);
+      const url = data.publicUrl;
+      setSignatureUrl(url);
+      // Save to profile
+      await supabase.from('profiles').update({ signature_url: url }).eq('user_id', user.id);
+      toast({ title: t('Signature uploaded'), description: t('Your signature has been updated.') });
+    } catch (err: any) {
+      toast({ title: t('Error'), description: err.message || String(err), variant: 'destructive' });
+    } finally {
+      setUploadingSig(false);
+    }
+  };
+
+  // Save teacher remarks
+  const saveTeacherRemarks = async () => {
+    if (!teacherClassArmId) return;
+    setSavingTeacherRemarks(true);
+    try {
+      await supabase.from('tiered_remarks').delete().eq('role', 'teacher').eq('class_arm_id', teacherClassArmId);
+      const inserts = REMARK_TIERS.map(tier => ({
+        role: 'teacher' as const,
+        class_arm_id: teacherClassArmId,
+        min_score: tier.min,
+        max_score: tier.max,
+        remark_en: teacherRemarks[`${tier.min}-${tier.max}`] || '',
+        remark_ar: '',
+      })).filter(r => r.remark_en.trim());
+      if (inserts.length > 0) {
+        await supabase.from('tiered_remarks').insert(inserts);
+      }
+      toast({ title: t('Saved'), description: t('Teacher remarks saved successfully') });
+    } catch (err: any) {
+      toast({ title: t('Error'), description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingTeacherRemarks(false);
+    }
+  };
 
   // Load settings + tiered remarks
   useEffect(() => {
@@ -276,6 +334,118 @@ const AdminDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Teacher Section: Only visible to teachers */}
+      {isTeacher && (
+        <div className="space-y-8">
+          <Card className="shadow-card border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Users className="h-5 w-5 text-primary" />
+                {t("My Students", "طلابي")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {teacherClassArmId ? (
+                teacherStudents.length === 0 ? (
+                  <p className="text-muted-foreground">{t('No students found in your class arm.', 'لا يوجد طلاب في شعبتك.')}</p>
+                ) : (
+                  <div className="overflow-x-auto max-h-[40vh]">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>#</TableHead>
+                          <TableHead>{t('Student ID', 'رقم الطالب')}</TableHead>
+                          <TableHead>{t('Name', 'الاسم')}</TableHead>
+                          <TableHead>{t('Gender', 'الجنس')}</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {teacherStudents.map((student, i) => (
+                          <TableRow key={student.id}>
+                            <TableCell>{i + 1}</TableCell>
+                            <TableCell className="font-mono text-xs">{student.student_uid || '—'}</TableCell>
+                            <TableCell>{student.name_en || student.full_name}</TableCell>
+                            <TableCell className="capitalize">{student.gender || '—'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )
+              ) : (
+                <p className="text-muted-foreground">{t('No class arm assigned to you.', 'لم يتم تعيين شعبة لك.')}</p>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Signature Upload */}
+          <Card className="shadow-card border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Upload className="h-5 w-5 text-primary" />
+                {t('Upload Signature', 'رفع التوقيع')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                {signatureUrl ? (
+                  <img src={signatureUrl} alt="Signature" className="h-12 w-32 object-contain border rounded bg-white" />
+                ) : (
+                  <span className="text-muted-foreground">{t('No signature uploaded', 'لم يتم رفع توقيع')}</span>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                  onChange={handleSignatureUpload}
+                  disabled={uploadingSig}
+                />
+                <Button size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploadingSig}>
+                  {uploadingSig ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                  {t('Upload', 'رفع')}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Teacher Remarks Editor */}
+          <Card className="shadow-card border-primary/20">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <MessageSquare className="h-5 w-5 text-primary" />
+                {t("My Class Teacher's Remarks", 'ملاحظات معلم الفصل')}
+              </CardTitle>
+              <CardDescription className="text-xs">
+                {t('Set automatic remarks based on student average scores for your assigned class', 'حدد ملاحظات تلقائية بناءً على متوسط درجات الطالب لفصلك المعين')}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3 max-w-lg">
+                {REMARK_TIERS.map(tier => (
+                  <div key={tier.label} className="space-y-1">
+                    <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
+                    <Textarea
+                      value={teacherRemarks[`${tier.min}-${tier.max}`] || ''}
+                      onChange={e => setTeacherRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
+                      rows={2}
+                      placeholder={t(`Remark for students scoring ${tier.label}`, `ملاحظة للطلاب بدرجة ${tier.label}`)}
+                      className="text-sm"
+                    />
+                  </div>
+                ))}
+                <div className="flex justify-end">
+                  <Button onClick={saveTeacherRemarks} disabled={savingTeacherRemarks} size="sm">
+                    {savingTeacherRemarks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                    {t('Save Remarks', 'حفظ الملاحظات')}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </AdminLayout>
   );
 };
