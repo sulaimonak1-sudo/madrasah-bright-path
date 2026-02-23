@@ -92,6 +92,61 @@ const AdminDashboard = () => {
     })();
   }, [isTeacher, user]);
 
+  // Fetch overall dashboard stats (counts, active session/term, average score)
+  useEffect(() => {
+    (async () => {
+      try {
+        const [studentsRes, classesRes, armsRes, subjectsRes] = await Promise.all([
+          supabase.from('students').select('id', { count: 'exact' }),
+          supabase.from('class_levels').select('id', { count: 'exact' }),
+          supabase.from('class_arms').select('id', { count: 'exact' }),
+          supabase.from('subjects').select('id', { count: 'exact' }),
+        ]);
+
+        const activeSessionRes = await supabase.from('sessions').select('id,name_en,name_ar').eq('is_active', true).maybeSingle();
+        let currentTermName = '';
+        let currentTermId: string | null = null;
+        if (activeSessionRes.data?.id) {
+          const termRes = await supabase.from('terms').select('*').eq('session_id', activeSessionRes.data.id).order('term_number', { ascending: false }).limit(1).maybeSingle();
+          if (termRes.data) {
+            currentTermName = termRes.data.name_en || termRes.data.name_ar || '';
+            currentTermId = termRes.data.id;
+          }
+        }
+
+        // Compute average score for current term (if available)
+        let avgScore = 0;
+        if (currentTermId) {
+          const { data: rows } = await supabase.from('term_scores').select('student_id,total').eq('term_id', currentTermId);
+          if (rows && rows.length > 0) {
+            const byStudent: Record<string, number[]> = {};
+            rows.forEach((r: any) => {
+              if (r.total == null) return;
+              byStudent[r.student_id] = byStudent[r.student_id] || [];
+              byStudent[r.student_id].push(r.total);
+            });
+            const studentAverages = Object.values(byStudent).map(arr => arr.reduce((a, b) => a + b, 0) / arr.length);
+            if (studentAverages.length > 0) {
+              avgScore = Math.round(studentAverages.reduce((a, b) => a + b, 0) / studentAverages.length);
+            }
+          }
+        }
+
+        setStats({
+          totalStudents: Number(studentsRes.count || 0),
+          totalClasses: Number(classesRes.count || 0),
+          totalArms: Number(armsRes.count || 0),
+          totalSubjects: Number(subjectsRes.count || 0),
+          activeSession: activeSessionRes.data?.name_en || activeSessionRes.data?.name_ar || '',
+          currentTerm: currentTermName,
+          averageScore: avgScore,
+        });
+      } catch (err) {
+        // silently ignore dashboard stat errors
+      }
+    })();
+  }, []);
+
   // Signature upload handler
   const handleSignatureUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
