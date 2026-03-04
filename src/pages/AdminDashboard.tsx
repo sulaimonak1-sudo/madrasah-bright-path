@@ -103,7 +103,7 @@ const AdminDashboard = () => {
           supabase.from('subjects').select('id', { count: 'exact' }),
         ]);
 
-        const activeSessionRes = await supabase.from('sessions').select('id,name_en,name_ar').eq('is_active', true).maybeSingle();
+        const activeSessionRes = await supabase.from('sessions').select('id,name').eq('is_active', true).maybeSingle();
         let currentTermName = '';
         let currentTermId: string | null = null;
         if (activeSessionRes.data?.id) {
@@ -137,7 +137,7 @@ const AdminDashboard = () => {
           totalClasses: Number(classesRes.count || 0),
           totalArms: Number(armsRes.count || 0),
           totalSubjects: Number(subjectsRes.count || 0),
-          activeSession: activeSessionRes.data?.name_en || activeSessionRes.data?.name_ar || '',
+          activeSession: activeSessionRes.data?.name || '',
           currentTerm: currentTermName,
           averageScore: avgScore,
         });

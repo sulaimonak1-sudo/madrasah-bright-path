@@ -260,12 +260,6 @@ const AdminStaff = () => {
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in">
-        {/* Debug: Show detected profile info */}
-        {myProfile && (
-          <div className="p-2 mb-2 border border-dashed border-primary/30 bg-primary/5 rounded">
-            <strong>Debug:</strong> Detected role: <span className="font-mono">{myProfile.role}</span>, User ID: <span className="font-mono">{myProfile.user_id}</span>
-          </div>
-        )}
         <div>
           <h1 className="text-2xl font-bold">{t('Staff Management', 'إدارة الموظفين')}</h1>
           <p className="text-muted-foreground text-sm">{t('Manage staff members, assign classes, and upload signatures', 'إدارة الموظفين، تعيين الفصول، ورفع التوقيعات')}</p>
