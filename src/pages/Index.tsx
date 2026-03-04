@@ -84,15 +84,24 @@ const Index = () => {
   const [loading, setLoading] = useState(false);
   const [terms, setTerms] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [liveStats, setLiveStats] = useState({ students: 0, subjects: 0 });
 
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false });
-        if (data) {
-          setTerms(data);
-          if (data.length > 0) setTermId(data[0].id);
+        const [termsRes, studentsRes, subjectsRes] = await Promise.all([
+          supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false }),
+          supabase.from('students').select('id', { count: 'exact', head: true }),
+          supabase.from('subjects').select('id', { count: 'exact', head: true }),
+        ]);
+        if (termsRes.data) {
+          setTerms(termsRes.data);
+          if (termsRes.data.length > 0) setTermId(termsRes.data[0].id);
         }
+        setLiveStats({
+          students: Number(studentsRes.count || 0),
+          subjects: Number(subjectsRes.count || 0),
+        });
       } catch (err) {
         // ignore
       }
@@ -254,8 +263,8 @@ const Index = () => {
         <div className="container">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
             {[
-              { icon: Users, value: '500+', label_en: 'Students', label_ar: 'طالب' },
-              { icon: BookOpen, value: '20+', label_en: 'Subjects', label_ar: 'مادة' },
+              { icon: Users, value: liveStats.students > 0 ? `${liveStats.students}+` : '—', label_en: 'Students', label_ar: 'طالب' },
+              { icon: BookOpen, value: liveStats.subjects > 0 ? `${liveStats.subjects}+` : '—', label_en: 'Subjects', label_ar: 'مادة' },
               { icon: Star, value: '100%', label_en: 'Digital Records', label_ar: 'سجلات رقمية' },
               { icon: CheckCircle, value: '24/7', label_en: 'Access', label_ar: 'وصول' },
             ].map((s, i) => (
