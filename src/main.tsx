@@ -2,8 +2,10 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Register service worker for PWA support
-if ("serviceWorker" in navigator) {
+// Register service worker only outside preview domains
+const isPreviewHost = window.location.hostname.includes("lovableproject.com");
+
+if ("serviceWorker" in navigator && !isPreviewHost) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
@@ -14,8 +16,15 @@ if ("serviceWorker" in navigator) {
         console.error("Service Worker registration failed:", error);
       });
   });
-} else {
-  console.warn("Service Workers are not supported in this browser");
+} else if ("serviceWorker" in navigator) {
+  // Cleanup stale workers/caches in preview to prevent stale chunk loading issues
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister());
+  });
+
+  if ("caches" in window) {
+    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
