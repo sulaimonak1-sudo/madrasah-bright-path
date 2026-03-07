@@ -41,8 +41,19 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Footer */}
       <footer className="border-t bg-card py-6">
-        <div className="container text-center text-sm text-muted-foreground">
-          <p>© 2025 {t('Al-Bari Group of Schools. All rights reserved.', 'مجموعة مدارس البارئ. جميع الحقوق محفوظة.')}</p>
+        <div className="container text-center text-sm text-muted-foreground space-y-2">
+          <p>© {new Date().getFullYear()} {t('Al-Bari Group of Schools. All rights reserved.', 'مجموعة مدارس البارئ. جميع الحقوق محفوظة.')}</p>
+          <p>
+            {t('Designed by', 'تصميم')}{' '}
+            <a
+              href="https://akboy.space"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-primary hover:underline transition-colors"
+            >
+              Akboy Creative Hub
+            </a>
+          </p>
         </div>
       </footer>
     </div>
