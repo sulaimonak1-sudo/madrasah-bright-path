@@ -111,7 +111,7 @@ const AdminResults = () => {
   }, [selectedSubject, selectedClassArm, termId, selectedClassLevel]);
 
   const updateScore = useCallback((index: number, field: 'ca1' | 'ca2' | 'exam', value: string) => {
-    const num = Math.max(0, Math.min(field === 'exam' ? 60 : 15, Number(value) || 0));
+    const num = Math.max(0, Math.min(field === 'exam' ? 60 : 20, Number(value) || 0));
     setScores(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: num };
@@ -339,8 +339,8 @@ const AdminResults = () => {
                       <TableRow>
                         <TableHead className="w-8">#</TableHead>
                         <TableHead>{t('Student', 'الطالب')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('CA1 (15)', 'اختبار١ (١٥)')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('CA2 (15)', 'اختبار٢ (١٥)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('CA1 (20)', 'اختبار١ (٢٠)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('CA2 (20)', 'اختبار٢ (٢٠)')}</TableHead>
                         <TableHead className="w-24 text-center">{t('Exam (60)', 'امتحان (٦٠)')}</TableHead>
                         <TableHead className="w-20 text-center">{t('Total', 'المجموع')}</TableHead>
                         <TableHead className="w-16 text-center">{t('Grade', 'التقدير')}</TableHead>
@@ -355,12 +355,12 @@ const AdminResults = () => {
                             <TableCell className="text-muted-foreground">{i + 1}</TableCell>
                             <TableCell className="font-medium">{s.student_name}</TableCell>
                             <TableCell>
-                              <Input type="number" min={0} max={15} value={s.ca1}
+                              <Input type="number" min={0} max={20} value={s.ca1}
                                 onChange={e => updateScore(i, 'ca1', e.target.value)}
                                 className="h-8 text-center" disabled={isLocked} />
                             </TableCell>
                             <TableCell>
-                              <Input type="number" min={0} max={15} value={s.ca2}
+                              <Input type="number" min={0} max={20} value={s.ca2}
                                 onChange={e => updateScore(i, 'ca2', e.target.value)}
                                 className="h-8 text-center" disabled={isLocked} />
                             </TableCell>
