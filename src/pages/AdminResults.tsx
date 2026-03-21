@@ -339,8 +339,8 @@ const AdminResults = () => {
                       <TableRow>
                         <TableHead className="w-8">#</TableHead>
                         <TableHead>{t('Student', 'الطالب')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('CA1 (15)', 'اختبار١ (١٥)')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('CA2 (15)', 'اختبار٢ (١٥)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('CA1 (20)', 'اختبار١ (٢٠)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('CA2 (20)', 'اختبار٢ (٢٠)')}</TableHead>
                         <TableHead className="w-24 text-center">{t('Exam (60)', 'امتحان (٦٠)')}</TableHead>
                         <TableHead className="w-20 text-center">{t('Total', 'المجموع')}</TableHead>
                         <TableHead className="w-16 text-center">{t('Grade', 'التقدير')}</TableHead>
