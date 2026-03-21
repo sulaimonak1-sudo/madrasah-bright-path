@@ -360,7 +360,7 @@ const AdminResults = () => {
                                 className="h-8 text-center" disabled={isLocked} />
                             </TableCell>
                             <TableCell>
-                              <Input type="number" min={0} max={15} value={s.ca2}
+                              <Input type="number" min={0} max={20} value={s.ca2}
                                 onChange={e => updateScore(i, 'ca2', e.target.value)}
                                 className="h-8 text-center" disabled={isLocked} />
                             </TableCell>
