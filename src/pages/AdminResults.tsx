@@ -355,7 +355,7 @@ const AdminResults = () => {
                             <TableCell className="text-muted-foreground">{i + 1}</TableCell>
                             <TableCell className="font-medium">{s.student_name}</TableCell>
                             <TableCell>
-                              <Input type="number" min={0} max={15} value={s.ca1}
+                              <Input type="number" min={0} max={20} value={s.ca1}
                                 onChange={e => updateScore(i, 'ca1', e.target.value)}
                                 className="h-8 text-center" disabled={isLocked} />
                             </TableCell>
