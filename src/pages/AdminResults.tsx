@@ -111,7 +111,7 @@ const AdminResults = () => {
   }, [selectedSubject, selectedClassArm, termId, selectedClassLevel]);
 
   const updateScore = useCallback((index: number, field: 'ca1' | 'ca2' | 'exam', value: string) => {
-    const num = Math.max(0, Math.min(field === 'exam' ? 60 : 15, Number(value) || 0));
+    const num = Math.max(0, Math.min(field === 'exam' ? 60 : 20, Number(value) || 0));
     setScores(prev => {
       const updated = [...prev];
       updated[index] = { ...updated[index], [field]: num };
