@@ -304,13 +304,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                   </Link>
                 );
               })}
-                    <item.icon className="h-5 w-5" strokeWidth={active ? 2.2 : 1.9} />
-                    <span className={cn('text-[10px] leading-none', active ? 'font-semibold' : 'font-medium')}>
-                      {t(item.label_en, item.label_ar)}
-                    </span>
-                  </Link>
-                );
-              })}
             </div>
           </div>
         </nav>
