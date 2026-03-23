@@ -6,13 +6,12 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import {
   LayoutDashboard, Users, BookOpen, Layers, FolderOpen,
   Calendar, Upload, TrendingUp, FileText, Lock, LogOut, Menu, X,
-  UserCog, ChevronLeft, ChevronRight
+  UserCog, ChevronLeft, ChevronRight, Bell, MoreHorizontal
 } from 'lucide-react';
 import { useState } from 'react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -56,6 +55,22 @@ const navGroups = [
   },
 ];
 
+// Mobile bottom tab items
+const mobileTabItems = [
+  { to: '/admin', icon: LayoutDashboard, label_en: 'Home', label_ar: 'الرئيسية', exact: true },
+  { to: '/admin/students', icon: Users, label_en: 'Students', label_ar: 'الطلاب' },
+  { to: '/admin/results', icon: Upload, label_en: 'Results', label_ar: 'النتائج' },
+  { to: '/admin/reports', icon: FileText, label_en: 'Reports', label_ar: 'التقارير' },
+];
+
+const mobileTabItemsAdmin = [
+  { to: '/admin', icon: LayoutDashboard, label_en: 'Home', label_ar: 'الرئيسية', exact: true },
+  { to: '/admin/students', icon: Users, label_en: 'Students', label_ar: 'الطلاب' },
+  { to: '/admin/results', icon: Upload, label_en: 'Results', label_ar: 'النتائج' },
+  { to: '/admin/subjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد' },
+  { to: '/admin/reports', icon: FileText, label_en: 'Reports', label_ar: 'التقارير' },
+];
+
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { t, isRTL } = useLanguage();
   const { signOut, isAdmin, role, user } = useAuth();
@@ -70,12 +85,18 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     items: isAdmin
       ? group.items
       : group.items.filter(item =>
-          // allow teachers access to students, results and reports; admins see everything
           ['/admin', '/admin/results', '/admin/reports', '/admin/students'].includes(item.path)
         ),
   })).filter(group => group.items.length > 0);
 
   const userInitials = user?.email?.substring(0, 2).toUpperCase() || 'U';
+  const userName = user?.email?.split('@')[0] || 'User';
+  const tabs = isAdmin ? mobileTabItemsAdmin : mobileTabItems;
+
+  // Get current page title for mobile header
+  const allItems = navGroups.flatMap(g => g.items);
+  const currentPage = allItems.find(i => i.path === location.pathname);
+  const pageTitle = currentPage ? t(currentPage.label_en, currentPage.label_ar) : t('Dashboard', 'لوحة التحكم');
 
   return (
     <div className={cn("flex min-h-screen bg-background", isRTL && "flex-row-reverse")}>
@@ -84,7 +105,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <div className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm md:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      {/* Sidebar */}
+      {/* Sidebar — desktop + mobile drawer */}
       <aside className={cn(
         "fixed z-50 inset-y-0 flex flex-col bg-sidebar border-r border-sidebar-border transition-all duration-300 md:relative",
         collapsed ? "w-[68px]" : "w-64",
@@ -209,17 +230,47 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
       {/* Main content */}
       <div className="flex flex-1 flex-col min-w-0">
-        {/* Top bar */}
-        <header className="sticky top-0 z-30 flex items-center justify-between border-b bg-card/80 backdrop-blur-md px-4 py-2.5 md:px-6">
-          <div className="flex items-center gap-3">
-            <button onClick={() => setSidebarOpen(true)} className="md:hidden text-foreground hover:text-primary transition-colors">
-              <Menu className="h-5 w-5" />
-            </button>
-            <div className="hidden md:block">
-              <h2 className="text-sm font-semibold text-foreground/80">
-                {t('Al-Bari Madrasah Portal', 'بوابة مدرسة البارئ')}
-              </h2>
+        {/* Mobile header — clean, modern with avatar */}
+        <header className="md:hidden sticky top-0 z-30 bg-card border-b border-border/50 px-4 py-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="flex items-center justify-center h-10 w-10 rounded-xl bg-muted/60 text-foreground active:scale-95 transition-transform"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+              <div>
+                <p className="text-xs text-muted-foreground font-medium">
+                  {t('Welcome back', 'مرحبًا بعودتك')} 👋
+                </p>
+                <h2 className="text-base font-bold text-foreground leading-tight capitalize">
+                  {userName}
+                </h2>
+              </div>
             </div>
+            <div className="flex items-center gap-2">
+              <LanguageToggle />
+              <Link
+                to="/admin/settings/profile"
+                className="flex items-center justify-center"
+              >
+                <Avatar className="h-10 w-10 ring-2 ring-primary/20">
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-bold">
+                    {userInitials}
+                  </AvatarFallback>
+                </Avatar>
+              </Link>
+            </div>
+          </div>
+        </header>
+
+        {/* Desktop header */}
+        <header className="hidden md:flex sticky top-0 z-30 items-center justify-between border-b bg-card/80 backdrop-blur-md px-6 py-2.5">
+          <div className="flex items-center gap-3">
+            <h2 className="text-sm font-semibold text-foreground/80">
+              {t('Al-Bari Madrasah Portal', 'بوابة مدرسة البارئ')}
+            </h2>
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle />
@@ -227,42 +278,57 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 md:p-6 lg:p-8 pb-20 md:pb-0">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 pb-24 md:pb-0">
           {children}
         </main>
-        {/* Mobile bottom navigation — minimal, flat, professional */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/60 backdrop-blur-sm" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="flex justify-around items-end px-1 pt-1.5 pb-1">
-            {[
-              { to: '/admin', icon: LayoutDashboard, label_en: 'Home', label_ar: 'الرئيسية', exact: true },
-              { to: '/admin/students', icon: Users, label_en: 'Students', label_ar: 'الطلاب' },
-              { to: '/admin/results', icon: Upload, label_en: 'Results', label_ar: 'النتائج' },
-              ...(isAdmin ? [{ to: '/admin/subjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد' }] : []),
-              { to: '/admin/reports', icon: FileText, label_en: 'Reports', label_ar: 'التقارير' },
-            ].map(item => {
-              const active = item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to);
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  aria-label={t(item.label_en, item.label_ar)}
-                  className="flex flex-col items-center gap-0.5 py-1.5 px-2 min-w-[3.5rem] group"
-                >
-                  <div className={cn(
-                    "flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-200",
-                    active ? "bg-primary text-primary-foreground" : "text-muted-foreground group-active:bg-muted"
-                  )}>
-                    <item.icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.2 : 1.8} />
-                  </div>
-                  <span className={cn(
-                    "text-[10px] leading-tight transition-colors duration-200",
-                    active ? "font-semibold text-primary" : "font-medium text-muted-foreground"
-                  )}>
-                    {t(item.label_en, item.label_ar)}
-                  </span>
-                </Link>
-              );
-            })}
+
+        {/* Mobile bottom tab bar — inspired by reference: clean, modern, no gradients */}
+        <nav
+          className="md:hidden fixed bottom-0 left-0 right-0 z-40"
+          style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+        >
+          {/* Floating tab bar container */}
+          <div className="mx-3 mb-2 bg-card rounded-2xl border border-border/40 shadow-lg">
+            <div className="flex items-center justify-around py-1.5">
+              {tabs.map(item => {
+                const active = item.exact
+                  ? location.pathname === item.to
+                  : location.pathname.startsWith(item.to);
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    aria-label={t(item.label_en, item.label_ar)}
+                    className={cn(
+                      "relative flex flex-col items-center gap-0.5 py-2 px-3 rounded-xl transition-all duration-200",
+                      active && "bg-primary/10"
+                    )}
+                  >
+                    {/* Active top indicator bar */}
+                    {active && (
+                      <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 h-[3px] w-6 rounded-full bg-primary" />
+                    )}
+                    <item.icon
+                      className={cn(
+                        "h-5 w-5 transition-colors duration-200",
+                        active ? "text-primary" : "text-muted-foreground"
+                      )}
+                      strokeWidth={active ? 2.4 : 1.8}
+                    />
+                    <span
+                      className={cn(
+                        "text-[10px] leading-none transition-colors duration-200",
+                        active
+                          ? "font-semibold text-primary"
+                          : "font-medium text-muted-foreground"
+                      )}
+                    >
+                      {t(item.label_en, item.label_ar)}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
         </nav>
       </div>
