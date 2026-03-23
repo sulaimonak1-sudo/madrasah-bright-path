@@ -230,81 +230,39 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         <main className="flex-1 p-4 md:p-6 lg:p-8 pb-20 md:pb-0">
           {children}
         </main>
-        {/* Mobile bottom navigation (app-like) */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card/98 border-t border-border" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
-          <div className="max-w-4xl mx-auto flex justify-between items-center gap-3 py-3 px-3">
-            {/** Modern pill buttons with white background, shadow, and clear active state */}
-            <Link
-              to="/admin"
-              aria-label={t('Dashboard', 'الرئيسية')}
-              className={cn(
-                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
-                location.pathname === '/admin'
-                  ? 'bg-primary text-white scale-100 shadow-md'
-                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
-              )}
-            >
-              <LayoutDashboard className="h-6 w-6" />
-              <span className="text-[11px] font-medium">{t('Dash', 'الرئيسية')}</span>
-            </Link>
-
-            <Link
-              to="/admin/students"
-              aria-label={t('Students', 'الطلاب')}
-              className={cn(
-                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
-                location.pathname.startsWith('/admin/students')
-                  ? 'bg-primary text-white scale-100 shadow-md'
-                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
-              )}
-            >
-              <Users className="h-6 w-6" />
-              <span className="text-[11px] font-medium">{t('Students', 'الطلاب')}</span>
-            </Link>
-
-            <Link
-              to="/admin/results"
-              aria-label={t('Results', 'النتائج')}
-              className={cn(
-                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
-                location.pathname.startsWith('/admin/results')
-                  ? 'bg-primary text-white scale-100 shadow-md'
-                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
-              )}
-            >
-              <Upload className="h-6 w-6" />
-              <span className="text-[11px] font-medium">{t('Results', 'النتائج')}</span>
-            </Link>
-
-            {isAdmin && (
-              <Link
-                to="/admin/subjects"
-                aria-label={t('Subjects', 'المواد')}
-                className={cn(
-                  "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
-                  location.pathname.startsWith('/admin/subjects')
-                    ? 'bg-primary text-white scale-100 shadow-md'
-                    : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
-                )}
-              >
-                <BookOpen className="h-6 w-6" />
-                <span className="text-[11px] font-medium">{t('Subjects', 'المواد')}</span>
-              </Link>
-            )}
-
-            <Link
-              to="/admin/reports"
-              aria-label={t('Reports', 'التقارير')}
-              className={cn(
-                "flex flex-col items-center text-xs gap-1 px-3 py-2 rounded-xl shadow-sm transition-transform duration-150",
-                location.pathname.startsWith('/admin/reports')
-                  ? 'bg-primary text-white scale-100 shadow-md'
-                  : 'bg-white text-foreground/80 hover:shadow-md active:scale-95'
-              )}
-            >
-              <FileText className="h-6 w-6" />
-              <span className="text-[11px] font-medium">{t('Reports', 'التقارير')}</span>
-            </Link>
+        {/* Mobile bottom navigation — minimal, flat, professional */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-card border-t border-border/60 backdrop-blur-sm" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+          <div className="flex justify-around items-end px-1 pt-1.5 pb-1">
+            {[
+              { to: '/admin', icon: LayoutDashboard, label_en: 'Home', label_ar: 'الرئيسية', exact: true },
+              { to: '/admin/students', icon: Users, label_en: 'Students', label_ar: 'الطلاب' },
+              { to: '/admin/results', icon: Upload, label_en: 'Results', label_ar: 'النتائج' },
+              ...(isAdmin ? [{ to: '/admin/subjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد' }] : []),
+              { to: '/admin/reports', icon: FileText, label_en: 'Reports', label_ar: 'التقارير' },
+            ].map(item => {
+              const active = item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  aria-label={t(item.label_en, item.label_ar)}
+                  className="flex flex-col items-center gap-0.5 py-1.5 px-2 min-w-[3.5rem] group"
+                >
+                  <div className={cn(
+                    "flex items-center justify-center h-8 w-8 rounded-full transition-colors duration-200",
+                    active ? "bg-primary text-primary-foreground" : "text-muted-foreground group-active:bg-muted"
+                  )}>
+                    <item.icon className="h-[18px] w-[18px]" strokeWidth={active ? 2.2 : 1.8} />
+                  </div>
+                  <span className={cn(
+                    "text-[10px] leading-tight transition-colors duration-200",
+                    active ? "font-semibold text-primary" : "font-medium text-muted-foreground"
+                  )}>
+                    {t(item.label_en, item.label_ar)}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </nav>
       </div>
