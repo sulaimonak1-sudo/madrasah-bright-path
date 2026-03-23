@@ -268,7 +268,9 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           <div className="mx-3 mb-3 rounded-[28px] border border-border/60 bg-card/95 p-2 shadow-card-lg backdrop-blur-xl">
             <div className="grid grid-cols-5 gap-1">
               {mobileDockItems.map(item => {
-                const active = item.type === 'link' && (item.exact ? location.pathname === item.to : location.pathname.startsWith(item.to));
+                const active = item.to === '/admin'
+                  ? location.pathname === item.to
+                  : location.pathname.startsWith(item.to);
 
                 if (item.type === 'action') {
                   return (
