@@ -268,10 +268,6 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           <div className="mx-3 mb-3 rounded-[28px] border border-border/60 bg-card/95 p-2 shadow-card-lg backdrop-blur-xl">
             <div className="grid grid-cols-5 gap-1">
               {mobileDockItems.map(item => {
-                const active = item.to === '/admin'
-                  ? location.pathname === item.to
-                  : location.pathname.startsWith(item.to);
-
                 if (item.type === 'action') {
                   return (
                     <button
@@ -287,6 +283,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                   );
                 }
 
+                const active = item.to === '/admin'
+                  ? location.pathname === item.to
+                  : location.pathname.startsWith(item.to);
+
                 return (
                   <Link
                     key={item.to}
@@ -297,6 +297,13 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                     )}
                     aria-label={t(item.label_en, item.label_ar)}
                   >
+                    <item.icon className="h-5 w-5" strokeWidth={active ? 2.2 : 1.9} />
+                    <span className={cn('text-[10px] leading-none', active ? 'font-semibold' : 'font-medium')}>
+                      {t(item.label_en, item.label_ar)}
+                    </span>
+                  </Link>
+                );
+              })}
                     <item.icon className="h-5 w-5" strokeWidth={active ? 2.2 : 1.9} />
                     <span className={cn('text-[10px] leading-none', active ? 'font-semibold' : 'font-medium')}>
                       {t(item.label_en, item.label_ar)}
