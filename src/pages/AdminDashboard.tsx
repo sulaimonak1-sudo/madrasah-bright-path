@@ -5,17 +5,17 @@ import { InstallPrompt } from '@/components/InstallPrompt';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Users, Layers, BookOpen, FolderOpen, Calendar, Award, Save, Loader2 } from 'lucide-react';
+import { GraduationCap, Rows3, BookText, Grid2x2, CalendarRange, TrendingUp, Save, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 // using native textarea to avoid runtime bundling issues
 
 const statCards = [
-  { key: 'totalStudents', icon: Users, label_en: 'Total Students', label_ar: 'إجمالي الطلاب', color: 'text-primary' },
-  { key: 'totalClasses', icon: Layers, label_en: 'Class Levels', label_ar: 'المراحل الدراسية', color: 'text-[hsl(var(--info))]' },
-  { key: 'totalArms', icon: FolderOpen, label_en: 'Total Arms', label_ar: 'إجمالي الشعب', color: 'text-accent' },
-  { key: 'totalSubjects', icon: BookOpen, label_en: 'Subjects', label_ar: 'المواد', color: 'text-[hsl(var(--success))]' },
+  { key: 'totalStudents', icon: GraduationCap, label_en: 'Total Students', label_ar: 'إجمالي الطلاب', color: 'text-primary' },
+  { key: 'totalClasses', icon: Rows3, label_en: 'Class Levels', label_ar: 'المراحل الدراسية', color: 'text-[hsl(var(--info))]' },
+  { key: 'totalArms', icon: Grid2x2, label_en: 'Total Arms', label_ar: 'إجمالي الشعب', color: 'text-accent' },
+  { key: 'totalSubjects', icon: BookText, label_en: 'Subjects', label_ar: 'المواد', color: 'text-[hsl(var(--success))]' },
 ];
 
 const REMARK_TIERS = [
@@ -175,64 +175,64 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
-        <div>
+      <div className="space-y-5 animate-fade-in pb-20 md:pb-0">
+        {/* Page heading — hidden on mobile since header shows title */}
+        <div className="hidden md:block">
           <h1 className="text-2xl font-bold">{t('Dashboard', 'لوحة التحكم')}</h1>
-          <p className="text-muted-foreground">{t('Overview of your Madrasah result portal', 'نظرة عامة على بوابة نتائج المدرسة')}</p>
+          <p className="text-sm text-muted-foreground">{t('Overview of your Madrasah result portal', 'نظرة عامة على بوابة نتائج المدرسة')}</p>
         </div>
 
-        {/* Install PWA Prompt */}
         <InstallPrompt />
 
-        {/* Stats */}
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Stats — 2‑col grid on mobile, 4‑col on desktop */}
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {statCards.map(card => (
-            <Card key={card.key} className="shadow-card rounded-2xl touch-auto transition-transform duration-200 active:scale-95 hover:shadow-lg">
-              <CardContent className="flex items-center gap-4 p-6 md:p-5">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-muted">
-                  <card.icon className={`h-7 w-7 ${card.color}`} />
+            <Card key={card.key} className="overflow-hidden border-0 bg-card shadow-sm rounded-2xl">
+              <CardContent className="p-4">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 mb-3">
+                  <card.icon className={`h-5 w-5 ${card.color}`} strokeWidth={1.8} />
                 </div>
-                <div>
-                  <p className="text-sm md:text-xs text-muted-foreground">{t(card.label_en, card.label_ar)}</p>
-                  <p className="text-2xl md:text-xl font-bold">{(stats as any)[card.key]}</p>
-                </div>
+                <p className="text-xs text-muted-foreground leading-none">{t(card.label_en, card.label_ar)}</p>
+                <p className="mt-1 text-2xl font-bold tracking-tight">{(stats as any)[card.key]}</p>
               </CardContent>
             </Card>
           ))}
         </div>
 
-        {/* Quick Info */}
-        <div className="grid gap-4 md:grid-cols-2">
-          <Card className="shadow-card rounded-2xl transition-transform duration-200 active:scale-95">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Calendar className="h-5 w-5 text-accent" />
-                {t('Current Session', 'السنة الدراسية الحالية')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('Session', 'السنة')}</span>
-                <span className="font-semibold">{stats.activeSession}</span>
+        {/* Quick Info — session & performance */}
+        <div className="grid gap-3 md:grid-cols-2">
+          <Card className="border-0 bg-card shadow-sm rounded-2xl">
+            <CardContent className="p-4 md:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15">
+                  <CalendarRange className="h-4 w-4 text-accent" strokeWidth={1.8} />
+                </div>
+                <h3 className="text-sm font-semibold">{t('Current Session', 'السنة الدراسية الحالية')}</h3>
               </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">{t('Current Term', 'الفصل الحالي')}</span>
-                <span className="font-semibold">{stats.currentTerm}</span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{t('Session', 'السنة')}</span>
+                  <span className="font-medium">{stats.activeSession || '—'}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{t('Current Term', 'الفصل الحالي')}</span>
+                  <span className="font-medium">{stats.currentTerm || '—'}</span>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="shadow-card rounded-2xl transition-transform duration-200 active:scale-95">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Award className="h-5 w-5 text-accent" />
-                {t('Performance', 'الأداء')}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex justify-between">
+          <Card className="border-0 bg-card shadow-sm rounded-2xl">
+            <CardContent className="p-4 md:p-5">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <TrendingUp className="h-4 w-4 text-primary" strokeWidth={1.8} />
+                </div>
+                <h3 className="text-sm font-semibold">{t('Performance', 'الأداء')}</h3>
+              </div>
+              <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{t('Avg. Score', 'متوسط الدرجات')}</span>
-                <span className="font-semibold">{stats.averageScore}%</span>
+                <span className="text-xl font-bold">{stats.averageScore}%</span>
               </div>
             </CardContent>
           </Card>
@@ -240,17 +240,17 @@ const AdminDashboard = () => {
 
         {/* Head Teacher Tiered Remarks (admin only) */}
         {isAdmin && (
-          <Card className="shadow-card">
-            <CardHeader>
-              <CardTitle className="text-lg">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle>
+          <Card className="border-0 bg-card shadow-sm rounded-2xl">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4 max-w-lg">
                 {REMARK_TIERS.map(tier => (
-                  <div key={tier.label} className="space-y-1">
-                    <Label className="text-xs font-semibold">{tier.label} ({tier.min}–{tier.max}%)</Label>
+                  <div key={tier.label} className="space-y-1.5">
+                    <Label className="text-xs font-medium text-muted-foreground">{tier.label} ({tier.min}–{tier.max}%)</Label>
                     <textarea
-                      className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex min-h-[72px] w-full rounded-xl border border-input bg-background px-3 py-2.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={headRemarks[`${tier.min}-${tier.max}`] || ''}
                       onChange={e => setHeadRemarks(prev => ({ ...prev, [`${tier.min}-${tier.max}`]: e.target.value }))}
                       rows={2}
@@ -258,8 +258,8 @@ const AdminDashboard = () => {
                     />
                   </div>
                 ))}
-                <div className="flex justify-end">
-                  <Button onClick={saveHeadRemarks} disabled={savingRemarks} size="sm">
+                <div className="flex justify-end pt-1">
+                  <Button onClick={saveHeadRemarks} disabled={savingRemarks} size="sm" className="rounded-xl">
                     {savingRemarks ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                     {t('Save Remarks', 'حفظ الملاحظات')}
                   </Button>
