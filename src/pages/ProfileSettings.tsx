@@ -71,11 +71,11 @@ const ProfileSettings = () => {
     setUploadingAvatar(true);
     try {
       const ext = file.name.split('.').pop();
-      const path = `${user.id}/avatar.${ext}`;
+      const path = `${user.id}/${Date.now()}-avatar.${ext}`;
       const url = await uploadToBucket(file, 'avatars', path);
-      await supabase.from('profiles').upsert({ user_id: user.id, avatar_url: url } as any, { onConflict: 'user_id' });
+      await supabase.from('profiles').update({ avatar_url: url }).eq('user_id', user.id);
+      setProfile((prev: any) => prev ? { ...prev, avatar_url: url } : prev);
       toast({ title: t('Uploaded', 'تم الرفع'), description: t('Avatar updated', 'تم تحديث صورة الملف الشخصي') });
-      fetchProfile();
     } catch (err: any) {
       toast({ title: t('Error', 'خطأ'), description: err.message || String(err), variant: 'destructive' });
     } finally {
@@ -89,11 +89,11 @@ const ProfileSettings = () => {
     setUploadingSig(true);
     try {
       const ext = file.name.split('.').pop();
-      const path = `${user.id}/signature.${ext}`;
+      const path = `${user.id}/${Date.now()}-signature.${ext}`;
       const url = await uploadToBucket(file, 'signatures', path);
-      await supabase.from('profiles').upsert({ user_id: user.id, signature_url: url } as any, { onConflict: 'user_id' });
+      await supabase.from('profiles').update({ signature_url: url }).eq('user_id', user.id);
+      setProfile((prev: any) => prev ? { ...prev, signature_url: url } : prev);
       toast({ title: t('Uploaded', 'تم الرفع'), description: t('Signature updated', 'تم تحديث التوقيع') });
-      fetchProfile();
     } catch (err: any) {
       toast({ title: t('Error', 'خطأ'), description: err.message || String(err), variant: 'destructive' });
     } finally {
