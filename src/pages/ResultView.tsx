@@ -245,6 +245,20 @@ const ResultView = () => {
   const cumulativeAvg = subjectRows.length > 0 ? Math.round(subjectRows.reduce((s, r) => s + (r.cumulativeAvg || 0), 0) / subjectRows.length) : 0;
   const promoted = cumulativeAvg >= 50;
 
+  // Resolve tiered remarks based on term average
+  const studentArmId = (student as any)?.class_arm_id;
+  const pickRemark = (role: 'teacher' | 'head') => {
+    const candidates = (tieredRemarks || []).filter((r: any) => r.role === role && termAvg >= r.min_score && termAvg <= r.max_score);
+    // Prefer one scoped to this student's class arm (teacher remarks are arm-scoped)
+    const scoped = candidates.find((r: any) => r.class_arm_id && r.class_arm_id === studentArmId);
+    const fallback = candidates.find((r: any) => !r.class_arm_id) || candidates[0];
+    return (scoped || fallback)?.remark_en || '';
+  };
+  const teacherRemarkResolved = report?.teacher_remark || pickRemark('teacher') || defaultTeacherRemark;
+  const headRemarkResolved = report?.head_remark || pickRemark('head') || defaultHeadRemark;
+  const teacherSignatureUrl = teacherProfile?.signature_url || '';
+  const teacherDisplayName = report?.teacher_name || teacherProfile?.full_name || 'Class Teacher';
+
   const downloadResultPDF = () => {
     const element = document.querySelector('.result-printable-content');
     if (!element) return;
