@@ -367,7 +367,7 @@ const AdminReports = () => {
       w.document.open();
       w.document.write(html);
       w.document.close();
-      setTimeout(() => { w.focus(); w.print(); }, 500);
+      setTimeout(() => { w.focus(); w.print(); }, 800);
     } catch (err: any) {
       toast({ title: t('Error', 'خطأ'), description: err.message, variant: 'destructive' });
     } finally {
