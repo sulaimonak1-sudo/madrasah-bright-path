@@ -340,7 +340,25 @@ const AdminReports = () => {
 </div>
 
 <div class="footer-bar"></div>
-
+</div>
+<script>
+  (function(){
+    function fitToPage(){
+      var el = document.querySelector('.page-wrap');
+      if(!el) return;
+      // 281mm available height at ~3.78 px/mm = ~1062px
+      var maxH = 1062;
+      var h = el.scrollHeight;
+      if (h > maxH) {
+        var scale = maxH / h;
+        el.style.transform = 'scale(' + scale + ')';
+        el.style.width = (100 / scale) + '%';
+      }
+    }
+    if (document.readyState === 'complete') fitToPage();
+    else window.addEventListener('load', fitToPage);
+  })();
+</script>
 </body>
 </html>`;
 
