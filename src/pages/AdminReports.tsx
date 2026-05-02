@@ -209,9 +209,13 @@ const AdminReports = () => {
   <meta charset="utf-8"/>
   <title>Report - ${student.name_en || student.full_name}</title>
   <style>
-    @page { size: A4; margin: 20mm; }
+    @page { size: A4; margin: 8mm; }
+    @media print {
+      html, body { width: 210mm; height: 297mm; }
+      .page-wrap { width: 194mm; max-height: 281mm; transform-origin: top left; overflow: hidden; page-break-after: avoid; page-break-inside: avoid; }
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.5; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; color: #1a1a1a; line-height: 1.35; font-size: 10px; }
     .header { text-align: center; padding: 20px 0 16px; border-bottom: 2px solid #374151; margin-bottom: 16px; }
     .logo { width: 60px; height: 60px; margin: 0 auto 8px; }
     .logo img { width: 100%; height: 100%; object-fit: contain; }
