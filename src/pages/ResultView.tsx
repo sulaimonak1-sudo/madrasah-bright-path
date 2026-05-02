@@ -259,49 +259,45 @@ const ResultView = () => {
   const teacherSignatureUrl = teacherProfile?.signature_url || '';
   const teacherDisplayName = report?.teacher_name || teacherProfile?.full_name || 'Class Teacher';
 
-  const downloadResultPDF = () => {
+  const downloadResultPDF = async () => {
     const element = document.querySelector('.result-printable-content') as HTMLElement | null;
     if (!element) return;
-    const options = {
-      margin: [5, 5, 5, 5] as [number, number, number, number],
-      filename: `result-${student?.student_uid || 'report'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2, useCORS: true, windowWidth: 800 },
-      jsPDF: { orientation: 'portrait' as const, unit: 'mm' as const, format: 'a4' as const, compress: true },
-      pagebreak: { mode: ['avoid-all'] as any },
-    };
 
     setPrintDate(new Date().toLocaleDateString());
-    setTimeout(() => {
-      // Render to a single-page PDF by capturing the element as one canvas and scaling to fit A4
-      const worker = html2pdf().set(options).from(element);
-      worker.toCanvas().toPdf().get('pdf').then((pdf: any) => {
-        // Get canvas to scale into one page
-        return worker.get('canvas').then((canvas: HTMLCanvasElement) => {
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
-          const margin = 5;
-          const availW = pageWidth - margin * 2;
-          const availH = pageHeight - margin * 2;
-          const imgRatio = canvas.width / canvas.height;
-          let renderW = availW;
-          let renderH = availW / imgRatio;
-          if (renderH > availH) {
-            renderH = availH;
-            renderW = availH * imgRatio;
-          }
-          const imgData = canvas.toDataURL('image/jpeg', 0.98);
-          // Reset and add scaled image
-          pdf.deletePage(1);
-          pdf.addPage();
-          const x = (pageWidth - renderW) / 2;
-          const y = (pageHeight - renderH) / 2;
-          pdf.addImage(imgData, 'JPEG', x, y, renderW, renderH);
-          pdf.save(`result-${student?.student_uid || 'report'}.pdf`);
-        });
+    // Wait for DOM update
+    await new Promise(r => setTimeout(r, 150));
+
+    try {
+      const html2canvasMod: any = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const canvas: HTMLCanvasElement = await html2canvasMod(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
       });
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 5;
+      const availW = pageWidth - margin * 2;
+      const availH = pageHeight - margin * 2;
+      const imgRatio = canvas.width / canvas.height;
+      let renderW = availW;
+      let renderH = availW / imgRatio;
+      if (renderH > availH) {
+        renderH = availH;
+        renderW = availH * imgRatio;
+      }
+      const x = (pageWidth - renderW) / 2;
+      const y = (pageHeight - renderH) / 2;
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imgData, 'JPEG', x, y, renderW, renderH);
+      pdf.save(`result-${student?.student_uid || 'report'}.pdf`);
+    } finally {
       setPrintDate(null);
-    }, 100);
+    }
   };
 
   return (
