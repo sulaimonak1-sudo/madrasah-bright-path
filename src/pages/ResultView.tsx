@@ -429,14 +429,14 @@ const ResultView = () => {
               <div className="mb-6 pb-6 border-t-2 border-b-2 border-gray-300 py-4">
                 <div className="mb-4">
                   <p className="font-bold text-gray-800 mb-2">Class Teacher's Remark:</p>
-                  <p className="text-sm text-gray-700 mb-1">{report?.teacher_remark || defaultTeacherRemark || '_________________________'}</p>
-                  <p className="text-xs text-gray-600 text-right" dir="rtl">{(report?.teacher_remark || defaultTeacherRemark) ? 'ملاحظة معلم الفصل:' : ''}</p>
+                  <p className="text-sm text-gray-700 mb-1">{teacherRemarkResolved || '_________________________'}</p>
+                  <p className="text-xs text-gray-600 text-right" dir="rtl">{teacherRemarkResolved ? 'ملاحظة معلم الفصل:' : ''}</p>
                 </div>
 
                 <div>
                   <p className="font-bold text-gray-800 mb-2">Head Teacher's Remark:</p>
-                  <p className="text-sm text-gray-700 mb-1">{report?.head_remark || defaultHeadRemark || '_________________________'}</p>
-                  <p className="text-xs text-gray-600 text-right" dir="rtl">{(report?.head_remark || defaultHeadRemark) ? 'كلمة مدير المدرسة:' : ''}</p>
+                  <p className="text-sm text-gray-700 mb-1">{headRemarkResolved || '_________________________'}</p>
+                  <p className="text-xs text-gray-600 text-right" dir="rtl">{headRemarkResolved ? 'كلمة مدير المدرسة:' : ''}</p>
                 </div>
               </div>
             )}
