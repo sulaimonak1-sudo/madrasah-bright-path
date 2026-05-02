@@ -444,11 +444,20 @@ const ResultView = () => {
             {/* SIGNATURE SECTION */}
             <div className="mb-8">
                 <div className="grid grid-cols-3 gap-8 text-sm text-center">
-                  <div className="relative">
-                    <div className="border-b border-gray-800 h-10" />
-                    <p className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 italic text-gray-800">
-                      {report?.teacher_name || report?.teacher || 'Class Teacher'}
-                    </p>
+                  <div>
+                    <div className="flex items-center justify-center mb-1 h-12">
+                      {teacherSignatureUrl ? (
+                        <img
+                          src={teacherSignatureUrl}
+                          alt="Class Teacher Signature"
+                          className="max-h-12 object-contain"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="border-b border-gray-800 w-full h-10" />
+                      )}
+                    </div>
+                    <p className="font-semibold text-gray-800">{teacherDisplayName}</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center mb-1">
