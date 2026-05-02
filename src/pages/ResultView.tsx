@@ -36,6 +36,8 @@ const ResultView = () => {
   const [classArm, setClassArm] = useState<any | null>(null);
   const [sessionName, setSessionName] = useState<string | null>(null);
   const [report, setReport] = useState<any | null>(null);
+  const [tieredRemarks, setTieredRemarks] = useState<any[]>([]);
+  const [teacherProfile, setTeacherProfile] = useState<any | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [includeQr, setIncludeQr] = useState(true);
   const [remarksEnabled, setRemarksEnabled] = useState(true);
@@ -107,6 +109,8 @@ const ResultView = () => {
       setSubjects(data.subjects || []);
       setScores(data.scores || []);
       setReport(data.report || null);
+      setTieredRemarks(data.tiered_remarks || []);
+      setTeacherProfile(data.teacher_profile || null);
 
       // fetch session name
       try {
@@ -241,23 +245,59 @@ const ResultView = () => {
   const cumulativeAvg = subjectRows.length > 0 ? Math.round(subjectRows.reduce((s, r) => s + (r.cumulativeAvg || 0), 0) / subjectRows.length) : 0;
   const promoted = cumulativeAvg >= 50;
 
-  const downloadResultPDF = () => {
-    const element = document.querySelector('.result-printable-content');
-    if (!element) return;
-    const options = {
-      margin: [10,10,10,10] as [number, number, number, number],
-      filename: `result-${student?.student_uid || 'report'}.pdf`,
-      image: { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait' as const, unit: 'mm' as const, format: 'a4' as const }
-    };
+  // Resolve tiered remarks based on term average
+  const studentArmId = (student as any)?.class_arm_id;
+  const pickRemark = (role: 'teacher' | 'head') => {
+    const candidates = (tieredRemarks || []).filter((r: any) => r.role === role && termAvg >= r.min_score && termAvg <= r.max_score);
+    // Prefer one scoped to this student's class arm (teacher remarks are arm-scoped)
+    const scoped = candidates.find((r: any) => r.class_arm_id && r.class_arm_id === studentArmId);
+    const fallback = candidates.find((r: any) => !r.class_arm_id) || candidates[0];
+    return (scoped || fallback)?.remark_en || '';
+  };
+  const teacherRemarkResolved = report?.teacher_remark || pickRemark('teacher') || defaultTeacherRemark;
+  const headRemarkResolved = report?.head_remark || pickRemark('head') || defaultHeadRemark;
+  const teacherSignatureUrl = teacherProfile?.signature_url || '';
+  const teacherDisplayName = report?.teacher_name || teacherProfile?.full_name || 'Class Teacher';
 
-    // set print date in DOM then generate PDF
+  const downloadResultPDF = async () => {
+    const element = document.querySelector('.result-printable-content') as HTMLElement | null;
+    if (!element) return;
+
     setPrintDate(new Date().toLocaleDateString());
-    setTimeout(() => {
-      html2pdf().set(options).from(element as HTMLElement).save();
+    // Wait for DOM update
+    await new Promise(r => setTimeout(r, 150));
+
+    try {
+      const html2canvasMod: any = (await import('html2canvas')).default;
+      const { jsPDF } = await import('jspdf');
+
+      const canvas: HTMLCanvasElement = await html2canvasMod(element, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+      });
+
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 5;
+      const availW = pageWidth - margin * 2;
+      const availH = pageHeight - margin * 2;
+      const imgRatio = canvas.width / canvas.height;
+      let renderW = availW;
+      let renderH = availW / imgRatio;
+      if (renderH > availH) {
+        renderH = availH;
+        renderW = availH * imgRatio;
+      }
+      const x = (pageWidth - renderW) / 2;
+      const y = (pageHeight - renderH) / 2;
+      const imgData = canvas.toDataURL('image/jpeg', 0.95);
+      pdf.addImage(imgData, 'JPEG', x, y, renderW, renderH);
+      pdf.save(`result-${student?.student_uid || 'report'}.pdf`);
+    } finally {
       setPrintDate(null);
-    }, 100);
+    }
   };
 
   return (
@@ -411,14 +451,14 @@ const ResultView = () => {
               <div className="mb-6 pb-6 border-t-2 border-b-2 border-gray-300 py-4">
                 <div className="mb-4">
                   <p className="font-bold text-gray-800 mb-2">Class Teacher's Remark:</p>
-                  <p className="text-sm text-gray-700 mb-1">{report?.teacher_remark || defaultTeacherRemark || '_________________________'}</p>
-                  <p className="text-xs text-gray-600 text-right" dir="rtl">{(report?.teacher_remark || defaultTeacherRemark) ? 'ملاحظة معلم الفصل:' : ''}</p>
+                  <p className="text-sm text-gray-700 mb-1">{teacherRemarkResolved || '_________________________'}</p>
+                  <p className="text-xs text-gray-600 text-right" dir="rtl">{teacherRemarkResolved ? 'ملاحظة معلم الفصل:' : ''}</p>
                 </div>
 
                 <div>
                   <p className="font-bold text-gray-800 mb-2">Head Teacher's Remark:</p>
-                  <p className="text-sm text-gray-700 mb-1">{report?.head_remark || defaultHeadRemark || '_________________________'}</p>
-                  <p className="text-xs text-gray-600 text-right" dir="rtl">{(report?.head_remark || defaultHeadRemark) ? 'كلمة مدير المدرسة:' : ''}</p>
+                  <p className="text-sm text-gray-700 mb-1">{headRemarkResolved || '_________________________'}</p>
+                  <p className="text-xs text-gray-600 text-right" dir="rtl">{headRemarkResolved ? 'كلمة مدير المدرسة:' : ''}</p>
                 </div>
               </div>
             )}
@@ -426,11 +466,20 @@ const ResultView = () => {
             {/* SIGNATURE SECTION */}
             <div className="mb-8">
                 <div className="grid grid-cols-3 gap-8 text-sm text-center">
-                  <div className="relative">
-                    <div className="border-b border-gray-800 h-10" />
-                    <p className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 italic text-gray-800">
-                      {report?.teacher_name || report?.teacher || 'Class Teacher'}
-                    </p>
+                  <div>
+                    <div className="flex items-center justify-center mb-1 h-12">
+                      {teacherSignatureUrl ? (
+                        <img
+                          src={teacherSignatureUrl}
+                          alt="Class Teacher Signature"
+                          className="max-h-12 object-contain"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="border-b border-gray-800 w-full h-10" />
+                      )}
+                    </div>
+                    <p className="font-semibold text-gray-800">{teacherDisplayName}</p>
                   </div>
                   <div>
                     <div className="flex items-center justify-center mb-1">
