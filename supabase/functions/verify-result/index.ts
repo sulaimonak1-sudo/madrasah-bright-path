@@ -75,10 +75,32 @@ Deno.serve(async (req) => {
     // Fetch term scores for this student and term
     const { data: scores } = await supabaseAdmin.from('term_scores').select('*').eq('student_id', student.id).eq('term_id', term_id)
 
-    // Fetch any saved teacher/head remarks and signatures
-    const { data: report } = await supabaseAdmin.from('term_reports').select('*').eq('student_id', student.id).eq('term_id', term_id).maybeSingle()
+    // Fetch tiered remarks (teacher: scoped to student's class arm; head: global)
+    const { data: tieredRemarks } = await supabaseAdmin
+      .from('tiered_remarks')
+      .select('*')
 
-    return new Response(JSON.stringify({ ok: true, student, term, subjects: subjects || [], scores: scores || [], report: report || null }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+    // Fetch class teacher profile (signature + name) by student's class_arm_id
+    let teacherProfile: any = null
+    if (student.class_arm_id) {
+      const { data: tp } = await supabaseAdmin
+        .from('profiles')
+        .select('full_name, signature_url, class_teacher_class_arm_id')
+        .eq('class_teacher_class_arm_id', student.class_arm_id)
+        .maybeSingle()
+      teacherProfile = tp || null
+    }
+
+    return new Response(JSON.stringify({
+      ok: true,
+      student,
+      term,
+      subjects: subjects || [],
+      scores: scores || [],
+      tiered_remarks: tieredRemarks || [],
+      teacher_profile: teacherProfile,
+      report: null,
+    }), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
   } catch (err) {
     console.error('verify-result error', err)
     return new Response(JSON.stringify({ ok: false, error: 'Server error' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
