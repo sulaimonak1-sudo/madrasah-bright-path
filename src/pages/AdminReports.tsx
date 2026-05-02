@@ -257,6 +257,7 @@ const AdminReports = () => {
   </style>
 </head>
 <body>
+<div class="page-wrap">
 
 <div class="header">
   <div class="logo"><img src="${window.location.origin}/images/school-logo.png" alt="Logo" onerror="this.style.display='none'" /></div>
