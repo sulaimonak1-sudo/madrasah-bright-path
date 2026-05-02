@@ -36,6 +36,8 @@ const ResultView = () => {
   const [classArm, setClassArm] = useState<any | null>(null);
   const [sessionName, setSessionName] = useState<string | null>(null);
   const [report, setReport] = useState<any | null>(null);
+  const [tieredRemarks, setTieredRemarks] = useState<any[]>([]);
+  const [teacherProfile, setTeacherProfile] = useState<any | null>(null);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [includeQr, setIncludeQr] = useState(true);
   const [remarksEnabled, setRemarksEnabled] = useState(true);
