@@ -109,6 +109,8 @@ const ResultView = () => {
       setSubjects(data.subjects || []);
       setScores(data.scores || []);
       setReport(data.report || null);
+      setTieredRemarks(data.tiered_remarks || []);
+      setTeacherProfile(data.teacher_profile || null);
 
       // fetch session name
       try {
