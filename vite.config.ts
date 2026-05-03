@@ -19,14 +19,12 @@ export default defineConfig(({ mode }) => ({
       // Force a single React runtime across app and dependencies
       "react": path.resolve(__dirname, "node_modules/react"),
       "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      "react-router-dom": path.resolve(__dirname, "node_modules/react-router-dom"),
-      "react-router": path.resolve(__dirname, "node_modules/react-router"),
       "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime.js"),
       "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime.js"),
     },
     dedupe: ["react", "react-dom", "react-router-dom", "react-router"],
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "react/jsx-runtime", "react-router-dom", "react-router"],
+    include: ["react", "react-dom", "react/jsx-runtime", "react-router-dom"],
   },
 }));
