@@ -412,33 +412,35 @@ const ResultView = () => {
                 ACADEMIC PERFORMANCE
               </div>
               
-              <table className="w-full text-sm border-collapse">
-                <thead>
-                  <tr className="bg-green-700 text-white">
-                    <th className="text-left px-3 py-2 font-semibold">Subject</th>
-                    <th className="text-center px-2 py-2 font-semibold">CA1</th>
-                    <th className="text-center px-2 py-2 font-semibold">CA2</th>
-                    <th className="text-center px-2 py-2 font-semibold">Exam</th>
-                    <th className="text-center px-2 py-2 font-semibold">المجموع</th>
-                    <th className="text-center px-2 py-2 font-semibold">Grade</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subjectRows.map((row, idx) => (
-                    <tr key={row.subject.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-amber-50'}>
-                      <td className="text-left px-3 py-2 font-medium border">
-                        <div>{row.subject.name_en}</div>
-                        <div className="text-xs text-gray-600">{row.subject.name_ar}</div>
-                      </td>
-                      <td className="text-center px-2 py-2 border">{row.currentScore?.ca1 ?? '—'}</td>
-                      <td className="text-center px-2 py-2 border">{row.currentScore?.ca2 ?? '—'}</td>
-                      <td className="text-center px-2 py-2 border">{row.currentScore?.exam ?? '—'}</td>
-                      <td className="text-center px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
-                      <td className="text-center px-2 py-2 border font-bold">{row.currentScore?.grade ?? '—'}</td>
+              <div className="-mx-2 sm:mx-0 overflow-x-auto">
+                <table className="w-full min-w-[480px] text-xs sm:text-sm border-collapse">
+                  <thead>
+                    <tr className="bg-green-700 text-white">
+                      <th className="text-left px-2 sm:px-3 py-2 font-semibold">Subject</th>
+                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">CA1</th>
+                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">CA2</th>
+                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">Exam</th>
+                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">المجموع</th>
+                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">Grade</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {subjectRows.map((row, idx) => (
+                      <tr key={row.subject.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-amber-50'}>
+                        <td className="text-left px-2 sm:px-3 py-2 font-medium border whitespace-nowrap">
+                          <div>{row.subject.name_en}</div>
+                          <div className="text-[10px] sm:text-xs text-gray-600">{row.subject.name_ar}</div>
+                        </td>
+                        <td className="text-center px-1 sm:px-2 py-2 border">{row.currentScore?.ca1 ?? '—'}</td>
+                        <td className="text-center px-1 sm:px-2 py-2 border">{row.currentScore?.ca2 ?? '—'}</td>
+                        <td className="text-center px-1 sm:px-2 py-2 border">{row.currentScore?.exam ?? '—'}</td>
+                        <td className="text-center px-1 sm:px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
+                        <td className="text-center px-1 sm:px-2 py-2 border font-bold">{row.currentScore?.grade ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {/* TERM AVERAGE */}
