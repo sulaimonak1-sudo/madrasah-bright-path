@@ -271,11 +271,25 @@ const ResultView = () => {
       const html2canvasMod: any = (await import('html2canvas')).default;
       const { jsPDF } = await import('jspdf');
 
-      const canvas: HTMLCanvasElement = await html2canvasMod(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-      });
+      // Force a desktop-width capture so mobile users get the same A4 layout
+      const RENDER_WIDTH = 800;
+      const prevInline = element.getAttribute('style') || '';
+      element.style.width = `${RENDER_WIDTH}px`;
+      element.style.maxWidth = 'none';
+      await new Promise(r => setTimeout(r, 50));
+
+      let canvas: HTMLCanvasElement;
+      try {
+        canvas = await html2canvasMod(element, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff',
+          width: RENDER_WIDTH,
+          windowWidth: RENDER_WIDTH,
+        });
+      } finally {
+        element.setAttribute('style', prevInline);
+      }
 
       const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
       const pageWidth = pdf.internal.pageSize.getWidth();
