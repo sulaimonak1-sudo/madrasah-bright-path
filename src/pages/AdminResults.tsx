@@ -49,7 +49,7 @@ const AdminResults = () => {
   useEffect(() => {
     const fetch = async () => {
       const [sessRes, clRes, armsRes] = await Promise.all([
-        supabase.from('sessions').select('*').eq('campus_id', campusId).order('name', { ascending: false }),
+        supabase.from('sessions').select('*').order('name', { ascending: false }),
         supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('class_arms').select('*').eq('campus_id', campusId),
       ]);
@@ -74,7 +74,7 @@ const AdminResults = () => {
 
   useEffect(() => {
     if (!selectedClassLevel) { setSubjects([]); return; }
-    supabase.from('subjects').select('*').eq('campus_id', campusId).eq('class_level_id', selectedClassLevel.id)
+    supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id)
       .then(({ data }) => setSubjects(data || []));
   }, [campusId, selectedClassLevel]);
 

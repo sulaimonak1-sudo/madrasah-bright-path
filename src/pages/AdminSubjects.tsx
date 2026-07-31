@@ -30,7 +30,7 @@ const AdminSubjects = () => {
 
   const fetchData = async () => {
     const [subRes, clRes] = await Promise.all([
-      supabase.from('subjects').select('*').eq('campus_id', campusId).order('name'),
+      supabase.from('subjects').select('*').order('name'),
       supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
     ]);
     setSubjects(subRes.data || []);
@@ -80,7 +80,6 @@ const AdminSubjects = () => {
         name: name.trim(),
         name_ar: autoAr,
         class_level_id: clId,
-        campus_id: campusId,
       });
       if (error) errors.push(error.message);
     }
@@ -95,7 +94,7 @@ const AdminSubjects = () => {
   };
 
   const deleteSubject = async (id: string) => {
-    const { error } = await supabase.from('subjects').delete().eq('id', id).eq('campus_id', campusId);
+    const { error } = await supabase.from('subjects').delete().eq('id', id);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     fetchData();
   };

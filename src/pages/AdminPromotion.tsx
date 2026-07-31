@@ -39,7 +39,7 @@ const AdminPromotion = () => {
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: s } = await supabase.from('sessions').select('*').eq('campus_id', campusId).order('name');
+        const { data: s } = await supabase.from('sessions').select('*').order('name');
         setSessions((s as any[]) || []);
         const { data: cl } = await supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order');
         setClassLevels((cl as any[]) || []);

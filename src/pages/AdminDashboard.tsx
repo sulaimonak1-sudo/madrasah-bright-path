@@ -61,10 +61,10 @@ const AdminDashboard = () => {
           supabase.from('students').select('id', { count: 'exact' }).eq('campus_id', campusId),
           supabase.from('class_levels').select('id', { count: 'exact' }).eq('campus_id', campusId),
           supabase.from('class_arms').select('id', { count: 'exact' }).eq('campus_id', campusId),
-          supabase.from('subjects').select('id', { count: 'exact' }).eq('campus_id', campusId),
+          supabase.from('subjects').select('id', { count: 'exact' }),
         ]);
 
-        const activeSessionRes = await supabase.from('sessions').select('id,name').eq('campus_id', campusId).eq('is_active', true).maybeSingle();
+        const activeSessionRes = await supabase.from('sessions').select('id,name').eq('is_active', true).maybeSingle();
         let currentTermName = '';
         let currentTermId: string | null = null;
         if (activeSessionRes.data?.id) {

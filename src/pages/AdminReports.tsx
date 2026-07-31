@@ -60,7 +60,7 @@ const AdminReports = () => {
   useEffect(() => {
     const fetch = async () => {
       const [sessRes, clRes, armsRes, remarksRes] = await Promise.all([
-        supabase.from('sessions').select('*').eq('campus_id', campusId).order('name', { ascending: false }),
+        supabase.from('sessions').select('*').order('name', { ascending: false }),
         supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('class_arms').select('*').eq('campus_id', campusId),
         supabase.from('tiered_remarks').select('*'),
@@ -162,7 +162,7 @@ const AdminReports = () => {
       const selectedTerm = terms.find(t => t.id === termId);
 
       const [subjectsRes, scoresRes, classLevelRes, classArmRes, teacherProfileRes] = await Promise.all([
-        supabase.from('subjects').select('*').eq('campus_id', campusId).eq('class_level_id', selectedClassLevel.id).order('name'),
+        supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id).order('name'),
         supabase.from('term_scores').select('*').eq('student_id', student.id).eq('term_id', termId),
         supabase.from('class_levels').select('*').eq('id', selectedClassLevel.id).maybeSingle(),
         selectedClassArm ? supabase.from('class_arms').select('*').eq('id', selectedClassArm.id).maybeSingle() : Promise.resolve({ data: null }),

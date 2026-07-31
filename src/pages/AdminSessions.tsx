@@ -10,12 +10,10 @@ import { Plus, Calendar, Pencil, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { useCampus } from '@/contexts/CampusContext';
 
 const AdminSessions = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { campusId } = useCampus();
   const [sessions, setSessions] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -33,7 +31,7 @@ const AdminSessions = () => {
 
   const fetchData = async () => {
     const [sessRes, termsRes] = await Promise.all([
-      supabase.from('sessions').select('*').eq('campus_id', campusId).order('name', { ascending: false }),
+      supabase.from('sessions').select('*').order('name', { ascending: false }),
       supabase.from('terms').select('*').order('term_number'),
     ]);
     setSessions(sessRes.data || []);
@@ -41,11 +39,11 @@ const AdminSessions = () => {
     setLoading(false);
   };
 
-  useEffect(() => { if (campusId) fetchData(); }, [campusId]);
+  useEffect(() => { fetchData(); }, []);
 
   const addSession = async () => {
     if (!newName.trim()) return;
-    const { error } = await supabase.from('sessions').insert({ name: newName.trim(), campus_id: campusId });
+    const { error } = await supabase.from('sessions').insert({ name: newName.trim() });
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     toast({ title: t('Session added', 'تمت الإضافة') });
     setNewName('');
@@ -54,13 +52,13 @@ const AdminSessions = () => {
   };
 
   const toggleActive = async (id: string, current: boolean) => {
-    const { error } = await supabase.from('sessions').update({ is_active: !current }).eq('id', id).eq('campus_id', campusId);
+    const { error } = await supabase.from('sessions').update({ is_active: !current }).eq('id', id);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     fetchData();
   };
 
   const deleteSession = async (id: string) => {
-    const { error } = await supabase.from('sessions').delete().eq('id', id).eq('campus_id', campusId);
+    const { error } = await supabase.from('sessions').delete().eq('id', id);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     toast({ title: t('Deleted', 'تم الحذف') });
     fetchData();
