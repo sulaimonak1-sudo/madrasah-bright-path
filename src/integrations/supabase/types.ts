@@ -122,26 +122,72 @@ export type Database = {
         }
         Relationships: []
       }
+      campuses: {
+        Row: {
+          address: string | null
+          code: string
+          created_at: string
+          email: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          code: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          code?: string
+          created_at?: string
+          email?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       class_arms: {
         Row: {
+          campus_id: string
           class_level_id: string
           created_at: string
           id: string
           name: string
         }
         Insert: {
+          campus_id?: string
           class_level_id: string
           created_at?: string
           id?: string
           name: string
         }
         Update: {
+          campus_id?: string
           class_level_id?: string
           created_at?: string
           id?: string
           name?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "class_arms_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "class_arms_class_level_id_fkey"
             columns: ["class_level_id"]
@@ -285,6 +331,7 @@ export type Database = {
       profiles: {
         Row: {
           avatar_url: string | null
+          campus_id: string | null
           class_teacher_class_arm_id: string | null
           class_teacher_class_level_id: string | null
           created_at: string
@@ -297,6 +344,7 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
+          campus_id?: string | null
           class_teacher_class_arm_id?: string | null
           class_teacher_class_level_id?: string | null
           created_at?: string
@@ -309,6 +357,7 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
+          campus_id?: string | null
           class_teacher_class_arm_id?: string | null
           class_teacher_class_level_id?: string | null
           created_at?: string
@@ -320,6 +369,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "profiles_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "profiles_class_teacher_class_arm_id_fkey"
             columns: ["class_teacher_class_arm_id"]
@@ -340,7 +396,7 @@ export type Database = {
         Row: {
           created_at: string
           cumulative_average: number
-          from_arm_id: string
+          from_arm_id: string | null
           from_class_level_id: string
           id: string
           promoted_at: string
@@ -354,7 +410,7 @@ export type Database = {
         Insert: {
           created_at?: string
           cumulative_average?: number
-          from_arm_id: string
+          from_arm_id?: string | null
           from_class_level_id: string
           id?: string
           promoted_at?: string
@@ -368,7 +424,7 @@ export type Database = {
         Update: {
           created_at?: string
           cumulative_average?: number
-          from_arm_id?: string
+          from_arm_id?: string | null
           from_class_level_id?: string
           id?: string
           promoted_at?: string
@@ -468,6 +524,8 @@ export type Database = {
       }
       students: {
         Row: {
+          archived_at: string | null
+          campus_id: string
           class_arm_id: string | null
           class_id: string | null
           class_level_id: string | null
@@ -488,6 +546,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          campus_id?: string
           class_arm_id?: string | null
           class_id?: string | null
           class_level_id?: string | null
@@ -508,6 +568,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          campus_id?: string
           class_arm_id?: string | null
           class_id?: string | null
           class_level_id?: string | null
@@ -528,6 +590,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "students_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "students_class_arm_id_fkey"
             columns: ["class_arm_id"]
@@ -553,6 +622,7 @@ export type Database = {
       }
       subjects: {
         Row: {
+          campus_id: string | null
           class_level_id: string | null
           created_at: string
           description: string | null
@@ -561,6 +631,7 @@ export type Database = {
           name_ar: string | null
         }
         Insert: {
+          campus_id?: string | null
           class_level_id?: string | null
           created_at?: string
           description?: string | null
@@ -569,6 +640,7 @@ export type Database = {
           name_ar?: string | null
         }
         Update: {
+          campus_id?: string | null
           class_level_id?: string | null
           created_at?: string
           description?: string | null
@@ -577,6 +649,13 @@ export type Database = {
           name_ar?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subjects_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subjects_class_level_id_fkey"
             columns: ["class_level_id"]
@@ -794,6 +873,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_access_campus: { Args: { _campus_id: string }; Returns: boolean }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -802,7 +882,10 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: never; Returns: boolean }
+      is_super_admin: { Args: never; Returns: boolean }
       is_teacher: { Args: never; Returns: boolean }
+      main_campus_id: { Args: never; Returns: string }
+      user_campus_id: { Args: never; Returns: string }
     }
     Enums: {
       app_role: "admin" | "teacher" | "parent"
