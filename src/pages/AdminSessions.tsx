@@ -119,11 +119,12 @@ const AdminSessions = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{t('Sessions & Terms', 'السنوات الدراسية والفصول')}</h1>
-            <p className="text-muted-foreground">{t('Manage academic sessions and terms', 'إدارة السنوات الدراسية والفصول')}</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{t('School operations', 'عمليات المدرسة')}</p>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('Sessions & Terms', 'السنوات الدراسية والفصول')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('Keep the academic calendar current and publish the active term.', 'حافظ على تحديث التقويم الأكاديمي وانشر الفصل النشط.')}</p>
           </div>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
@@ -149,7 +150,7 @@ const AdminSessions = () => {
           {sessions.map(session => {
             const sessionTerms = terms.filter(t => t.session_id === session.id);
             return (
-              <Card key={session.id} className="shadow-card">
+              <Card key={session.id} className="rounded-2xl border-border/70 shadow-card">
                 <CardHeader>
                   <CardTitle className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-lg">

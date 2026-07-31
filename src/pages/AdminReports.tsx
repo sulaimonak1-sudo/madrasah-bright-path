@@ -410,7 +410,7 @@ const AdminReports = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         <div className="flex items-center gap-3">
           {step === 'students' && (
             <Button variant="ghost" size="icon" onClick={() => setStep('select')}>
@@ -418,13 +418,14 @@ const AdminReports = () => {
             </Button>
           )}
           <div>
-            <h1 className="text-2xl font-bold">{t('Reports', 'التقارير')}</h1>
-            <p className="text-muted-foreground">{t('Download individual student report sheets', 'تحميل كشوف تقارير الطلاب')}</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{t('School operations', 'عمليات المدرسة')}</p>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('Reports', 'التقارير')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('Generate and download individual student report sheets.', 'إنشاء وتنزيل كشوف تقارير الطلاب.')}</p>
           </div>
         </div>
 
         {/* Session/Term selector */}
-        <Card className="shadow-card">
+        <Card className="rounded-2xl border-border/70 shadow-card">
           <CardContent className="py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
               <div className="space-y-1.5">
@@ -447,7 +448,7 @@ const AdminReports = () => {
 
         {/* Teacher Tiered Remarks Editor */}
         {isTeacher && teacherClassArmId && (
-          <Card className="shadow-card border-primary/20">
+          <Card className="rounded-2xl border-border/70 shadow-card">
             <CardHeader className="pb-3">
               <CardTitle className="text-base flex items-center gap-2">
                 <MessageSquare className="h-4 w-4 text-primary" />

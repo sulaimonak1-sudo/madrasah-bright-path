@@ -301,17 +301,17 @@ const AdminStudents = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         {step === 'classes' && (
           <div>
-            <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-              <h1 className="text-2xl font-bold">{t('Students', 'الطلاب')}</h1>
+            <div className="mb-5 flex items-end justify-between gap-4 flex-wrap">
+              <div><p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{t('School operations', 'عمليات المدرسة')}</p><h1 className="font-display text-2xl font-extrabold tracking-tight">{t('Students', 'الطلاب')}</h1><p className="mt-1 text-sm text-muted-foreground">{t('Browse and manage student records by class.', 'تصفح وإدارة سجلات الطلاب حسب الفصل.')}</p></div>
               <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={exportMasterCSV}>
+              <Button size="sm" variant="outline" className="border-border bg-card" onClick={exportMasterCSV}>
                   <Download className="mr-2 h-4 w-4" />
                   {t('Export Master List', 'تصدير قائمة رئيسية')}
                 </Button>
-                <Button size="sm" variant="outline" onClick={printMasterList}>
+                <Button size="sm" variant="outline" className="border-border bg-card" onClick={printMasterList}>
                   <Printer className="mr-2 h-4 w-4" />
                   {t('Print Master List', 'طباعة قائمة رئيسية')}
                 </Button>
@@ -321,7 +321,7 @@ const AdminStudents = () => {
               {classLevels.map(level => {
                 const arms = classArms.filter(a => a.class_level_id === level.id);
                 return (
-                  <Card key={level.id} className="shadow-card">
+                  <Card key={level.id} className="rounded-2xl border-border/70 shadow-card">
                     <CardHeader className="pb-3">
                       <span className="font-semibold">{bilingualText(level.name_en, level.name_ar)}</span>
                     </CardHeader>
@@ -361,7 +361,7 @@ const AdminStudents = () => {
               <Button variant="ghost" size="icon" onClick={() => setStep('classes')}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-2xl font-bold">
+              <h1 className="font-display text-2xl font-extrabold tracking-tight">
                 {bilingualText(selectedClassLevel?.name_en, selectedClassLevel?.name_ar)}
                 {selectedClassArm ? ` - ${selectedClassArm.name}` : ''}
               </h1>

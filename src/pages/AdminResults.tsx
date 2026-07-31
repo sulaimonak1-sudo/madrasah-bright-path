@@ -188,7 +188,7 @@ const AdminResults = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         <div className="flex items-center gap-3">
           {step !== 'classes' && (
             <Button variant="ghost" size="icon" onClick={goBack}>
@@ -204,11 +204,12 @@ const AdminResults = () => {
                 </span>
               ))}
             </div>
-            <h1 className="text-2xl font-bold">{t('Results', 'النتائج')}</h1>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('Results', 'النتائج')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('Select a class and subject to enter term scores.', 'اختر الفصل والمادة لإدخال درجات الفصل.')}</p>
           </div>
         </div>
 
-        <Card className="shadow-card">
+        <Card className="rounded-2xl border-border/70 shadow-card">
           <CardContent className="py-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg">
               <div className="space-y-1.5">

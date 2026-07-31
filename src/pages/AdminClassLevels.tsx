@@ -89,15 +89,16 @@ const AdminClassLevels = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{t('Class Levels', 'المراحل الدراسية')}</h1>
-            <p className="text-muted-foreground">{t('Manage Madrasah class levels', 'إدارة المراحل الدراسية')}</p>
+            <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{t('School operations', 'عمليات المدرسة')}</p>
+            <h1 className="font-display text-2xl font-extrabold tracking-tight">{t('Class Levels', 'المراحل الدراسية')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('Organize the academic structure for your campus.', 'تنظيم الهيكل الأكاديمي للحرم المدرسي.')}</p>
           </div>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <Button size="sm"><Plus className="mr-2 h-4 w-4" />{t('Add Level', 'إضافة مرحلة')}</Button>
+              <Button size="sm" className="shadow-sm"><Plus className="mr-2 h-4 w-4" />{t('Add Level', 'إضافة مرحلة')}</Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader><DialogTitle>{t('Add Class Level', 'إضافة مرحلة')}</DialogTitle></DialogHeader>
@@ -122,7 +123,7 @@ const AdminClassLevels = () => {
             </DialogContent>
           </Dialog>
         </div>
-        <Card className="shadow-card">
+        <Card className="rounded-2xl border-border/70 shadow-card">
           <CardContent className="p-0">
             <Table>
               <TableHeader>
