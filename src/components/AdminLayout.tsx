@@ -22,6 +22,8 @@ import {
   PanelLeftOpen,
   Home,
   BarChart3,
+  Building2,
+  Table2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -57,6 +59,7 @@ const navGroups = [
     items: [
       { path: '/admin/results', icon: ClipboardPen, label_en: 'Results Entry', label_ar: 'إدخال النتائج' },
       { path: '/admin/reports', icon: FileBarChart, label_en: 'Reports', label_ar: 'التقارير' },
+      { path: '/admin/broadsheet', icon: Table2, label_en: 'Class Broadsheet', label_ar: 'كشف الدرجات' },
       { path: '/admin/promotion', icon: ArrowUpRight, label_en: 'Promotion', label_ar: 'الترقية' },
       { path: '/admin/locking', icon: ShieldCheck, label_en: 'Result Locking', label_ar: 'قفل النتائج' },
     ],
@@ -65,6 +68,7 @@ const navGroups = [
     label_en: 'Administration',
     label_ar: 'الإدارة',
     items: [
+      { path: '/admin/campuses', icon: Building2, label_en: 'Campuses', label_ar: 'الفروع' },
       { path: '/admin/staff', icon: Settings, label_en: 'Staff Management', label_ar: 'إدارة الموظفين' },
     ],
   },
@@ -91,7 +95,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       ...group,
       items: isAdmin
         ? group.items
-        : group.items.filter(item => ['/admin', '/admin/results', '/admin/reports', '/admin/students'].includes(item.path)),
+        : group.items.filter(item => ['/admin', '/admin/results', '/admin/reports', '/admin/broadsheet', '/admin/students'].includes(item.path)),
     }))
     .filter(group => group.items.length > 0);
 

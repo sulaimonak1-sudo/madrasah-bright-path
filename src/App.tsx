@@ -24,6 +24,8 @@ import StaffSignup from "./pages/StaffSignup";
 import PinGenerate from "./pages/PinGenerate";
 import AdminStaff from "./pages/AdminStaff";
 import ProfileSettings from "./pages/ProfileSettings";
+import AdminCampuses from "./pages/AdminCampuses";
+import AdminBroadsheet from "./pages/AdminBroadsheet";
 
 const queryClient = new QueryClient();
 
@@ -31,6 +33,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
       <AuthProvider>
+        <CampusProvider>
         <TooltipProvider>
           <Toaster />
           <Sonner />
@@ -48,6 +51,8 @@ const App = () => (
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/results" element={<ProtectedRoute><AdminResults /></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
+              <Route path="/admin/broadsheet" element={<ProtectedRoute><AdminBroadsheet /></ProtectedRoute>} />
+              <Route path="/admin/campuses" element={<ProtectedRoute requiredRole="admin"><AdminCampuses /></ProtectedRoute>} />
 
               {/* Admin only (except students which teachers can access) */}
               <Route path="/admin/students" element={<ProtectedRoute><AdminStudents /></ProtectedRoute>} />
@@ -64,6 +69,7 @@ const App = () => (
             </Routes>
           </HashRouter>
         </TooltipProvider>
+        </CampusProvider>
       </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
