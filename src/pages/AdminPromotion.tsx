@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { TrendingUp, Play, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -21,6 +22,17 @@ const AdminPromotion = () => {
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [promotionPreview, setPromotionPreview] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [targetLevelId, setTargetLevelId] = useState('');
+  const [targetArmId, setTargetArmId] = useState('');
+  const [targetArms, setTargetArms] = useState<any[]>([]);
+  const [selected, setSelected] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (!targetLevelId) { setTargetArms([]); setTargetArmId(''); return; }
+    supabase.from('class_arms').select('*').eq('class_level_id', targetLevelId).order('name')
+      .then(({ data }) => setTargetArms(data || []));
+    setTargetArmId('');
+  }, [targetLevelId]);
 
   useEffect(() => {
     const load = async () => {
@@ -70,6 +82,7 @@ const AdminPromotion = () => {
       });
 
       setPromotionPreview(preview);
+      setSelected(Object.fromEntries(preview.map((p: any) => [p.id, p.status === 'PROMOTED'])));
       setShowPreview(true);
     } catch (err) {
       toast({ title: t('Failed to build preview', 'فشل في إنشاء المعاينة'), description: String(err) });
@@ -80,49 +93,43 @@ const AdminPromotion = () => {
 
   const commitPromotion = async () => {
     if (!sessionId || !classId) return;
+    const chosen = promotionPreview.filter(s => selected[s.id]);
+    if (!chosen.length) {
+      toast({ title: t('Select at least one student', 'اختر طالبًا واحدًا على الأقل'), variant: 'destructive' });
+      return;
+    }
+    if (!targetLevelId) {
+      toast({ title: t('Select the class to promote to', 'اختر الصف المراد الترقية إليه'), variant: 'destructive' });
+      return;
+    }
     setLoading(true);
-    const toInsert: any[] = [];
-    const toUpdateStudents: any[] = [];
     try {
-      // load class levels to find next
-      const { data: cl } = await supabase.from('class_levels').select('*').order('display_order');
-      const ordered = (cl || []) as any[];
-      const currentIndex = ordered.findIndex((c) => c.id === classId);
+      const records = chosen.map((s: any) => ({
+        student_id: s.id,
+        session_id: sessionId,
+        from_class_level_id: classId,
+        to_class_level_id: targetLevelId,
+        from_arm_id: s.class_arm_id || null,
+        to_arm_id: targetArmId || null,
+        cumulative_average: s.cumulativeAvg || 0,
+        status: 'PROMOTED',
+        promoted_at: new Date().toISOString(),
+      }));
 
-      for (const s of promotionPreview) {
-        const promoted = s.status === 'PROMOTED';
-        const nextLevel = promoted && currentIndex >= 0 && currentIndex < ordered.length - 1 ? ordered[currentIndex + 1] : null;
+      const { error: insertErr } = await supabase.from('promotion_records').insert(records as any[]);
+      if (insertErr) throw insertErr;
 
-        toInsert.push({
-          student_id: s.id,
-          session_id: sessionId,
-          from_class_level_id: classId,
-          to_class_level_id: nextLevel?.id || null,
-          cumulative_average: s.cumulativeAvg || 0,
-          status: s.status,
-          promoted_at: new Date().toISOString(),
-        });
+      const { error: updErr } = await supabase
+        .from('students')
+        .update({ class_level_id: targetLevelId, class_arm_id: targetArmId || null })
+        .in('id', chosen.map((s: any) => s.id));
+      if (updErr) throw updErr;
 
-        if (promoted && nextLevel) {
-          toUpdateStudents.push({ id: s.id, class_level_id: nextLevel.id });
-        }
-      }
-
-      // insert promotion_records
-      if (toInsert.length) {
-        const { error: insertErr } = await supabase.from('promotion_records').insert(toInsert as any[]);
-        if (insertErr) throw insertErr;
-      }
-
-      // batch update students
-      for (const u of toUpdateStudents) {
-        const { error: updErr } = await supabase.from('students').update({ class_level_id: u.class_level_id }).eq('id', u.id);
-        if (updErr) throw updErr;
-      }
-
-      toast({ title: t('Promotion committed', 'تم تأكيد الترقية') });
-    } catch (err) {
-      toast({ title: t('Failed to commit', 'فشل في التأكيد'), description: String(err) });
+      toast({ title: t('Promotion committed', 'تم تأكيد الترقية'), description: `${chosen.length}` });
+      setShowPreview(false);
+      setPromotionPreview([]);
+    } catch (err: any) {
+      toast({ title: t('Failed to commit', 'فشل في التأكيد'), description: err?.message || String(err), variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -165,6 +172,26 @@ const AdminPromotion = () => {
                 </Select>
               </div>
             </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>{t('Promote to Class Level', 'الترقية إلى المرحلة')}</Label>
+                <Select value={targetLevelId} onValueChange={setTargetLevelId}>
+                  <SelectTrigger><SelectValue placeholder={t('Select target class', 'اختر الصف الهدف')} /></SelectTrigger>
+                  <SelectContent>
+                    {classLevels.map(c => <SelectItem key={c.id} value={c.id}>{bilingualText(c.name_en, c.name_ar)}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>{t('Promote to Arm', 'الترقية إلى الشعبة')}</Label>
+                <Select value={targetArmId} onValueChange={setTargetArmId} disabled={!targetLevelId || targetArms.length === 0}>
+                  <SelectTrigger><SelectValue placeholder={targetArms.length ? t('Select arm', 'اختر الشعبة') : t('No arms', 'لا توجد شعب')} /></SelectTrigger>
+                  <SelectContent>
+                    {targetArms.map(a => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
             <Button onClick={buildPromotionPreview} disabled={!sessionId || !classId || loading} className="w-full">
               <Play className="mr-2 h-4 w-4" />
               {t('Preview Promotion', 'معاينة الترقية')}
@@ -181,6 +208,7 @@ const AdminPromotion = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-10"></TableHead>
                     <TableHead>{t('Student ID', 'رقم الطالب')}</TableHead>
                     <TableHead>{t('Name', 'الاسم')}</TableHead>
                     <TableHead>{t('Cumulative Avg', 'المتوسط التراكمي')}</TableHead>
@@ -190,6 +218,9 @@ const AdminPromotion = () => {
                 <TableBody>
                   {promotionPreview.map(s => (
                     <TableRow key={s.id}>
+                      <TableCell>
+                        <Checkbox checked={!!selected[s.id]} onCheckedChange={(v) => setSelected(prev => ({ ...prev, [s.id]: !!v }))} />
+                      </TableCell>
                       <TableCell className="font-mono text-sm">{s.student_uid || s.id}</TableCell>
                       <TableCell>{bilingualText(s.name_en || s.full_name, s.name_ar)}</TableCell>
                       <TableCell className="font-semibold">{s.cumulativeAvg}%</TableCell>
@@ -205,7 +236,7 @@ const AdminPromotion = () => {
               </Table>
             </CardContent>
             <div className="p-4 border-t">
-              <Button className="w-full" onClick={commitPromotion} disabled={loading}>{t('Commit Promotion', 'تأكيد الترقية')}</Button>
+              <Button className="w-full" onClick={commitPromotion} disabled={loading}>{t('Commit Promotion for Selected Students', 'تأكيد ترقية الطلاب المحددين')}</Button>
             </div>
           </Card>
         )}
