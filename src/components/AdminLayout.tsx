@@ -326,11 +326,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
         {/* ─── Mobile bottom nav ─── */}
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 md:hidden"
+          className="fixed bottom-0 left-0 right-0 z-40 px-3 md:hidden"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="border-t border-border/40 bg-card/95 backdrop-blur-lg">
-            <div className="mx-auto flex max-w-md items-stretch justify-around px-2 py-1">
+          <div className="mx-auto max-w-lg rounded-t-3xl border border-border/70 bg-card/95 px-2 pt-2 shadow-[0_-8px_30px_hsl(var(--foreground)/0.08)] backdrop-blur-lg">
+            <div className="flex items-stretch justify-around gap-1">
               {mobileDockItems.map(item => {
                 if (item.type === 'action') {
                   return (
@@ -338,13 +338,13 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                       key="more"
                       type="button"
                       onClick={() => setSidebarOpen(true)}
-                      className="flex min-w-[56px] flex-col items-center justify-center gap-0.5 py-2 text-muted-foreground transition-colors active:text-foreground"
+                      className="flex min-h-[58px] min-w-[58px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-2 text-muted-foreground transition-colors active:bg-muted active:text-foreground"
                       aria-label={t(item.label_en, item.label_ar)}
                     >
-                      <div className="flex h-7 w-7 items-center justify-center">
-                        <Menu className="h-[22px] w-[22px]" strokeWidth={1.6} />
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted/70">
+                        <Menu className="h-[19px] w-[19px]" strokeWidth={1.8} />
                       </div>
-                      <span className="text-[10px] font-medium">{t(item.label_en, item.label_ar)}</span>
+                      <span className="text-[10px] font-semibold">{t(item.label_en, item.label_ar)}</span>
                     </button>
                   );
                 }
@@ -358,22 +358,19 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                     key={item.to}
                     to={item.to}
                     className={cn(
-                      'relative flex min-w-[56px] flex-col items-center justify-center gap-0.5 py-2 transition-colors',
-                      active ? 'text-primary' : 'text-muted-foreground'
+                      'relative flex min-h-[58px] min-w-[58px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-colors',
+                      active ? 'bg-primary/10 text-primary' : 'text-muted-foreground active:bg-muted'
                     )}
                     aria-label={t(item.label_en, item.label_ar)}
                   >
-                    {active && (
-                      <span className="absolute top-0 left-1/2 h-[2.5px] w-8 -translate-x-1/2 rounded-full bg-primary" />
-                    )}
-                    <div className="flex h-7 w-7 items-center justify-center">
+                    <div className={cn('flex h-7 w-7 items-center justify-center rounded-lg', active && 'bg-primary text-primary-foreground')}>
                       <item.icon
-                        className="h-[22px] w-[22px]"
-                        strokeWidth={active ? 2.2 : 1.6}
+                        className="h-[18px] w-[18px]"
+                        strokeWidth={active ? 2 : 1.8}
                       />
                     </div>
                     <span className={cn(
-                      'text-[10px]',
+                      'text-[10px] leading-none',
                       active ? 'font-semibold' : 'font-medium'
                     )}>
                       {t(item.label_en, item.label_ar)}
