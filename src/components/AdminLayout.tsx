@@ -307,7 +307,18 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
         {/* Page content */}
         <main className="flex-1 px-4 pb-24 pt-4 md:p-6 md:pb-0 lg:p-8">
-          <div className="mx-auto w-full max-w-6xl">{children}</div>
+          <div className="mx-auto w-full max-w-6xl">
+            <div className="mb-5 flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                  {t('Current section', 'القسم الحالي')}
+                </p>
+                <h1 className="truncate text-lg font-semibold text-foreground">{pageTitle}</h1>
+              </div>
+              <CampusSwitcher className="w-full sm:w-[240px]" />
+            </div>
+            {children}
+          </div>
         </main>
 
         {/* ─── Mobile bottom nav ─── */}
