@@ -51,8 +51,8 @@ const AdminBroadsheet = () => {
   useEffect(() => {
     (async () => {
       const [s, cl, st] = await Promise.all([
-        supabase.from('sessions').select('*').order('name', { ascending: false }),
-        supabase.from('class_levels').select('*').order('display_order'),
+        supabase.from('sessions').select('*').eq('campus_id', campusId).order('name', { ascending: false }),
+        supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('school_settings').select('*'),
       ]);
       setSessions(s.data || []);
@@ -60,7 +60,7 @@ const AdminBroadsheet = () => {
       const pm = (st.data || []).find((r: any) => r.key === 'grading.pass_mark');
       if (pm && !isNaN(Number(pm.value))) setPassMark(Number(pm.value));
     })();
-  }, []);
+  }, [campusId]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
@@ -104,7 +104,7 @@ const AdminBroadsheet = () => {
 
       const [studRes, subjRes] = await Promise.all([
         sq,
-        supabase.from('subjects').select('id, name_en:name, name_ar').eq('class_level_id', levelId).order('name'),
+        supabase.from('subjects').select('id, name_en:name, name_ar').eq('campus_id', campusId).eq('class_level_id', levelId).order('name'),
       ]);
       if (studRes.error) throw studRes.error;
       if (subjRes.error) throw subjRes.error;

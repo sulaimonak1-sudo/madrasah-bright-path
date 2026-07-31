@@ -10,10 +10,12 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 const AdminClassLevels = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
   const [addOpen, setAddOpen] = useState(false);
@@ -23,14 +25,14 @@ const AdminClassLevels = () => {
 
   const fetchData = async () => {
     const [clRes, armsRes] = await Promise.all([
-      supabase.from('class_levels').select('*').order('display_order'),
-      supabase.from('class_arms').select('*'),
+      supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+      supabase.from('class_arms').select('*').eq('campus_id', campusId),
     ]);
     setClassLevels(clRes.data || []);
     setClassArms(armsRes.data || []);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (campusId) fetchData(); }, [campusId]);
 
   // Utility: Simple English to Arabic transliteration (same as in students)
   function transliterateToArabic(text: string): string {
@@ -70,6 +72,7 @@ const AdminClassLevels = () => {
       name_en: nameEn.trim(),
       name_ar: autoAr,
       display_order: order,
+      campus_id: campusId,
     });
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     toast({ title: t('Level added', 'تمت إضافة المرحلة') });
@@ -79,7 +82,7 @@ const AdminClassLevels = () => {
   };
 
   const deleteLevel = async (id: string) => {
-    const { error } = await supabase.from('class_levels').delete().eq('id', id);
+    const { error } = await supabase.from('class_levels').delete().eq('id', id).eq('campus_id', campusId);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     fetchData();
   };

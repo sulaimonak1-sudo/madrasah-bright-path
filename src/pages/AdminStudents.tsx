@@ -14,11 +14,13 @@ import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 const AdminStudents = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
   const { role, user } = useAuth();
+  const { campusId } = useCampus();
   const [students, setStudents] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<any[]>([]);
@@ -48,7 +50,7 @@ const AdminStudents = () => {
       ...editFields,
       name_en: editFields.name_en || editFields.full_name,
       name_ar: editFields.name_ar || transliterateToArabic(editFields.name_en || editFields.full_name),
-    }).eq('id', selectedStudent.id);
+    }).eq('id', selectedStudent.id).eq('campus_id', campusId);
     if (error) {
       toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' });
       return;
@@ -66,7 +68,7 @@ const AdminStudents = () => {
 
   const confirmDelete = async () => {
     if (!selectedStudent) return;
-    const { error } = await supabase.from('students').delete().eq('id', selectedStudent.id);
+    const { error } = await supabase.from('students').delete().eq('id', selectedStudent.id).eq('campus_id', campusId);
     if (error) {
       toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' });
       return;
@@ -114,9 +116,9 @@ const AdminStudents = () => {
 
   const fetchData = async () => {
     const [studRes, clRes, armsRes] = await Promise.all([
-      supabase.from('students').select('*').order('full_name'),
-      supabase.from('class_levels').select('*').order('display_order'),
-      supabase.from('class_arms').select('*'),
+      supabase.from('students').select('*').eq('campus_id', campusId).order('full_name'),
+      supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+      supabase.from('class_arms').select('*').eq('campus_id', campusId),
     ]);
     let studentsData = studRes.data || [];
     let levels = clRes.data || [];
@@ -144,7 +146,7 @@ const AdminStudents = () => {
     setClassArms(arms);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (campusId) fetchData(); }, [campusId]);
 
   const handleAddOpenChange = (open: boolean) => {
     setAddOpen(open);
@@ -211,6 +213,7 @@ const AdminStudents = () => {
       class_arm_id: finalArmId,
       guardian_name: guardianName.trim() || null,
       guardian_phone: guardianPhone.trim() || null,
+      campus_id: campusId,
     }).select().maybeSingle();
     if (insertErr) { toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' }); return; }
 

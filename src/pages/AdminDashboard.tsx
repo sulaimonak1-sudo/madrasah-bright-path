@@ -9,6 +9,7 @@ import { GraduationCap, Rows3, BookText, Grid2x2, CalendarRange, TrendingUp, Sav
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCampus } from '@/contexts/CampusContext';
 // using native textarea to avoid runtime bundling issues
 
 const statCards = [
@@ -29,6 +30,7 @@ const AdminDashboard = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
   const { user, isTeacher, isAdmin } = useAuth();
+  const { campusId } = useCampus();
 
   // Report settings
   const [includeQr, setIncludeQr] = useState(true);
@@ -56,13 +58,13 @@ const AdminDashboard = () => {
     (async () => {
       try {
         const [studentsRes, classesRes, armsRes, subjectsRes] = await Promise.all([
-          supabase.from('students').select('id', { count: 'exact' }),
-          supabase.from('class_levels').select('id', { count: 'exact' }),
-          supabase.from('class_arms').select('id', { count: 'exact' }),
-          supabase.from('subjects').select('id', { count: 'exact' }),
+          supabase.from('students').select('id', { count: 'exact' }).eq('campus_id', campusId),
+          supabase.from('class_levels').select('id', { count: 'exact' }).eq('campus_id', campusId),
+          supabase.from('class_arms').select('id', { count: 'exact' }).eq('campus_id', campusId),
+          supabase.from('subjects').select('id', { count: 'exact' }).eq('campus_id', campusId),
         ]);
 
-        const activeSessionRes = await supabase.from('sessions').select('id,name').eq('is_active', true).maybeSingle();
+        const activeSessionRes = await supabase.from('sessions').select('id,name').eq('campus_id', campusId).eq('is_active', true).maybeSingle();
         let currentTermName = '';
         let currentTermId: string | null = null;
         if (activeSessionRes.data?.id) {
@@ -76,7 +78,8 @@ const AdminDashboard = () => {
         // Compute average score for current term (if available)
         let avgScore = 0;
         if (currentTermId) {
-          const { data: rows } = await supabase.from('term_scores').select('student_id,total').eq('term_id', currentTermId);
+          const { data: campusStudents } = await supabase.from('students').select('id').eq('campus_id', campusId);
+          const { data: rows } = await supabase.from('term_scores').select('student_id,total').eq('term_id', currentTermId).in('student_id', (campusStudents || []).map(s => s.id));
           if (rows && rows.length > 0) {
             const byStudent: Record<string, number[]> = {};
             rows.forEach((r: any) => {
@@ -104,7 +107,7 @@ const AdminDashboard = () => {
         // silently ignore dashboard stat errors
       }
     })();
-  }, []);
+  }, [campusId]);
 
 
   // Load settings + tiered remarks

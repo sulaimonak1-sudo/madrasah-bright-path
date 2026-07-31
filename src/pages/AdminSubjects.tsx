@@ -12,10 +12,12 @@ import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 const AdminSubjects = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
   const [subjects, setSubjects] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [addOpen, setAddOpen] = useState(false);
@@ -28,14 +30,14 @@ const AdminSubjects = () => {
 
   const fetchData = async () => {
     const [subRes, clRes] = await Promise.all([
-      supabase.from('subjects').select('*').order('name'),
-      supabase.from('class_levels').select('*').order('display_order'),
+      supabase.from('subjects').select('*').eq('campus_id', campusId).order('name'),
+      supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
     ]);
     setSubjects(subRes.data || []);
     setClassLevels(clRes.data || []);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (campusId) fetchData(); }, [campusId]);
 
   // Utility: Simple English to Arabic transliteration (same as in students)
   function transliterateToArabic(text: string): string {
@@ -78,6 +80,7 @@ const AdminSubjects = () => {
         name: name.trim(),
         name_ar: autoAr,
         class_level_id: clId,
+        campus_id: campusId,
       });
       if (error) errors.push(error.message);
     }
@@ -92,7 +95,7 @@ const AdminSubjects = () => {
   };
 
   const deleteSubject = async (id: string) => {
-    const { error } = await supabase.from('subjects').delete().eq('id', id);
+    const { error } = await supabase.from('subjects').delete().eq('id', id).eq('campus_id', campusId);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     fetchData();
   };

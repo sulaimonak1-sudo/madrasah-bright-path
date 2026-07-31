@@ -8,10 +8,12 @@ import { Lock, Unlock } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 const AdminLocking = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
@@ -21,7 +23,7 @@ const AdminLocking = () => {
     const load = async () => {
       setLoading(true);
       try {
-        const { data: s } = await supabase.from('sessions').select('*').order('name');
+        const { data: s } = await supabase.from('sessions').select('*').eq('campus_id', campusId).order('name');
         setSessions((s as any[]) || []);
         const { data: termsData } = await supabase.from('terms').select('*');
         setTerms((termsData as any[]) || []);
@@ -32,12 +34,12 @@ const AdminLocking = () => {
       }
     };
     load();
-  }, []);
+  }, [campusId]);
 
   const handleToggleLock = async (term: any) => {
     const newLocked = !term.is_locked;
     try {
-      const { error } = await supabase.from('terms').update({ is_locked: newLocked }).eq('id', term.id);
+      const { error } = await supabase.from('terms').update({ is_locked: newLocked }).eq('id', term.id).eq('session_id', term.session_id);
       if (error) throw error;
       setTerms((prev) => prev.map((p) => (p.id === term.id ? { ...p, is_locked: newLocked } : p)));
       toast({ title: newLocked ? t('Locked', 'مقفل') : t('Unlocked', 'مفتوح') });

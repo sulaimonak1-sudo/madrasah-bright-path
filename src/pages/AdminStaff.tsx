@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Users, Search, Edit, Trash2, Save, Loader2, UserPlus, Upload, Image as ImageIcon, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCampus } from '@/contexts/CampusContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -30,6 +31,7 @@ interface StaffMember {
 const AdminStaff = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
   const { user: authUser, isAdmin } = useAuth();
 
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -69,10 +71,10 @@ const AdminStaff = () => {
     setLoading(true);
     try {
       const [profilesRes, rolesRes, levelsRes, armsRes] = await Promise.all([
-        supabase.from('profiles').select('*'),
+        supabase.from('profiles').select('*').eq('campus_id', campusId),
         supabase.from('user_roles').select('*'),
-        supabase.from('class_levels').select('*').order('display_order'),
-        supabase.from('class_arms').select('*').order('name'),
+        supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+        supabase.from('class_arms').select('*').eq('campus_id', campusId).order('name'),
       ]);
 
       setClassLevels(levelsRes.data || []);
@@ -102,7 +104,7 @@ const AdminStaff = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (campusId) fetchData(); }, [campusId]);
 
   const getClassName = (armId: string | null, levelId: string | null) => {
     if (armId) {
@@ -197,6 +199,7 @@ const AdminStaff = () => {
         user_id: data.user.id,
         full_name: addName.trim(),
         phone: addPhone.trim() || null,
+        campus_id: campusId,
         class_teacher_class_arm_id: null,
         class_teacher_class_level_id: classTeacherLevelId,
       } as any, { onConflict: 'user_id' });

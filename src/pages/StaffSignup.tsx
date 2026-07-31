@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GraduationCap, KeyRound, UserPlus, Loader2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 type Step = 'auth_key' | 'signup' | 'profile' | 'done';
 
@@ -17,6 +18,7 @@ const StaffSignup = () => {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { campusId } = useCampus();
 
   const [step, setStep] = useState<Step>('auth_key');
   const [loading, setLoading] = useState(false);
@@ -40,8 +42,8 @@ const StaffSignup = () => {
       try {
         console.log('Fetching class_levels and class_arms...');
         const [clRes, armsRes] = await Promise.all([
-          supabase.from('class_levels').select('*').order('display_order'),
-          supabase.from('class_arms').select('*').order('name'),
+          supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+          supabase.from('class_arms').select('*').eq('campus_id', campusId).order('name'),
         ]);
         
         if (clRes.error) {
@@ -66,7 +68,7 @@ const StaffSignup = () => {
         setClassesLoading(false);
       }
     })();
-  }, [toast, t]);
+  }, [campusId, toast, t]);
 
   const validateAuthKey = async () => {
     if (!authKey.trim()) return;
@@ -171,6 +173,7 @@ const StaffSignup = () => {
         user_id: currentUserId,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
+        campus_id: campusId,
         class_teacher_class_arm_id: classTeacherArmId,
         class_teacher_class_level_id: classTeacherLevelId,
       }, { onConflict: 'user_id' });

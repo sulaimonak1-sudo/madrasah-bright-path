@@ -13,6 +13,7 @@ import { useToast } from '@/hooks/use-toast';
 import { calculateGrade, GRADE_CONFIG } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 import QRCode from 'qrcode';
+import { useCampus } from '@/contexts/CampusContext';
 
 type Step = 'select' | 'students';
 
@@ -27,6 +28,7 @@ const AdminReports = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
   const { user, isTeacher, isAdmin } = useAuth();
+  const { campusId } = useCampus();
 
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
@@ -58,9 +60,9 @@ const AdminReports = () => {
   useEffect(() => {
     const fetch = async () => {
       const [sessRes, clRes, armsRes, remarksRes] = await Promise.all([
-        supabase.from('sessions').select('*').order('name', { ascending: false }),
-        supabase.from('class_levels').select('*').order('display_order'),
-        supabase.from('class_arms').select('*'),
+        supabase.from('sessions').select('*').eq('campus_id', campusId).order('name', { ascending: false }),
+        supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+        supabase.from('class_arms').select('*').eq('campus_id', campusId),
         supabase.from('tiered_remarks').select('*'),
       ]);
       setSessions(sessRes.data || []);
@@ -102,7 +104,7 @@ const AdminReports = () => {
         // ignore
       }
     })();
-  }, [user]);
+  }, [campusId, user]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
@@ -136,7 +138,7 @@ const AdminReports = () => {
     setLoadingStudents(true);
     try {
       let query = supabase.from('students').select('id, full_name, name_en, name_ar, student_uid, class_arm_id, gender')
-        .eq('class_level_id', level.id).eq('status', 'active').order('full_name');
+        .eq('campus_id', campusId).eq('class_level_id', level.id).eq('status', 'active').order('full_name');
       const { data } = await query;
       let filtered = data || [];
       if (arm) {
@@ -160,7 +162,7 @@ const AdminReports = () => {
       const selectedTerm = terms.find(t => t.id === termId);
 
       const [subjectsRes, scoresRes, classLevelRes, classArmRes, teacherProfileRes] = await Promise.all([
-        supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id).order('name'),
+        supabase.from('subjects').select('*').eq('campus_id', campusId).eq('class_level_id', selectedClassLevel.id).order('name'),
         supabase.from('term_scores').select('*').eq('student_id', student.id).eq('term_id', termId),
         supabase.from('class_levels').select('*').eq('id', selectedClassLevel.id).maybeSingle(),
         selectedClassArm ? supabase.from('class_arms').select('*').eq('id', selectedClassArm.id).maybeSingle() : Promise.resolve({ data: null }),

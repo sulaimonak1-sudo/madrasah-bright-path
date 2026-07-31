@@ -29,6 +29,7 @@ import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { CampusSwitcher } from '@/components/CampusSwitcher';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -155,6 +156,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           >
             <X className="h-4 w-4" />
           </button>
+        </div>
+
+        <div className="border-b border-sidebar-border px-4 pb-4">
+          <CampusSwitcher className="w-full border-sidebar-border bg-sidebar-accent text-sidebar-foreground" />
         </div>
 
         {/* Sidebar nav */}

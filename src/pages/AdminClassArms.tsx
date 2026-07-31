@@ -11,10 +11,12 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 const AdminClassArms = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
   const [classArms, setClassArms] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [addOpen, setAddOpen] = useState(false);
@@ -23,20 +25,21 @@ const AdminClassArms = () => {
 
   const fetchData = async () => {
     const [armsRes, clRes] = await Promise.all([
-      supabase.from('class_arms').select('*').order('name'),
-      supabase.from('class_levels').select('*').order('display_order'),
+      supabase.from('class_arms').select('*').eq('campus_id', campusId).order('name'),
+      supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
     ]);
     setClassArms(armsRes.data || []);
     setClassLevels(clRes.data || []);
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (campusId) fetchData(); }, [campusId]);
 
   const addArm = async () => {
     if (!name.trim() || !classLevelId) return;
     const { error } = await supabase.from('class_arms').insert({
       name: name.trim(),
       class_level_id: classLevelId,
+      campus_id: campusId,
     });
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     toast({ title: t('Arm added', 'تمت إضافة الشعبة') });
@@ -46,7 +49,7 @@ const AdminClassArms = () => {
   };
 
   const deleteArm = async (id: string) => {
-    const { error } = await supabase.from('class_arms').delete().eq('id', id);
+    const { error } = await supabase.from('class_arms').delete().eq('id', id).eq('campus_id', campusId);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
     fetchData();
   };

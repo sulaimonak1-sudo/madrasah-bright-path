@@ -11,10 +11,12 @@ import { useEffect, useState } from 'react';
 import { Checkbox } from '@/components/ui/checkbox';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useCampus } from '@/contexts/CampusContext';
 
 const AdminPromotion = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
   const [sessionId, setSessionId] = useState('');
   const [classId, setClassId] = useState('');
   const [showPreview, setShowPreview] = useState(false);
@@ -29,24 +31,24 @@ const AdminPromotion = () => {
 
   useEffect(() => {
     if (!targetLevelId) { setTargetArms([]); setTargetArmId(''); return; }
-    supabase.from('class_arms').select('*').eq('class_level_id', targetLevelId).order('name')
+    supabase.from('class_arms').select('*').eq('campus_id', campusId).eq('class_level_id', targetLevelId).order('name')
       .then(({ data }) => setTargetArms(data || []));
     setTargetArmId('');
-  }, [targetLevelId]);
+  }, [campusId, targetLevelId]);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const { data: s } = await supabase.from('sessions').select('*').order('name');
+        const { data: s } = await supabase.from('sessions').select('*').eq('campus_id', campusId).order('name');
         setSessions((s as any[]) || []);
-        const { data: cl } = await supabase.from('class_levels').select('*').order('display_order');
+        const { data: cl } = await supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order');
         setClassLevels((cl as any[]) || []);
       } catch (err) {
         toast({ title: t('Error loading data', 'خطأ في تحميل البيانات'), description: String(err) });
       }
     };
     load();
-  }, []);
+  }, [campusId]);
 
   // Build promotion preview using real data
   const buildPromotionPreview = async () => {
@@ -54,7 +56,7 @@ const AdminPromotion = () => {
     setLoading(true);
     try {
       // fetch students in class level
-      const { data: students } = await supabase.from('students').select('*').eq('class_level_id', classId);
+      const { data: students } = await supabase.from('students').select('*').eq('campus_id', campusId).eq('class_level_id', classId);
 
       // fetch terms for session
       const { data: terms } = await supabase.from('terms').select('id').eq('session_id', sessionId);
@@ -122,7 +124,7 @@ const AdminPromotion = () => {
       const { error: updErr } = await supabase
         .from('students')
         .update({ class_level_id: targetLevelId, class_arm_id: targetArmId || null })
-        .in('id', chosen.map((s: any) => s.id));
+        .in('id', chosen.map((s: any) => s.id)).eq('campus_id', campusId);
       if (updErr) throw updErr;
 
       toast({ title: t('Promotion committed', 'تم تأكيد الترقية'), description: `${chosen.length}` });

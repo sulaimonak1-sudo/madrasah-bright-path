@@ -5,6 +5,7 @@ import { Label } from './ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { useCampus } from '@/contexts/CampusContext';
 
 interface AddStudentFormProps {
   classLevels: any[];
@@ -15,6 +16,7 @@ interface AddStudentFormProps {
 
 export function AddStudentForm({ classLevels, classArms, assignedLevelId, assignedArmId }: AddStudentFormProps) {
   const { toast } = useToast();
+  const { campusId } = useCampus();
   const [fullName, setFullName] = useState('');
   const [gender, setGender] = useState('');
   const [guardianName, setGuardianName] = useState('');
@@ -36,6 +38,7 @@ export function AddStudentForm({ classLevels, classArms, assignedLevelId, assign
         class_arm_id: assignedArmId,
         guardian_name: guardianName.trim() || null,
         guardian_phone: guardianPhone.trim() || null,
+        campus_id: campusId,
       });
       if (error) throw error;
       toast({ title: 'Student added', description: 'Student successfully added to your class.' });

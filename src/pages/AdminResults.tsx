@@ -12,6 +12,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateGrade } from '@/types';
+import { useCampus } from '@/contexts/CampusContext';
 
 interface ScoreEntry {
   student_id: string;
@@ -27,6 +28,7 @@ type Step = 'classes' | 'subjects' | 'scores';
 const AdminResults = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
+  const { campusId } = useCampus();
 
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
@@ -47,9 +49,9 @@ const AdminResults = () => {
   useEffect(() => {
     const fetch = async () => {
       const [sessRes, clRes, armsRes] = await Promise.all([
-        supabase.from('sessions').select('*').order('name', { ascending: false }),
-        supabase.from('class_levels').select('*').order('display_order'),
-        supabase.from('class_arms').select('*'),
+        supabase.from('sessions').select('*').eq('campus_id', campusId).order('name', { ascending: false }),
+        supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+        supabase.from('class_arms').select('*').eq('campus_id', campusId),
       ]);
       setSessions(sessRes.data || []);
       setClassLevels(clRes.data || []);
@@ -61,7 +63,7 @@ const AdminResults = () => {
       setClassArms(grouped);
     };
     fetch();
-  }, []);
+  }, [campusId]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
@@ -72,15 +74,16 @@ const AdminResults = () => {
 
   useEffect(() => {
     if (!selectedClassLevel) { setSubjects([]); return; }
-    supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id)
+    supabase.from('subjects').select('*').eq('campus_id', campusId).eq('class_level_id', selectedClassLevel.id)
       .then(({ data }) => setSubjects(data || []));
-  }, [selectedClassLevel]);
+  }, [campusId, selectedClassLevel]);
 
   useEffect(() => {
     if (!selectedSubject || !termId || !selectedClassLevel) { setScores([]); return; }
     const fetchData = async () => {
       const [studRes, scoresRes] = await Promise.all([
         supabase.from('students').select('id, full_name, name_en, name_ar, student_uid, class_arm_id')
+          .eq('campus_id', campusId)
           .eq('class_level_id', selectedClassLevel.id)
           .eq('status', 'active')
           .order('full_name'),
@@ -108,7 +111,7 @@ const AdminResults = () => {
       setScores(entries);
     };
     fetchData();
-  }, [selectedSubject, selectedClassArm, termId, selectedClassLevel]);
+  }, [campusId, selectedSubject, selectedClassArm, termId, selectedClassLevel]);
 
   const updateScore = useCallback((index: number, field: 'ca1' | 'ca2' | 'exam', value: string) => {
     const num = Math.max(0, Math.min(field === 'exam' ? 60 : 20, Number(value) || 0));

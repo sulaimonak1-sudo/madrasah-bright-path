@@ -199,6 +199,7 @@ export type Database = {
       }
       class_levels: {
         Row: {
+          campus_id: string
           created_at: string
           display_order: number
           id: string
@@ -206,6 +207,7 @@ export type Database = {
           name_en: string
         }
         Insert: {
+          campus_id?: string
           created_at?: string
           display_order?: number
           id?: string
@@ -213,6 +215,7 @@ export type Database = {
           name_en: string
         }
         Update: {
+          campus_id?: string
           created_at?: string
           display_order?: number
           id?: string
@@ -503,18 +506,21 @@ export type Database = {
       }
       sessions: {
         Row: {
+          campus_id: string
           created_at: string
           id: string
           is_active: boolean
           name: string
         }
         Insert: {
+          campus_id?: string
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
         }
         Update: {
+          campus_id?: string
           created_at?: string
           id?: string
           is_active?: boolean
