@@ -95,6 +95,12 @@ const AdminStudents = () => {
     return `${prefix}${String(next).padStart(3, '0')}`;
   }
 
+  function incrementStudentId(studentId: string) {
+    const match = studentId.match(/^(.*?)(\d+)$/);
+    if (!match) return `${studentId}-${Date.now()}`;
+    return `${match[1]}${String(Number(match[2]) + 1).padStart(match[2].length, '0')}`;
+  }
+
   function transliterateToArabic(text: string): string {
     return text
       .replace(/a/gi, 'ا').replace(/b/gi, 'ب').replace(/c/gi, 'ك').replace(/d/gi, 'د')
@@ -192,7 +198,8 @@ const AdminStudents = () => {
       toast({ title: t('Permission denied', 'تم رفض الإذن'), description: t('Only staff can add students', 'فقط الموظفين يمكنهم إضافة الطلاب'), variant: 'destructive' });
       return;
     }
-    const autoId = studentUid.trim() ? studentUid.trim() : generateStudentId();
+    const hasManualId = Boolean(studentUid.trim());
+    let autoId = hasManualId ? studentUid.trim() : generateStudentId();
     const autoAr = nameAr.trim() ? nameAr.trim() : transliterateToArabic(nameEn.trim() || fullName.trim());
     const finalLevelId = levelId || classLevelId || null;
     const finalArmId = armId || classArmId || null;
@@ -202,20 +209,30 @@ const AdminStudents = () => {
       return;
     }
 
-    const { error: insertErr } = await supabase.from('students').insert({
-      full_name: fullName.trim(),
-      name_en: nameEn.trim() || fullName.trim(),
-      name_ar: autoAr,
-      student_uid: autoId,
-      gender: gender || null,
-      status: 'active',
-      class_level_id: finalLevelId,
-      class_arm_id: finalArmId,
-      guardian_name: guardianName.trim() || null,
-      guardian_phone: guardianPhone.trim() || null,
-      campus_id: campusId,
-    }).select().maybeSingle();
-    if (insertErr) { toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' }); return; }
+    let insertErr: { code?: string; message: string } | null = null;
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const { error } = await supabase.from('students').insert({
+        full_name: fullName.trim(),
+        name_en: nameEn.trim() || fullName.trim(),
+        name_ar: autoAr,
+        student_uid: autoId,
+        gender: gender || null,
+        status: 'active',
+        class_level_id: finalLevelId,
+        class_arm_id: finalArmId,
+        guardian_name: guardianName.trim() || null,
+        guardian_phone: guardianPhone.trim() || null,
+        campus_id: campusId,
+      }).select().maybeSingle();
+      insertErr = error;
+      if (!error) break;
+      if (hasManualId || error.code !== '23505' || !error.message.includes('student_uid')) break;
+      autoId = incrementStudentId(autoId);
+    }
+    if (insertErr) {
+      toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' });
+      return;
+    }
 
     toast({ title: t('Student added', 'تمت إضافة الطالب') });
     setFullName(''); setNameEn(''); setNameAr(''); setStudentUid('');

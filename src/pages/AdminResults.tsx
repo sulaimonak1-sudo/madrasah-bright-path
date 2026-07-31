@@ -13,6 +13,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { calculateGrade } from '@/types';
 import { useCampus } from '@/contexts/CampusContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ScoreEntry {
   student_id: string;
@@ -29,6 +30,7 @@ const AdminResults = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
   const { campusId } = useCampus();
+  const { user, isAdmin } = useAuth();
 
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
@@ -42,6 +44,7 @@ const AdminResults = () => {
 
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [classArms, setClassArms] = useState<Record<string, any[]>>({});
+  const [teacherClassArmId, setTeacherClassArmId] = useState<string | null>(null);
   const [subjects, setSubjects] = useState<any[]>([]);
   const [scores, setScores] = useState<ScoreEntry[]>([]);
   const [saving, setSaving] = useState(false);
@@ -53,17 +56,36 @@ const AdminResults = () => {
         supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('class_arms').select('*').eq('campus_id', campusId),
       ]);
+      let assignedLevelId: string | null = null;
+      let assignedArmId: string | null = null;
+      if (!isAdmin && user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('class_teacher_class_level_id, class_teacher_class_arm_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        assignedLevelId = profile?.class_teacher_class_level_id || null;
+        assignedArmId = profile?.class_teacher_class_arm_id || null;
+      }
+      if (!assignedLevelId && assignedArmId) {
+        assignedLevelId = (armsRes.data || []).find(arm => arm.id === assignedArmId)?.class_level_id || null;
+      }
+      setTeacherClassArmId(assignedArmId);
       setSessions(sessRes.data || []);
-      setClassLevels(clRes.data || []);
+      setClassLevels((clRes.data || []).filter(level =>
+        isAdmin || (!assignedLevelId || level.id === assignedLevelId)
+      ));
       const grouped: Record<string, any[]> = {};
       (armsRes.data || []).forEach((arm: any) => {
+        if (!isAdmin && assignedLevelId && arm.class_level_id !== assignedLevelId) return;
+        if (!isAdmin && assignedArmId && arm.id !== assignedArmId) return;
         if (!grouped[arm.class_level_id]) grouped[arm.class_level_id] = [];
         grouped[arm.class_level_id].push(arm);
       });
       setClassArms(grouped);
     };
     fetch();
-  }, [campusId]);
+  }, [campusId, isAdmin, user]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
@@ -91,8 +113,8 @@ const AdminResults = () => {
           .eq('term_id', termId).eq('subject_id', selectedSubject.id),
       ]);
       let students = studRes.data || [];
-      if (selectedClassArm) {
-        students = students.filter((s: any) => s.class_arm_id === selectedClassArm.id);
+      if (selectedClassArm || teacherClassArmId) {
+        students = students.filter((s: any) => s.class_arm_id === (selectedClassArm?.id || teacherClassArmId));
       } else {
         students = students.filter((s: any) => !s.class_arm_id);
       }
@@ -111,7 +133,7 @@ const AdminResults = () => {
       setScores(entries);
     };
     fetchData();
-  }, [campusId, selectedSubject, selectedClassArm, termId, selectedClassLevel]);
+  }, [campusId, selectedSubject, selectedClassArm, teacherClassArmId, termId, selectedClassLevel]);
 
   const updateScore = useCallback((index: number, field: 'ca1' | 'ca2' | 'exam', value: string) => {
     const num = Math.max(0, Math.min(field === 'exam' ? 60 : 20, Number(value) || 0));

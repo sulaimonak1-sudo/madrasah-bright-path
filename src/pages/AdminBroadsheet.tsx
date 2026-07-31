@@ -24,13 +24,14 @@ type SortKey = 'position' | 'name' | 'uid' | 'total' | 'average';
 const AdminBroadsheet = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { campusId, campus, campuses } = useCampus();
 
   const [sessions, setSessions] = useState<any[]>([]);
   const [terms, setTerms] = useState<any[]>([]);
   const [classLevels, setClassLevels] = useState<any[]>([]);
   const [arms, setArms] = useState<any[]>([]);
+  const [teacherClassArmId, setTeacherClassArmId] = useState<string | null>(null);
 
   const [sessionId, setSessionId] = useState('');
   const [termId, setTermId] = useState('');
@@ -50,17 +51,35 @@ const AdminBroadsheet = () => {
 
   useEffect(() => {
     (async () => {
-      const [s, cl, st] = await Promise.all([
+      const [s, cl, st, allArms] = await Promise.all([
         supabase.from('sessions').select('*').order('name', { ascending: false }),
         supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('school_settings').select('*'),
+        supabase.from('class_arms').select('id, class_level_id').eq('campus_id', campusId),
       ]);
+      let assignedLevelId: string | null = null;
+      let assignedArmId: string | null = null;
+      if (!isAdmin && user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('class_teacher_class_level_id, class_teacher_class_arm_id')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        assignedLevelId = profile?.class_teacher_class_level_id || null;
+        assignedArmId = profile?.class_teacher_class_arm_id || null;
+      }
+      if (!assignedLevelId && assignedArmId) {
+        assignedLevelId = (allArms.data || []).find(arm => arm.id === assignedArmId)?.class_level_id || null;
+      }
+      setTeacherClassArmId(assignedArmId);
       setSessions(s.data || []);
-      setClassLevels(cl.data || []);
+      setClassLevels((cl.data || []).filter(level =>
+        isAdmin || (!assignedLevelId || level.id === assignedLevelId)
+      ));
       const pm = (st.data || []).find((r: any) => r.key === 'grading.pass_mark');
       if (pm && !isNaN(Number(pm.value))) setPassMark(Number(pm.value));
     })();
-  }, [campusId]);
+  }, [campusId, isAdmin, user]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
@@ -73,9 +92,9 @@ const AdminBroadsheet = () => {
   useEffect(() => {
     if (!campusId || !levelId) { setArms([]); setArmId(''); return; }
     supabase.from('class_arms').select('*').eq('campus_id', campusId).eq('class_level_id', levelId).order('name')
-      .then(({ data }) => setArms(data || []));
+      .then(({ data }) => setArms((data || []).filter(arm => isAdmin || !teacherClassArmId || arm.id === teacherClassArmId)));
     setArmId('');
-  }, [campusId, levelId]);
+  }, [campusId, isAdmin, levelId, teacherClassArmId]);
 
   useEffect(() => { setGenerated(false); }, [campusId, sessionId, termId, levelId, armId]);
 
