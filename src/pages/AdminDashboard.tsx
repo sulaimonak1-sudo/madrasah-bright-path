@@ -178,11 +178,18 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-5 animate-fade-in pb-20 md:pb-0">
+      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
         {/* Page heading — hidden on mobile since header shows title */}
-        <div className="hidden md:block">
-          <h1 className="text-2xl font-bold">{t('Dashboard', 'لوحة التحكم')}</h1>
-          <p className="text-sm text-muted-foreground">{t('Overview of your Madrasah result portal', 'نظرة عامة على بوابة نتائج المدرسة')}</p>
+        <div className="hidden md:flex items-end justify-between gap-4">
+          <div>
+            <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70">{t('Today at Al-Bari', 'اليوم في البارئ')}</p>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight">{t('Good morning, let’s make progress.', 'صباح الخير، لننجز المزيد.')}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">{t('A quick view of your academic operations.', 'نظرة سريعة على العمليات الأكاديمية.')}</p>
+          </div>
+          <div className="hidden rounded-2xl border border-accent/30 bg-accent/10 px-4 py-3 text-right lg:block">
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-accent-foreground/60">{t('Active term', 'الفصل النشط')}</p>
+            <p className="mt-1 text-sm font-bold text-accent-foreground">{stats.currentTerm || '—'}</p>
+          </div>
         </div>
 
         <InstallPrompt />
@@ -190,13 +197,14 @@ const AdminDashboard = () => {
         {/* Stats — 2‑col grid on mobile, 4‑col on desktop */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {statCards.map(card => (
-            <Card key={card.key} className="overflow-hidden border-0 bg-card shadow-sm rounded-2xl">
-              <CardContent className="p-4">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80 mb-3">
+            <Card key={card.key} className="group overflow-hidden border border-border/70 bg-card shadow-card rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-card-lg">
+              <CardContent className="relative p-5">
+                <div className="absolute right-4 top-4 h-16 w-16 rounded-full bg-primary/[0.04] transition-transform duration-500 group-hover:scale-125" />
+                <div className="relative mb-7 flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80">
                   <card.icon className={`h-5 w-5 ${card.color}`} strokeWidth={1.8} />
                 </div>
                 <p className="text-xs text-muted-foreground leading-none">{t(card.label_en, card.label_ar)}</p>
-                <p className="mt-1 text-2xl font-bold tracking-tight">{(stats as any)[card.key]}</p>
+                <p className="mt-1 font-display text-3xl font-extrabold tracking-tight">{(stats as any)[card.key]}</p>
               </CardContent>
             </Card>
           ))}
@@ -204,7 +212,7 @@ const AdminDashboard = () => {
 
         {/* Quick Info — session & performance */}
         <div className="grid gap-3 md:grid-cols-2">
-          <Card className="border-0 bg-card shadow-sm rounded-2xl">
+          <Card className="border border-border/70 bg-card shadow-card rounded-2xl">
             <CardContent className="p-4 md:p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent/15">
@@ -225,7 +233,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-0 bg-card shadow-sm rounded-2xl">
+          <Card className="border border-border/70 bg-card shadow-card rounded-2xl">
             <CardContent className="p-4 md:p-5">
               <div className="flex items-center gap-2 mb-3">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
@@ -235,7 +243,7 @@ const AdminDashboard = () => {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">{t('Avg. Score', 'متوسط الدرجات')}</span>
-                <span className="text-xl font-bold">{stats.averageScore}%</span>
+                <span className="font-display text-3xl font-extrabold">{stats.averageScore}%</span>
               </div>
             </CardContent>
           </Card>
@@ -243,7 +251,7 @@ const AdminDashboard = () => {
 
         {/* Head Teacher Tiered Remarks (admin only) */}
         {isAdmin && (
-          <Card className="border-0 bg-card shadow-sm rounded-2xl">
+          <Card className="border border-border/70 bg-card shadow-card rounded-2xl">
             <CardHeader className="pb-3">
               <CardTitle className="text-base font-semibold">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle>
             </CardHeader>

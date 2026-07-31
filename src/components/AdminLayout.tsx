@@ -125,7 +125,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       <aside
         className={cn(
           'fixed inset-y-0 z-50 flex flex-col bg-sidebar transition-all duration-300 ease-in-out md:relative',
-          collapsed ? 'w-[72px]' : 'w-72',
+          collapsed ? 'w-[72px]' : 'w-[260px]',
           isRTL ? 'right-0 border-l border-sidebar-border' : 'left-0 border-r border-sidebar-border',
           sidebarOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full',
           'md:translate-x-0',
@@ -134,10 +134,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       >
         {/* Sidebar header */}
         <div className={cn(
-          'flex items-center gap-3 px-5 py-5',
+          'flex items-center gap-3 px-5 py-6',
           collapsed && 'justify-center px-3'
         )}>
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-sidebar-accent">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-sidebar-primary shadow-lg shadow-black/10">
             <img src="/images/school-logo.png" alt="Logo" className="h-7 w-7 object-contain" />
           </div>
           {!collapsed && (
@@ -145,8 +145,8 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
               <h1 className="truncate text-[15px] font-bold text-sidebar-foreground leading-tight">
                 {t('Al-Bari Schools', 'مدارس البارئ')}
               </h1>
-              <p className="text-[11px] text-sidebar-foreground/50">
-                {t('Result Portal', 'بوابة النتائج')}
+              <p className="mt-0.5 text-[11px] text-sidebar-foreground/45">
+                {t('Academic operations', 'الإدارة الأكاديمية')}
               </p>
             </div>
           )}
@@ -158,17 +158,17 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
           </button>
         </div>
 
-        <div className="border-b border-sidebar-border px-4 pb-4">
+        <div className="border-b border-sidebar-border px-4 pb-5">
           <CampusSwitcher className="w-full border-sidebar-border bg-sidebar-accent text-sidebar-foreground" />
         </div>
 
         {/* Sidebar nav */}
         <ScrollArea className="flex-1 px-3">
-          <nav className="space-y-6 py-2">
+          <nav className="space-y-7 py-4">
             {filteredGroups.map((group, gi) => (
               <div key={gi}>
                 {!collapsed && (
-                  <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
+                  <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.18em] text-sidebar-foreground/30">
                     {t(group.label_en, group.label_ar)}
                   </p>
                 )}
@@ -182,10 +182,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                         onClick={() => setSidebarOpen(false)}
                         title={collapsed ? t(item.label_en, item.label_ar) : undefined}
                         className={cn(
-                          'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200',
+                          'group flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-semibold transition-all duration-200',
                           collapsed && 'justify-center px-0',
                           isActive
-                            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
+                            ? 'bg-sidebar-primary text-sidebar-primary-foreground shadow-md shadow-black/10'
                             : 'text-sidebar-foreground/60 hover:bg-sidebar-accent hover:text-sidebar-foreground'
                         )}
                       >
@@ -296,9 +296,12 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </header>
 
         {/* Desktop top bar */}
-        <header className="sticky top-0 z-30 hidden items-center justify-between border-b bg-card/80 px-6 py-2.5 backdrop-blur-md md:flex">
+        <header className="sticky top-0 z-30 hidden items-center justify-between border-b border-border/70 bg-background/85 px-8 py-4 backdrop-blur-md md:flex">
           <div className="flex items-center gap-3">
-            <h2 className="text-sm font-semibold text-foreground/80">{t('Al-Bari Madrasah Portal', 'بوابة مدرسة البارئ')}</h2>
+            <span className="h-2 w-2 rounded-full bg-accent" />
+            <h2 className="text-[13px] font-bold tracking-wide text-foreground/75">{t('Al-Bari Madrasah Portal', 'بوابة مدرسة البارئ')}</h2>
+            <span className="text-xs text-muted-foreground">/</span>
+            <span className="text-xs text-muted-foreground">{pageTitle}</span>
           </div>
           <div className="flex items-center gap-2">
             <LanguageToggle />
@@ -306,16 +309,16 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 px-4 pb-24 pt-4 md:p-6 md:pb-0 lg:p-8">
-          <div className="mx-auto w-full max-w-6xl">
-            <div className="mb-5 flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <main className="flex-1 px-4 pb-24 pt-4 md:p-8 md:pb-0 xl:px-10">
+          <div className="mx-auto w-full max-w-[1440px]">
+            <div className="mb-7 flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
               <div className="min-w-0">
-                <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  {t('Current section', 'القسم الحالي')}
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70">
+                  {t('Workspace', 'مساحة العمل')}
                 </p>
-                <h1 className="truncate text-lg font-semibold text-foreground">{pageTitle}</h1>
+                <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-foreground">{pageTitle}</h1>
               </div>
-              <CampusSwitcher className="w-full sm:w-[240px]" />
+              <CampusSwitcher className="w-full border-border/70 bg-card shadow-sm sm:w-[240px]" />
             </div>
             {children}
           </div>

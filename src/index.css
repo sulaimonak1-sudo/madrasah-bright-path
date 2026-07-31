@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&family=Noto+Sans+Arabic:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,44 +6,44 @@
 
 @layer base {
   :root {
-    --background: 40 30% 97%;
-    --foreground: 160 30% 10%;
+    --background: 42 33% 96%;
+    --foreground: 176 35% 13%;
 
     --card: 0 0% 100%;
-    --card-foreground: 160 30% 10%;
+    --card-foreground: 176 35% 13%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 160 30% 10%;
+    --popover-foreground: 176 35% 13%;
 
-    --primary: 160 60% 22%;
+    --primary: 169 54% 20%;
     --primary-foreground: 40 30% 97%;
 
-    --secondary: 40 40% 92%;
-    --secondary-foreground: 160 30% 15%;
+    --secondary: 42 30% 91%;
+    --secondary-foreground: 176 35% 16%;
 
-    --muted: 40 20% 94%;
-    --muted-foreground: 160 10% 45%;
+    --muted: 42 22% 92%;
+    --muted-foreground: 176 10% 43%;
 
-    --accent: 42 85% 55%;
-    --accent-foreground: 160 40% 12%;
+    --accent: 36 90% 55%;
+    --accent-foreground: 176 40% 12%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 40 20% 88%;
-    --input: 40 20% 88%;
-    --ring: 160 60% 22%;
+    --border: 42 20% 86%;
+    --input: 42 20% 86%;
+    --ring: 169 54% 20%;
 
-    --radius: 0.625rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 160 55% 15%;
+    --sidebar-background: 176 46% 12%;
     --sidebar-foreground: 40 30% 95%;
-    --sidebar-primary: 42 85% 55%;
-    --sidebar-primary-foreground: 160 40% 12%;
-    --sidebar-accent: 160 45% 20%;
+    --sidebar-primary: 36 90% 55%;
+    --sidebar-primary-foreground: 176 40% 12%;
+    --sidebar-accent: 176 38% 18%;
     --sidebar-accent-foreground: 40 30% 95%;
-    --sidebar-border: 160 40% 22%;
-    --sidebar-ring: 42 85% 55%;
+    --sidebar-border: 176 30% 21%;
+    --sidebar-ring: 36 90% 55%;
 
     /* Custom tokens */
     --success: 142 60% 40%;
@@ -53,13 +53,13 @@
     --info: 210 70% 50%;
     --info-foreground: 0 0% 100%;
 
-    --hero-gradient: linear-gradient(135deg, hsl(160, 60%, 22%) 0%, hsl(160, 45%, 30%) 50%, hsl(42, 85%, 55%) 100%);
-    --card-shadow: 0 1px 3px 0 hsl(160 30% 10% / 0.06), 0 1px 2px -1px hsl(160 30% 10% / 0.06);
-    --card-shadow-lg: 0 10px 25px -5px hsl(160 30% 10% / 0.08), 0 8px 10px -6px hsl(160 30% 10% / 0.04);
+    --hero-gradient: linear-gradient(135deg, hsl(176 46% 12%) 0%, hsl(169 54% 20%) 55%, hsl(36 90% 55%) 140%);
+    --card-shadow: 0 1px 2px hsl(176 35% 13% / 0.04), 0 8px 24px hsl(176 35% 13% / 0.05);
+    --card-shadow-lg: 0 20px 45px -18px hsl(176 35% 13% / 0.24);
 
-    --font-sans: 'Inter', 'Noto Sans Arabic', sans-serif;
+    --font-sans: 'DM Sans', 'Noto Sans Arabic', sans-serif;
     --font-arabic: 'Noto Sans Arabic', 'Amiri', sans-serif;
-    --font-display: 'Inter', 'Noto Sans Arabic', sans-serif;
+    --font-display: 'Manrope', 'Noto Sans Arabic', sans-serif;
   }
 
   .dark {
@@ -110,6 +110,8 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    background-image: radial-gradient(hsl(var(--foreground) / 0.045) 0.7px, transparent 0.7px);
+    background-size: 18px 18px;
   }
 
   [dir="rtl"] body,

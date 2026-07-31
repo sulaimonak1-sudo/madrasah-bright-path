@@ -79,7 +79,7 @@ const Index = () => {
       <ScrollToTop />
 
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/90 to-primary/70 py-20 md:py-28">
+      <section className="relative min-h-[460px] overflow-hidden bg-[hsl(var(--sidebar-background))] py-20 md:min-h-[540px] md:py-28">
         <div className="absolute inset-0">
           <HeroCarousel />
         </div>
@@ -88,17 +88,18 @@ const Index = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="mx-auto max-w-3xl text-center"
+            className="max-w-3xl text-left"
           >
-            <div className="mb-6 inline-flex items-center gap-3 rounded-full bg-primary-foreground/15 px-5 py-2 backdrop-blur-sm">
-              <span className="text-sm font-semibold text-primary-foreground tracking-wide uppercase">
+            <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-4 py-2 backdrop-blur-sm">
+              <span className="h-2 w-2 rounded-full bg-accent" />
+              <span className="text-[11px] font-bold text-primary-foreground tracking-[0.16em] uppercase">
                 {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
               </span>
             </div>
-            <h1 className="mb-5 text-4xl font-extrabold tracking-tight text-primary-foreground md:text-6xl leading-tight">
+            <h1 className="mb-5 max-w-2xl font-display text-4xl font-extrabold tracking-tight text-primary-foreground md:text-6xl leading-[1.05]">
               {t('Madrasah Result Portal', 'بوابة نتائج المدرسة')}
             </h1>
-            <p className="text-lg md:text-xl text-primary-foreground/85 max-w-2xl mx-auto leading-relaxed">
+            <p className="max-w-xl text-base leading-relaxed text-primary-foreground/75 md:text-lg">
               {t(
                 'Access your academic results securely and instantly. Enter your Student ID below to get started.',
                 'اطّلع على نتائجك الدراسية بأمان وفورًا. أدخل رقم الطالب أدناه للبدء.'
@@ -109,17 +110,19 @@ const Index = () => {
       </section>
 
       {/* Result Checker Form */}
-      <section className="container relative z-10 -mt-12 pb-8">
+      <section className="container relative z-10 -mt-20 pb-10 md:-mt-24">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.3 }}
         >
-          <Card className="mx-auto max-w-lg shadow-card-lg border-0 bg-card">
-            <CardHeader className="text-center pb-2">
-              <CardTitle className="flex items-center justify-center gap-2 text-xl">
+          <Card className="ml-auto max-w-xl border border-border/70 bg-card shadow-card-lg">
+            <CardHeader className="pb-3">
+              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10">
                 <Search className="h-5 w-5 text-primary" />
-                {t('Check Your Result', 'التحقق من النتيجة')}
+              </div>
+              <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
+                {t('Check your result', 'التحقق من النتيجة')}
               </CardTitle>
               <CardDescription>
                 {t('Enter your Student ID to view your academic report', 'أدخل رقم الطالب لعرض تقريرك الدراسي')}
