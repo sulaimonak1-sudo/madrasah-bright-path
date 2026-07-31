@@ -101,7 +101,7 @@ const Index = () => {
             <p className="text-lg md:text-xl text-primary-foreground/85 max-w-2xl mx-auto leading-relaxed">
               {t(
                 'Access your academic results securely and instantly. Enter your Student ID below to get started.',
-                'تحقق من نتائجك الأكاديمية بأمان وفوراً. أدخل رقم الطالب أدناه للبدء.'
+                'اطّلع على نتائجك الدراسية بأمان وفورًا. أدخل رقم الطالب أدناه للبدء.'
               )}
             </p>
           </motion.div>
@@ -119,10 +119,10 @@ const Index = () => {
             <CardHeader className="text-center pb-2">
               <CardTitle className="flex items-center justify-center gap-2 text-xl">
                 <Search className="h-5 w-5 text-primary" />
-                {t('Check Your Result', 'تحقق من نتيجتك')}
+                {t('Check Your Result', 'التحقق من النتيجة')}
               </CardTitle>
               <CardDescription>
-                {t('Enter your Student ID to view your academic report', 'أدخل رقم الطالب لعرض تقريرك الأكاديمي')}
+                {t('Enter your Student ID to view your academic report', 'أدخل رقم الطالب لعرض تقريرك الدراسي')}
               </CardDescription>
             </CardHeader>
             <CardContent>

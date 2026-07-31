@@ -45,13 +45,13 @@ const navGroups = [
   },
   {
     label_en: 'Academic',
-    label_ar: 'الأكاديمية',
+    label_ar: 'الشؤون الأكاديمية',
     items: [
       { path: '/admin/students', icon: GraduationCap, label_en: 'Students', label_ar: 'الطلاب' },
       { path: '/admin/class-levels', icon: Rows3, label_en: 'Class Levels', label_ar: 'المراحل الدراسية' },
       { path: '/admin/class-arms', icon: Grid2x2, label_en: 'Class Arms', label_ar: 'الشعب' },
       { path: '/admin/subjects', icon: BookText, label_en: 'Subjects', label_ar: 'المواد الدراسية' },
-      { path: '/admin/sessions', icon: CalendarRange, label_en: 'Sessions & Terms', label_ar: 'السنوات والفصول' },
+      { path: '/admin/sessions', icon: CalendarRange, label_en: 'Sessions & Terms', label_ar: 'السنوات الدراسية والفصول' },
     ],
   },
   {

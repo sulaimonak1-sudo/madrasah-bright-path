@@ -242,12 +242,12 @@ const StaffSignup = () => {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-xl bg-primary mb-3">
             <GraduationCap className="h-8 w-8 text-primary-foreground" />
           </div>
-          <CardTitle>{t('Staff Registration', 'تسجيل الموظفين')}</CardTitle>
+          <CardTitle>{t('Staff Registration', 'تسجيل الموظف')}</CardTitle>
           <CardDescription>
             {step === 'auth_key' && t('Enter the school authorization key to proceed', 'أدخل مفتاح تفويض المدرسة للمتابعة')}
             {step === 'signup' && t('Create your account', 'أنشئ حسابك')}
             {step === 'profile' && t('Complete your profile', 'أكمل ملفك الشخصي')}
-            {step === 'done' && t('Registration complete!', 'اكتمل التسجيل!')}
+            {step === 'done' && t('Registration complete!', 'اكتمل التسجيل بنجاح!')}
           </CardDescription>
         </CardHeader>
 

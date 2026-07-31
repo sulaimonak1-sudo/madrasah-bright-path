@@ -4,8 +4,8 @@ import { UserCheck, Search, FileText } from 'lucide-react';
 
 const steps = [
   { icon: UserCheck, title_en: 'Enter Your Student ID', title_ar: 'أدخل رقم الطالب', desc_en: 'Use the unique ID provided by your school to identify your record.', desc_ar: 'استخدم الرقم الفريد الذي قدمته لك المدرسة.' },
-  { icon: Search, title_en: 'Select Term & Enter PIN', title_ar: 'اختر الفصل وأدخل الرقم السري', desc_en: 'Choose the academic term and enter your PIN for secure access.', desc_ar: 'اختر الفصل الدراسي وأدخل الرقم السري للوصول الآمن.' },
-  { icon: FileText, title_en: 'View & Download Report', title_ar: 'عرض وتحميل التقرير', desc_en: 'Instantly view your full result sheet and download it as PDF.', desc_ar: 'اعرض كشف نتيجتك الكامل وقم بتحميله كملف PDF.' },
+  { icon: Search, title_en: 'Select Term & Enter PIN', title_ar: 'اختر الفصل الدراسي وأدخل الرقم السري', desc_en: 'Choose the academic term and enter your PIN for secure access.', desc_ar: 'اختر الفصل الدراسي وأدخل الرقم السري للوصول الآمن.' },
+  { icon: FileText, title_en: 'View & Download Report', title_ar: 'عرض التقرير وتنزيله', desc_en: 'Instantly view your full result sheet and download it as PDF.', desc_ar: 'اعرض كشف درجاتك الكامل ونزّله بصيغة PDF.' },
 ];
 
 export const HowItWorks = () => {
@@ -15,10 +15,10 @@ export const HowItWorks = () => {
     <section className="container py-16">
       <div className="text-center mb-10">
         <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-          {t('How It Works', 'كيف يعمل')}
+          {t('How It Works', 'آلية الاستخدام')}
         </h2>
         <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-          {t('Three simple steps to access your academic results.', 'ثلاث خطوات بسيطة للوصول إلى نتائجك الأكاديمية.')}
+          {t('Three simple steps to access your academic results.', 'ثلاث خطوات بسيطة للوصول إلى نتائجك الدراسية.')}
         </p>
       </div>
       <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">

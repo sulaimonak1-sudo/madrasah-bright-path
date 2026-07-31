@@ -103,12 +103,12 @@ const AdminClassLevels = () => {
               <DialogHeader><DialogTitle>{t('Add Class Level', 'إضافة مرحلة')}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('Name (English)', 'الاسم (إنجليزي)')}</Label>
+                  <Label>{t('Name (English)', 'الاسم باللغة الإنجليزية')}</Label>
                   <Input value={nameEn} onChange={e => setNameEn(e.target.value)} placeholder="e.g. Tahfiz 1" />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
+                  <Label>{t('Name (Arabic)', 'الاسم باللغة العربية')}</Label>
+                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يُنشأ تلقائيًا عند تركه فارغًا')} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Display Order', 'الترتيب')}</Label>
@@ -128,8 +128,8 @@ const AdminClassLevels = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('Order', 'الترتيب')}</TableHead>
-                  <TableHead>{t('Name (English)', 'الاسم (إنجليزي)')}</TableHead>
-                  <TableHead>{t('Name (Arabic)', 'الاسم (عربي)')}</TableHead>
+                  <TableHead>{t('Name (English)', 'الاسم باللغة الإنجليزية')}</TableHead>
+                  <TableHead>{t('Name (Arabic)', 'الاسم باللغة العربية')}</TableHead>
                   <TableHead>{t('Arms', 'الشعب')}</TableHead>
                   <TableHead className="w-16"></TableHead>
                 </TableRow>

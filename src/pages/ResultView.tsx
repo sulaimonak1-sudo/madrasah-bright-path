@@ -167,7 +167,7 @@ const ResultView = () => {
             <CardHeader className="text-center">
               <CardTitle className="flex items-center justify-center gap-2">
                 <GraduationCap className="h-5 w-5 text-accent" />
-                {t('Check Your Result', 'تحقق من نتيجتك')}
+                {t('Check Your Result', 'التحقق من النتيجة')}
               </CardTitle>
               <CardDescription>
                 {t('Enter your Student ID and PIN', 'أدخل رقم الطالب والرقم السري')}
@@ -202,7 +202,7 @@ const ResultView = () => {
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    {t('Ask your teacher if unsure', 'اطلب من معلمك إذا كنت غير متأكد')}
+                    {t('Ask your teacher if unsure', 'استشر معلمك إذا لم تكن متأكدًا')}
                   </p>
                 </div>
                 {error && <div className="text-destructive text-sm p-2 bg-destructive/10 rounded">{error}</div>}

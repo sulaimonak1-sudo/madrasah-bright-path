@@ -417,12 +417,12 @@ const AdminStudents = () => {
                       <Input value={fullName} onChange={e => setFullName(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label>{t('Name (English)', 'الاسم (إنجليزي)')}</Label>
+                      <Label>{t('Name (English)', 'الاسم باللغة الإنجليزية')}</Label>
                       <Input value={nameEn} onChange={e => setNameEn(e.target.value)} />
                     </div>
                     <div className="space-y-2">
-                      <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                      <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً')} />
+                      <Label>{t('Name (Arabic)', 'الاسم باللغة العربية')}</Label>
+                      <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يُنشأ تلقائيًا عند تركه فارغًا')} />
                     </div>
                     <div className="space-y-2">
                       <Label>{t('Student ID', 'رقم الطالب')}</Label>

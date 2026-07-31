@@ -122,8 +122,8 @@ const AdminSessions = () => {
       <div className="space-y-6 animate-fade-in">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">{t('Sessions & Terms', 'السنوات والفصول')}</h1>
-            <p className="text-muted-foreground">{t('Manage academic sessions and terms', 'إدارة السنوات والفصول الدراسية')}</p>
+            <h1 className="text-2xl font-bold">{t('Sessions & Terms', 'السنوات الدراسية والفصول')}</h1>
+            <p className="text-muted-foreground">{t('Manage academic sessions and terms', 'إدارة السنوات الدراسية والفصول')}</p>
           </div>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>

@@ -115,12 +115,12 @@ const AdminSubjects = () => {
               <DialogHeader><DialogTitle>{t('Add Subject', 'إضافة مادة')}</DialogTitle></DialogHeader>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label>{t('Name (English)', 'الاسم (إنجليزي)')}</Label>
+                  <Label>{t('Name (English)', 'الاسم باللغة الإنجليزية')}</Label>
                   <Input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Mathematics" />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('Name (Arabic)', 'الاسم (عربي)')}</Label>
-                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يتم توليده تلقائياً إذا ترك فارغاً')} />
+                  <Label>{t('Name (Arabic)', 'الاسم باللغة العربية')}</Label>
+                  <Input value={nameAr} onChange={e => setNameAr(e.target.value)} placeholder={t('Auto-generated if blank', 'يُنشأ تلقائيًا عند تركه فارغًا')} />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Class Levels', 'المراحل الدراسية')}</Label>
