@@ -32,6 +32,7 @@ import Academics from "./pages/Academics";
 import NewsEvents from "./pages/NewsEvents";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
+import AdminWebsite from "./pages/AdminWebsite";
 import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
@@ -62,6 +63,7 @@ const App = () => (
 
               {/* Admin & Teacher */}
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+              <Route path="/admin/website" element={<ProtectedRoute requiredRole="admin"><AdminWebsite /></ProtectedRoute>} />
               <Route path="/admin/results" element={<ProtectedRoute><AdminResults /></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
               <Route path="/admin/broadsheet" element={<ProtectedRoute><AdminBroadsheet /></ProtectedRoute>} />

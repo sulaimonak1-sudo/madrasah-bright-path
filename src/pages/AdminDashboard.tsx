@@ -336,7 +336,7 @@ const AdminDashboard = () => {
 
         <InstallPrompt />
 
-        {isAdmin && (
+        {false && isAdmin && (
           <Card className="rounded-2xl border border-border/70 bg-card shadow-card">
             <CardHeader className="flex-row items-start justify-between space-y-0 pb-4">
               <div><CardTitle className="font-display text-lg font-extrabold">{t('Public website', 'الموقع العام')}</CardTitle><CardDescription className="mt-1">{t('Update the information families see on the madrasah homepage.', 'حدّث المعلومات التي تراها الأسر في الصفحة الرئيسية للمدرسة.')}</CardDescription></div>
