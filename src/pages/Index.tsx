@@ -97,7 +97,8 @@ const Index = () => {
               </span>
             </div>
             <h1 className="mb-5 max-w-2xl font-display text-4xl font-extrabold tracking-tight text-primary-foreground md:text-6xl leading-[1.05]">
-              {t('Madrasah Result Portal', 'بوابة نتائج المدرسة')}
+              {t('Madrasah', 'بوابة')}{' '}
+              <span className="text-gradient-gold">{t('Result Portal', 'نتائج المدرسة')}</span>
             </h1>
             <p className="max-w-xl text-base leading-relaxed text-primary-foreground/75 md:text-lg">
               {t(
