@@ -56,10 +56,11 @@
     --info: 196 66% 38%;
     --info-foreground: 0 0% 100%;
 
-    /* Expressive tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(165 45% 9%) 0%, hsl(162 78% 16%) 52%, hsl(165 72% 26%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(44 58% 54%) 0%, hsl(40 72% 66%) 100%);
-    --gradient-surface: linear-gradient(160deg, hsl(0 0% 100%) 0%, hsl(48 44% 97%) 100%);
+    /* Flat surface tokens (no gradients) */
+    --gradient-hero: hsl(162 72% 13%);
+    --gradient-gold: hsl(44 58% 54%);
+    --gradient-surface: hsl(48 40% 98%);
+
 
     --card-shadow: 0 1px 2px hsl(165 32% 11% / 0.04), 0 10px 28px -12px hsl(165 32% 11% / 0.10);
     --card-shadow-lg: 0 28px 60px -26px hsl(165 40% 14% / 0.30);
