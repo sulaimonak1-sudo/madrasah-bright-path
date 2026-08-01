@@ -93,10 +93,10 @@ const Index = () => {
       <section className="relative min-h-[650px] overflow-hidden bg-[hsl(var(--sidebar-background))] text-primary-foreground">
         <img src="/images/school-students.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
         <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--sidebar-background)/0.98)_0%,hsl(var(--sidebar-background)/0.82)_45%,hsl(var(--sidebar-background)/0.35)_100%)]" />
-        <div className="container relative flex min-h-[650px] items-center py-24 lg:py-32">
+          <div className="container relative flex min-h-[470px] items-center py-16 md:min-h-[500px] lg:py-20">
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-7 inline-flex items-center gap-2 border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em]"><Sparkles className="h-3.5 w-3.5 text-accent" /> {t('Welcome to Al-Bari Institute for Islamic Sciences', 'مرحباً بكم في معهد البارئ للعلوم الإسلامية')}</div>
-            <h1 className="max-w-4xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-8xl">{t('Nurturing Knowledge, Character and Faith', 'تنمية العلم والأخلاق والإيمان')}</h1>
+              <h1 className="max-w-3xl font-display text-4xl font-extrabold leading-[1] tracking-tight md:text-7xl">{t('Nurturing Knowledge, Character and Faith', 'تنمية العلم والأخلاق والإيمان')}</h1>
             <p className="mt-7 max-w-2xl text-base leading-8 text-primary-foreground/80 md:text-lg">{t('Al-Bari Institute for Islamic Sciences provides structured Islamic education that develops sound knowledge, excellent character, discipline, and confidence in every learner.', 'يقدم معهد البارئ للعلوم الإسلامية تعليماً إسلامياً منظماً ينمي العلم النافع وحسن الخلق والانضباط والثقة في كل متعلم.')}</p>
             <div className="mt-9 flex flex-wrap gap-3"><a href="#about" className="inline-flex h-12 items-center gap-2 bg-accent px-5 text-sm font-bold text-accent-foreground transition-transform hover:-translate-y-0.5">{t('Explore our institute', 'اكتشف معهدنا')} <ChevronRight className="h-4 w-4" /></a><Link to="/results" className="inline-flex h-12 items-center gap-2 border border-primary-foreground/30 px-5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10">{t('Check result', 'عرض النتيجة')} <ArrowRight className="h-4 w-4" /></Link></div>
           </motion.div>

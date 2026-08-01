@@ -190,6 +190,23 @@
     box-shadow: var(--card-shadow-lg);
   }
 
+  .public-site .shadow-card,
+  .public-site .shadow-card-lg,
+  .public-site article[class*="border"],
+  .public-site figure[class*="overflow"] {
+    border-radius: 0.85rem;
+  }
+
+  .public-site [class*="border"][class*="bg-background"],
+  .public-site [class*="border"][class*="bg-card"] {
+    border-radius: 0.85rem;
+  }
+
+  .public-site .shadow-card,
+  .public-site .shadow-card-lg {
+    overflow: hidden;
+  }
+
   .eyebrow {
     @apply text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground;
   }

@@ -22,17 +22,17 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="public-site min-h-screen flex flex-col bg-background">
       <div className="hidden bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] md:block">
-        <div className="container flex h-9 items-center justify-between text-[11px]">
+        <div className="container flex h-7 items-center justify-between text-[10px]">
           <div className="flex items-center gap-5"><span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-accent" />{contact.address}</span><a href={`tel:${contact.phone}`} className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-accent" />{contact.phone}</a><a href={`mailto:${contact.email}`} className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-accent" />{contact.email}</a></div>
           <div className="flex items-center gap-4"><Link to="/staff/signup" className="hover:text-accent">{t('Staff Portal', 'بوابة الموظفين')}</Link><Link to="/admin/login" className="hover:text-accent">{t('Admin Portal', 'بوابة المسؤول')}</Link></div>
         </div>
       </div>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur-lg">
-        <div className="container flex h-[76px] items-center justify-between gap-5">
+        <div className="container flex h-[62px] items-center justify-between gap-5">
           <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 p-1">
+            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-primary/10 p-1">
               <img src="/images/school-logo.png" alt="School logo" className="h-full w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             </div>
             <div>
