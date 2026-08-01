@@ -124,7 +124,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* ─── Sidebar ─── */}
       <aside
         className={cn(
-          'fixed inset-y-0 z-50 flex flex-col bg-sidebar transition-all duration-300 ease-in-out md:relative',
+          'fixed inset-y-0 z-50 flex flex-col bg-sidebar [background-image:var(--gradient-hero)] transition-all duration-300 ease-in-out md:relative',
           collapsed ? 'w-[72px]' : 'w-[260px]',
           isRTL ? 'right-0 border-l border-sidebar-border' : 'left-0 border-r border-sidebar-border',
           sidebarOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full',
