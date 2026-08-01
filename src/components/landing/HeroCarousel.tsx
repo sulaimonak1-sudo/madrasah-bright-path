@@ -47,7 +47,7 @@ export const HeroCarousel = () => {
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === index ? 'opacity-40 scale-100' : 'opacity-0 scale-105'}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-primary/10 to-primary/40" />
+        <div className="absolute inset-0 bg-primary/30" />
       </div>
       <div className="absolute left-4 bottom-6 flex gap-2 z-20">
         {images.map((_, i) => (
