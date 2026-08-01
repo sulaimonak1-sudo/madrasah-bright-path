@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Plus, Trash2 } from 'lucide-react';
+import { Edit, Plus, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import React from 'react';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,11 +27,12 @@ const AdminSubjects = () => {
   const [allClasses, setAllClasses] = useState(false);
   const [activeGroup, setActiveGroup] = useState<any | null>(null);
   const [subjectDialogOpen, setSubjectDialogOpen] = useState(false);
+  const [editingSubject, setEditingSubject] = useState(false);
 
   const fetchData = async () => {
     const [subRes, clRes] = await Promise.all([
       supabase.from('subjects').select('*').order('name'),
-      supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
+      supabase.from('class_levels').select('*').order('display_order'),
     ]);
     setSubjects(subRes.data || []);
     setClassLevels(clRes.data || []);
@@ -96,6 +97,54 @@ const AdminSubjects = () => {
   const deleteSubject = async (id: string) => {
     const { error } = await supabase.from('subjects').delete().eq('id', id);
     if (error) { toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' }); return; }
+    fetchData();
+  };
+
+  const updateSubject = async () => {
+    if (!activeGroup || !name.trim() || selectedClassLevels.length === 0) return;
+
+    const autoAr = nameAr.trim() || transliterateToArabic(name.trim());
+    const existingMappings = activeGroup.mappings as any[];
+    const selectedIds = new Set(selectedClassLevels);
+    const mappingsToDelete = existingMappings.filter(mapping => !selectedIds.has(mapping.class_level_id));
+    const existingClassIds = new Set(existingMappings.map(mapping => mapping.class_level_id));
+    const mappingsToInsert = selectedClassLevels.filter(classId => !existingClassIds.has(classId));
+
+    const { error: updateError } = await supabase
+      .from('subjects')
+      .update({ name: name.trim(), name_ar: autoAr })
+      .in('id', existingMappings.map(mapping => mapping.id));
+    if (updateError) {
+      toast({ title: t('Error', 'خطأ'), description: updateError.message, variant: 'destructive' });
+      return;
+    }
+
+    const { error: deleteError } = mappingsToDelete.length
+      ? await supabase.from('subjects').delete().in('id', mappingsToDelete.map(mapping => mapping.id))
+      : { error: null };
+    if (deleteError) {
+      toast({ title: t('Error', 'خطأ'), description: deleteError.message, variant: 'destructive' });
+      return;
+    }
+
+    const { error: insertError } = mappingsToInsert.length
+      ? await supabase.from('subjects').insert(mappingsToInsert.map(class_level_id => ({
+        name: name.trim(),
+        name_ar: autoAr,
+        class_level_id,
+      })))
+      : { error: null };
+    if (insertError) {
+      toast({ title: t('Error', 'خطأ'), description: insertError.message, variant: 'destructive' });
+      return;
+    }
+
+    toast({ title: t('Subject updated', 'تم تحديث المادة') });
+    setEditingSubject(false);
+    setSubjectDialogOpen(false);
+    setName('');
+    setNameAr('');
+    setSelectedClassLevels([]);
     fetchData();
   };
 
@@ -188,6 +237,9 @@ const AdminSubjects = () => {
                         <TableCell onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); }}>{g.mappings.length} {t('class(es)', 'شعبة')}</TableCell>
                         <TableCell className="flex justify-end gap-2">
                           <Button size="sm" onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); }}>{t('View', 'عرض')}</Button>
+                          <Button variant="outline" size="icon" aria-label={t('Edit subject', 'تعديل المادة')} onClick={() => { setActiveGroup(g); setSubjectDialogOpen(true); setEditingSubject(true); setName(g.name); setNameAr(g.name_ar || ''); setSelectedClassLevels(g.mappings.map((mapping: any) => mapping.class_level_id)); }}>
+                            <Edit className="h-4 w-4" />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
@@ -197,30 +249,37 @@ const AdminSubjects = () => {
             </Table>
           </CardContent>
         </Card>
-        {/* Controlled dialog for subject details */}
-        <Dialog open={subjectDialogOpen} onOpenChange={setSubjectDialogOpen}>
+        <Dialog open={subjectDialogOpen} onOpenChange={(open) => { setSubjectDialogOpen(open); if (!open) setEditingSubject(false); }}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>{activeGroup ? `${activeGroup.name} — ${activeGroup.name_ar || ''}` : ''}</DialogTitle>
+              <DialogTitle>{editingSubject ? t('Edit Subject', 'تعديل المادة') : activeGroup ? `${activeGroup.name} — ${activeGroup.name_ar || ''}` : ''}</DialogTitle>
             </DialogHeader>
-            <div className="space-y-3 mt-2">
-              {activeGroup?.mappings?.map((m: any) => {
-                const level = classLevels.find((l: any) => l.id === m.class_level_id);
-                return (
-                  <div key={m.id} className="flex items-center justify-between">
-                    <div>{bilingualText(level?.name_en, level?.name_ar) || t('Unknown', 'غير معروف')}</div>
-                    <div>
-                      <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={async () => { await deleteSubject(m.id); fetchData(); setActiveGroup((ag:any) => ({ ...ag, mappings: (ag?.mappings || []).filter((mm:any) => mm.id !== m.id) })); }}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+            {editingSubject ? (
+              <div className="space-y-4">
+                <div className="space-y-2"><Label>{t('Name (English)', 'الاسم باللغة الإنجليزية')}</Label><Input value={name} onChange={e => setName(e.target.value)} /></div>
+                <div className="space-y-2"><Label>{t('Name (Arabic)', 'الاسم باللغة العربية')}</Label><Input value={nameAr} onChange={e => setNameAr(e.target.value)} /></div>
+                <div className="space-y-2">
+                  <Label>{t('Class Levels', 'المراحل الدراسية')}</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {classLevels.map(c => (
+                      <label key={c.id} className="flex items-center gap-2"><input type="checkbox" checked={selectedClassLevels.includes(c.id)} onChange={e => setSelectedClassLevels(e.target.checked ? [...selectedClassLevels, c.id] : selectedClassLevels.filter(id => id !== c.id))} /><span>{bilingualText(c.name_en, c.name_ar)}</span></label>
+                    ))}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3 mt-2">
+                {activeGroup?.mappings?.map((m: any) => {
+                  const level = classLevels.find((l: any) => l.id === m.class_level_id);
+                  return (
+                    <div key={m.id} className="flex items-center justify-between"><div>{bilingualText(level?.name_en, level?.name_ar) || t('Unknown', 'غير معروف')}</div><Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={async () => { await deleteSubject(m.id); fetchData(); setActiveGroup((ag:any) => ({ ...ag, mappings: (ag?.mappings || []).filter((mm:any) => mm.id !== m.id) })); }}><Trash2 className="h-4 w-4" /></Button></div>
+                  );
+                })}
+              </div>
+            )}
             <DialogFooter>
               <DialogClose asChild><Button variant="outline">{t('Close', 'إغلاق')}</Button></DialogClose>
-              <Button variant="destructive" onClick={async () => { const ids = activeGroup?.mappings?.map((m:any) => m.id) || []; for (const id of ids) await deleteSubject(id); fetchData(); setSubjectDialogOpen(false); }}>{t('Delete All', 'حذف الكل')}</Button>
+              {editingSubject ? <Button onClick={updateSubject}>{t('Save', 'حفظ')}</Button> : <Button variant="destructive" onClick={async () => { const ids = activeGroup?.mappings?.map((m:any) => m.id) || []; for (const id of ids) await deleteSubject(id); fetchData(); setSubjectDialogOpen(false); }}>{t('Delete All', 'حذف الكل')}</Button>}
             </DialogFooter>
           </DialogContent>
         </Dialog>

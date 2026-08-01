@@ -543,6 +543,7 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           enrollment_date: string
+          email: string | null
           full_name: string
           gender: string | null
           guardian_name: string | null
@@ -565,6 +566,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           enrollment_date?: string
+          email?: string | null
           full_name: string
           gender?: string | null
           guardian_name?: string | null
@@ -587,6 +589,7 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           enrollment_date?: string
+          email?: string | null
           full_name?: string
           gender?: string | null
           guardian_name?: string | null

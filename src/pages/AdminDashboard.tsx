@@ -50,12 +50,16 @@ const AdminDashboard = () => {
   const [savingRemarks, setSavingRemarks] = useState(false);
   const [websiteContent, setWebsiteContent] = useState({
     schoolName: 'Al-Bari Madrasah',
-    heroTitle: 'A grounded education for bright futures.',
-    heroText: 'A caring learning community in the western section, helping every student grow in knowledge, character, and confidence.',
-    aboutTitle: 'A place to learn, belong, and become.',
-    aboutText: 'Our madrasah brings together purposeful teaching, strong values, and close attention to each learner.',
-    address: 'Western Section, Al-Bari Group of Schools',
+    heroTitle: 'Rooted in faith. Growing in knowledge.',
+    heroText: 'A welcoming Islamic learning community where Qur’anic values, sound knowledge, and excellent character shape every student’s journey.',
+    aboutTitle: 'A madrasah for faith, knowledge, and character.',
+    aboutText: 'Our madrasah brings together Qur’anic learning, strong academics, and tarbiyah in a caring environment.',
+    address: 'Al-Bari Madrasah, Main Campus',
     email: 'hello@albari.sch.ng',
+    programsTitle: 'Built around every learner.',
+    programQuran: 'Qur’an and sound learning',
+    programTarbiyah: 'Tarbiyah and good character',
+    programCommunity: 'A trusted family partnership',
   });
   const [savingWebsite, setSavingWebsite] = useState(false);
 
@@ -145,6 +149,10 @@ const AdminDashboard = () => {
           aboutText: map['website.about_text'] || current.aboutText,
           address: map['website.address'] || current.address,
           email: map['website.email'] || current.email,
+          programsTitle: map['website.programs_title'] || current.programsTitle,
+          programQuran: map['website.program_quran'] || current.programQuran,
+          programTarbiyah: map['website.program_tarbiyah'] || current.programTarbiyah,
+          programCommunity: map['website.program_community'] || current.programCommunity,
         }));
       } catch (err) {}
     })();
@@ -213,6 +221,10 @@ const AdminDashboard = () => {
         { key: 'website.about_text', value: websiteContent.aboutText },
         { key: 'website.address', value: websiteContent.address },
         { key: 'website.email', value: websiteContent.email },
+        { key: 'website.programs_title', value: websiteContent.programsTitle },
+        { key: 'website.program_quran', value: websiteContent.programQuran },
+        { key: 'website.program_tarbiyah', value: websiteContent.programTarbiyah },
+        { key: 'website.program_community', value: websiteContent.programCommunity },
       ], { onConflict: 'key' });
       toast({ title: 'Saved', description: 'Website content saved.' });
     } catch (err: any) {
@@ -260,6 +272,10 @@ const AdminDashboard = () => {
               <div className="space-y-2"><Label>{t('About heading', 'عنوان نبذة المدرسة')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.aboutTitle} onChange={e => setWebsiteContent({ ...websiteContent, aboutTitle: e.target.value })} /></div>
               <div className="space-y-2"><Label>{t('Location', 'الموقع')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.address} onChange={e => setWebsiteContent({ ...websiteContent, address: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('About the madrasah', 'نبذة عن المدرسة')}</Label><textarea className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm" value={websiteContent.aboutText} onChange={e => setWebsiteContent({ ...websiteContent, aboutText: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Programs section heading', 'عنوان قسم البرامج')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programsTitle} onChange={e => setWebsiteContent({ ...websiteContent, programsTitle: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('Program one', 'البرنامج الأول')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programQuran} onChange={e => setWebsiteContent({ ...websiteContent, programQuran: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('Program two', 'البرنامج الثاني')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programTarbiyah} onChange={e => setWebsiteContent({ ...websiteContent, programTarbiyah: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Program three', 'البرنامج الثالث')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programCommunity} onChange={e => setWebsiteContent({ ...websiteContent, programCommunity: e.target.value })} /></div>
               <div className="flex justify-end md:col-span-2"><Button onClick={saveWebsiteContent} disabled={savingWebsite} size="sm" className="rounded-xl">{savingWebsite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{t('Save website content', 'حفظ محتوى الموقع')}</Button></div>
             </CardContent>
           </Card>

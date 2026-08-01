@@ -27,6 +27,7 @@ import AdminStaff from "./pages/AdminStaff";
 import ProfileSettings from "./pages/ProfileSettings";
 import AdminCampuses from "./pages/AdminCampuses";
 import AdminBroadsheet from "./pages/AdminBroadsheet";
+import ResultsChecker from "./pages/ResultsChecker";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
               {/* Public */}
               <Route path="/" element={<Index />} />
               <Route path="/result" element={<ResultView />} />
+              <Route path="/results" element={<ResultsChecker />} />
               <Route path="/pin-generate" element={<PinGenerate />} />
 
               <Route path="/admin/login" element={<AdminLogin />} />

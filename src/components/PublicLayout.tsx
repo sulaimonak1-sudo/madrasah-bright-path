@@ -31,7 +31,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
                 {t(schoolName, schoolNameAr)}
               </h1>
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">
-                {t('Western Section', 'القسم الغربي')}
+                {t('Islamic Institute', 'المعهد الإسلامي')}
               </p>
             </div>
           </Link>
@@ -40,6 +40,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
               <a href="#about" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('About', 'عن المدرسة')}</a>
               <a href="#programs" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Programs', 'البرامج')}</a>
               <a href="#contact" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Contact', 'تواصل معنا')}</a>
+              <Link to="/results" className="text-xs font-bold text-primary transition-colors hover:text-primary/70">{t('Results', 'النتائج')}</Link>
             </nav>
             <LanguageToggle />
             <Link
