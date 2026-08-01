@@ -23,7 +23,7 @@ export const ProtectedRoute = ({ children, requiredRole }: ProtectedRouteProps) 
   }
 
   // Must have admin or teacher role to access admin area
-  if (!role || (role !== 'admin' && role !== 'teacher')) {
+  if (!role || (role !== 'admin' && role !== 'super_admin' && role !== 'teacher')) {
     return <Navigate to="/admin/login" replace />;
   }
 

@@ -23,7 +23,7 @@ const AdminLogin = () => {
 
   // Redirect if already logged in with valid role
   useEffect(() => {
-    if (!authLoading && user && (role === 'admin' || role === 'teacher')) {
+    if (!authLoading && user && (role === 'admin' || role === 'super_admin' || role === 'teacher')) {
       navigate('/admin', { replace: true });
     }
   }, [user, role, authLoading, navigate]);

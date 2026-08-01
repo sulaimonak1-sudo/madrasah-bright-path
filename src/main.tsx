@@ -10,6 +10,17 @@ if ("serviceWorker" in navigator && !isPreviewHost) {
     navigator.serviceWorker
       .register("/sw.js", { scope: "/" })
       .then((registration) => {
+        const hadController = Boolean(navigator.serviceWorker.controller);
+
+        if (hadController) {
+          navigator.serviceWorker.addEventListener(
+            "controllerchange",
+            () => window.location.reload(),
+            { once: true },
+          );
+        }
+
+        registration.update();
         console.log("Service Worker registered successfully:", registration);
       })
       .catch((error) => {

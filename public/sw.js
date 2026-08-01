@@ -1,7 +1,7 @@
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const APP_SHELL_CACHE = `madrasah-app-shell-${CACHE_VERSION}`;
 const DATA_CACHE = `madrasah-data-${CACHE_VERSION}`;
-const urlsToCache = ['/', '/index.html'];
+const urlsToCache = ['/'];
 
 const isBypassRequest = (request) => {
   const url = new URL(request.url);
@@ -42,6 +42,21 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' })
+        .then((response) => {
+          if (response.ok) {
+            const clone = response.clone();
+            caches.open(APP_SHELL_CACHE).then((cache) => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/')))
+    );
+    return;
+  }
 
   // Bypass cache for scripts/chunks to prevent stale app runtime
   if (isBypassRequest(event.request)) {
