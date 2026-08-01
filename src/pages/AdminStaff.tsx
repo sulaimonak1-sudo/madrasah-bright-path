@@ -26,12 +26,13 @@ interface StaffMember {
   class_teacher_class_level_id: string | null;
   signature_url: string | null;
   role: string;
+  campusIds: string[];
 }
 
 const AdminStaff = () => {
   const { t } = useLanguage();
   const { toast } = useToast();
-  const { campusId } = useCampus();
+  const { campusId, campuses } = useCampus();
   const { user: authUser, isAdmin } = useAuth();
 
   const [staff, setStaff] = useState<StaffMember[]>([]);
@@ -61,7 +62,9 @@ const AdminStaff = () => {
   const [addPhone, setAddPhone] = useState('');
   const [addClassId, setAddClassId] = useState('');
   const [addRole, setAddRole] = useState<'teacher' | 'admin' | 'super_admin'>('teacher');
+  const [addCampusIds, setAddCampusIds] = useState<string[]>([]);
   const [adding, setAdding] = useState(false);
+  const [editCampusIds, setEditCampusIds] = useState<string[]>([]);
 
   // Signature upload
   const [sigUploading, setSigUploading] = useState(false);
@@ -70,9 +73,10 @@ const AdminStaff = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [profilesRes, rolesRes, levelsRes, armsRes] = await Promise.all([
-        supabase.from('profiles').select('*').eq('campus_id', campusId),
+      const [profilesRes, rolesRes, membershipsRes, levelsRes, armsRes] = await Promise.all([
+        supabase.from('profiles').select('*'),
         supabase.from('user_roles').select('*'),
+        supabase.from('profile_campuses').select('profile_id, campus_id'),
         supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('class_arms').select('*').eq('campus_id', campusId).order('name'),
       ]);
@@ -82,9 +86,11 @@ const AdminStaff = () => {
 
       const roles = rolesRes.data || [];
       const profiles = profilesRes.data || [];
+      const memberships = membershipsRes.data || [];
 
       const merged: StaffMember[] = profiles.map(p => {
         const roleRow = roles.find(r => r.user_id === p.user_id);
+        const campusIds = memberships.filter(m => m.profile_id === p.id).map(m => m.campus_id);
         return {
           id: p.id,
           user_id: p.user_id,
@@ -94,8 +100,9 @@ const AdminStaff = () => {
           class_teacher_class_level_id: (p as any).class_teacher_class_level_id || null,
           signature_url: (p as any).signature_url || null,
           role: roleRow?.role || 'unknown',
+          campusIds: campusIds.length ? campusIds : ((p as any).campus_id ? [(p as any).campus_id] : []),
         };
-      });
+      }).filter(s => s.campusIds.includes(campusId));
       setStaff(merged);
     } catch (err) {
       console.error(err);
@@ -105,6 +112,9 @@ const AdminStaff = () => {
   };
 
   useEffect(() => { if (campusId) fetchData(); }, [campusId]);
+  useEffect(() => {
+    if (campusId && addCampusIds.length === 0) setAddCampusIds([campusId]);
+  }, [campusId, addCampusIds.length]);
 
   const getClassName = (armId: string | null, levelId: string | null) => {
     if (armId) {
@@ -124,10 +134,15 @@ const AdminStaff = () => {
   // Only offer class level assignment for teachers (no class arm selection)
   const classOptions = classLevels.map(level => ({ id: level.id, label: level.name_en }));
 
+  const toggleCampus = (selected: string[], setSelected: (ids: string[]) => void, id: string) => {
+    setSelected(selected.includes(id) ? selected.filter(existingId => existingId !== id) : [...selected, id]);
+  };
+
   const openEdit = (s: StaffMember) => {
     setEditStaff(s);
     setEditName(s.full_name);
     setEditPhone(s.phone || '');
+    setEditCampusIds(s.campusIds);
     // prefer class level id only
     setEditClassId(s.class_teacher_class_level_id || '');
     setEditOpen(true);
@@ -137,6 +152,7 @@ const AdminStaff = () => {
     if (!editStaff) return;
     setSaving(true);
     try {
+      if (editCampusIds.length === 0) throw new Error(t('Assign at least one campus', 'عيّن فرعاً واحداً على الأقل'));
       // assign only class level; clear any class arm assignment
       const classTeacherLevelId = editClassId || null;
       const { error } = await supabase.from('profiles').update({
@@ -144,9 +160,21 @@ const AdminStaff = () => {
         phone: editPhone.trim() || null,
         class_teacher_class_arm_id: null,
         class_teacher_class_level_id: classTeacherLevelId,
+        campus_id: editCampusIds[0],
       } as any).eq('id', editStaff.id);
 
       if (error) throw error;
+      const { error: membershipError } = await supabase.from('profile_campuses').upsert(
+        editCampusIds.map(id => ({ profile_id: editStaff.id, campus_id: id })),
+        { onConflict: 'profile_id,campus_id' }
+      );
+      if (membershipError) throw membershipError;
+      const { error: removeMembershipsError } = await supabase
+        .from('profile_campuses')
+        .delete()
+        .eq('profile_id', editStaff.id)
+        .not('campus_id', 'in', `(${editCampusIds.join(',')})`);
+      if (removeMembershipsError) throw removeMembershipsError;
       toast({ title: t('Saved', 'تم الحفظ'), description: t('Staff updated successfully', 'تم تحديث بيانات الموظف') });
       setEditOpen(false);
       fetchData();
@@ -183,6 +211,10 @@ const AdminStaff = () => {
       toast({ title: t('Error', 'خطأ'), description: t('Password must be at least 6 characters', 'يجب أن تكون كلمة المرور 6 أحرف على الأقل'), variant: 'destructive' });
       return;
     }
+    if (addCampusIds.length === 0) {
+      toast({ title: t('Error', 'خطأ'), description: t('Assign at least one campus', 'عيّن فرعاً واحداً على الأقل'), variant: 'destructive' });
+      return;
+    }
     setAdding(true);
     try {
       const { data, error } = await supabase.auth.signUp({
@@ -195,14 +227,25 @@ const AdminStaff = () => {
 
       // Only save class level assignment; clear any arm
       const classTeacherLevelId = addClassId && addClassId !== 'none' ? addClassId : null;
-      await supabase.from('profiles').upsert({
+      const { error: profileError } = await supabase.from('profiles').upsert({
         user_id: data.user.id,
         full_name: addName.trim(),
         phone: addPhone.trim() || null,
-        campus_id: campusId,
         class_teacher_class_arm_id: null,
         class_teacher_class_level_id: classTeacherLevelId,
+        campus_id: addCampusIds[0],
       } as any, { onConflict: 'user_id' });
+      if (profileError) throw profileError;
+      const { data: createdProfile, error: profileLookupError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', data.user.id)
+        .single();
+      if (profileLookupError) throw profileLookupError;
+      const { error: membershipError } = await supabase.from('profile_campuses').insert(
+        addCampusIds.map(id => ({ profile_id: createdProfile.id, campus_id: id }))
+      );
+      if (membershipError) throw membershipError;
 
       await supabase.from('user_roles').insert({
         user_id: data.user.id,
@@ -210,7 +253,7 @@ const AdminStaff = () => {
       });
 
       toast({ title: t('Staff Added', 'تمت الإضافة'), description: t('New staff member created successfully', 'تم إنشاء الموظف الجديد بنجاح') });
-      setAddEmail(''); setAddPassword(''); setAddName(''); setAddPhone(''); setAddClassId(''); setAddRole('teacher');
+      setAddEmail(''); setAddPassword(''); setAddName(''); setAddPhone(''); setAddClassId(''); setAddRole('teacher'); setAddCampusIds([campusId]);
       setActiveTab('list');
       fetchData();
     } catch (err: any) {
@@ -480,6 +523,22 @@ const AdminStaff = () => {
                       </Select>
                     </div>
                   </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs">{t('Assigned Campuses', 'الفروع المعينة')} *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-3">
+                      {campuses.map(campus => (
+                        <label key={campus.id} className="flex items-center gap-2 text-sm">
+                          <input
+                            type="checkbox"
+                            checked={addCampusIds.includes(campus.id)}
+                            onChange={() => toggleCampus(addCampusIds, setAddCampusIds, campus.id)}
+                            disabled={!campus.is_active}
+                          />
+                          <span>{campus.name}</span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
                   <div className="flex justify-end pt-2">
                     <Button onClick={handleAddStaff} disabled={adding}>
                       {adding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
@@ -514,6 +573,22 @@ const AdminStaff = () => {
             <div className="space-y-1.5">
               <Label className="text-xs">{t('Phone', 'الهاتف')}</Label>
               <Input value={editPhone} onChange={e => setEditPhone(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t('Assigned Campuses', 'الفروع المعينة')} *</Label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 rounded-md border p-3">
+                {campuses.map(campus => (
+                  <label key={campus.id} className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={editCampusIds.includes(campus.id)}
+                      onChange={() => toggleCampus(editCampusIds, setEditCampusIds, campus.id)}
+                      disabled={!campus.is_active}
+                    />
+                    <span>{campus.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs">{t('Assigned Class', 'الفصل المعين')}</Label>

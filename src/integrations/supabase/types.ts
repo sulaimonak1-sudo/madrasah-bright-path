@@ -403,6 +403,39 @@ export type Database = {
           },
         ]
       }
+      profile_campuses: {
+        Row: {
+          campus_id: string
+          created_at: string
+          profile_id: string
+        }
+        Insert: {
+          campus_id: string
+          created_at?: string
+          profile_id: string
+        }
+        Update: {
+          campus_id?: string
+          created_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_campuses_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_campuses_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       promotion_records: {
         Row: {
           created_at: string

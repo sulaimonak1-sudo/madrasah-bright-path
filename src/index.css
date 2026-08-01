@@ -196,6 +196,39 @@
     box-shadow: var(--card-shadow-lg);
   }
 
+  .portal-shell,
+  .public-site {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .portal-shell main,
+  .public-site main,
+  .portal-shell main > *,
+  .public-site main > * {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .portal-shell [class~="flex"],
+  .public-site [class~="flex"] {
+    min-width: 0;
+  }
+
+  @media (max-width: 639px) {
+    .portal-shell [class~="justify-between"],
+    .public-site [class~="justify-between"] {
+      flex-wrap: wrap;
+    }
+
+    .portal-shell button,
+    .public-site button,
+    .portal-shell a[class*="inline-flex"],
+    .public-site a[class*="inline-flex"] {
+      white-space: normal;
+    }
+  }
+
   .public-site .shadow-card,
   .public-site .shadow-card-lg,
   .public-site article[class*="border"],

@@ -56,7 +56,7 @@ const AdminPromotion = () => {
     setLoading(true);
     try {
       // fetch students in class level
-      const { data: students } = await supabase.from('students').select('*').eq('campus_id', campusId).eq('class_level_id', classId);
+      const { data: students } = await supabase.from('students').select('*').eq('campus_id', campusId).eq('class_level_id', classId).eq('status', 'active');
 
       // fetch terms for session
       const { data: terms } = await supabase.from('terms').select('id').eq('session_id', sessionId);

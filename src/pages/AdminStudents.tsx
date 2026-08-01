@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Plus, Search, Pencil, Trash2, Users, ChevronRight, ArrowLeft, Download, Printer } from 'lucide-react';
+import { Plus, Search, Pencil, Trash2, Archive, ArchiveRestore, Users, ChevronRight, ArrowLeft, Download, Printer } from 'lucide-react';
 import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -28,6 +28,8 @@ const AdminStudents = () => {
   const [addOpen, setAddOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [archiveOpen, setArchiveOpen] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<any>(null);
   const [step, setStep] = useState<'classes' | 'students'>('classes');
   const [selectedClassLevel, setSelectedClassLevel] = useState<any>(null);
@@ -64,6 +66,40 @@ const AdminStudents = () => {
   const openDelete = (student: any) => {
     setSelectedStudent(student);
     setDeleteOpen(true);
+  };
+
+  const openArchive = (student: any) => {
+    setSelectedStudent(student);
+    setArchiveOpen(true);
+  };
+
+  const confirmArchive = async () => {
+    if (!selectedStudent) return;
+    const { error } = await supabase.from('students').update({
+      status: 'archived',
+      archived_at: new Date().toISOString(),
+    }).eq('id', selectedStudent.id).eq('campus_id', campusId);
+    if (error) {
+      toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: t('Student archived', 'تمت أرشفة الطالب') });
+    setArchiveOpen(false);
+    setSelectedStudent(null);
+    fetchData();
+  };
+
+  const restoreStudent = async (student: any) => {
+    const { error } = await supabase.from('students').update({
+      status: 'active',
+      archived_at: null,
+    }).eq('id', student.id).eq('campus_id', campusId);
+    if (error) {
+      toast({ title: t('Error', 'خطأ'), description: error.message, variant: 'destructive' });
+      return;
+    }
+    toast({ title: t('Student restored', 'تمت استعادة الطالب') });
+    fetchData();
   };
 
   const confirmDelete = async () => {
@@ -181,9 +217,10 @@ const AdminStudents = () => {
     if (!selectedClassLevel) return [];
     return students.filter(s =>
       s.class_level_id === selectedClassLevel.id &&
+      (showArchived || s.status !== 'archived') &&
       (selectedClassArm ? s.class_arm_id === selectedClassArm.id : !s.class_arm_id)
     );
-  }, [students, selectedClassLevel, selectedClassArm]);
+  }, [students, selectedClassLevel, selectedClassArm, showArchived]);
 
   const filtered = studentsInSelectedClass.filter(s =>
     s.full_name.toLowerCase().includes(search.toLowerCase()) ||
@@ -201,8 +238,8 @@ const AdminStudents = () => {
 
   const addStudent = async (levelId: string = '', armId: string = '') => {
     if (!fullName.trim()) return;
-    // Only allow staff (admin or teacher) to add students
-    if (role !== 'admin' && role !== 'teacher') {
+    // Only allow staff to add students
+    if (role !== 'admin' && role !== 'super_admin' && role !== 'teacher') {
       toast({ title: t('Permission denied', 'تم رفض الإذن'), description: t('Only staff can add students', 'فقط الموظفين يمكنهم إضافة الطلاب'), variant: 'destructive' });
       return;
     }
@@ -401,6 +438,10 @@ const AdminStudents = () => {
                 <Input className="pl-9" placeholder={t('Search students...', 'البحث عن طالب...')} value={search} onChange={e => setSearch(e.target.value)} />
               </div>
               <div className="flex gap-2">
+                <Button size="sm" variant={showArchived ? 'secondary' : 'outline'} onClick={() => setShowArchived(value => !value)}>
+                  {showArchived ? <ArchiveRestore className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
+                  {showArchived ? t('Hide Archived', 'إخفاء المؤرشفين') : t('Show Archived', 'عرض المؤرشفين')}
+                </Button>
                 <Button size="sm" variant="outline" onClick={() => {
                   const rows = filtered.map(s => ({
                     'Student ID': s.student_uid || '',
@@ -547,6 +588,31 @@ const AdminStudents = () => {
                                 <Button size="icon" variant="ghost" onClick={() => openEdit(student)}>
                                   <Pencil className="h-4 w-4" />
                                 </Button>
+                                {student.status === 'archived' ? (
+                                  <Button size="icon" variant="ghost" title={t('Restore student', 'استعادة الطالب')} onClick={() => restoreStudent(student)}>
+                                    <ArchiveRestore className="h-4 w-4" />
+                                  </Button>
+                                ) : (
+                                  <AlertDialog open={archiveOpen && selectedStudent?.id === student.id} onOpenChange={open => { if (!open) setArchiveOpen(false); }}>
+                                    <AlertDialogTrigger asChild>
+                                      <Button size="icon" variant="ghost" title={t('Archive student', 'أرشفة الطالب')} onClick={() => openArchive(student)}>
+                                        <Archive className="h-4 w-4" />
+                                      </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                      <AlertDialogHeader>
+                                        <AlertDialogTitle>{t('Archive Student', 'أرشفة الطالب')}</AlertDialogTitle>
+                                        <AlertDialogDescription>
+                                          {t('This student will be removed from active class lists and reports. Their record and results will be kept.', 'سيتم إخفاء الطالب من قوائم الفصول والتقارير النشطة، مع الاحتفاظ بسجله ونتائجه.')}
+                                        </AlertDialogDescription>
+                                      </AlertDialogHeader>
+                                      <AlertDialogFooter>
+                                        <AlertDialogCancel>{t('Cancel', 'إلغاء')}</AlertDialogCancel>
+                                        <AlertDialogAction onClick={confirmArchive}>{t('Archive', 'أرشفة')}</AlertDialogAction>
+                                      </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                )}
                                 <AlertDialog open={deleteOpen && selectedStudent?.id === student.id} onOpenChange={open => { if (!open) setDeleteOpen(false); }}>
                                   <AlertDialogTrigger asChild>
                                     <Button size="icon" variant="ghost" className="text-destructive" onClick={() => openDelete(student)}>

@@ -105,7 +105,7 @@ const AdminDashboard = () => {
     (async () => {
       try {
         const [studentsRes, classesRes, armsRes, subjectsRes] = await Promise.all([
-          supabase.from('students').select('id', { count: 'exact' }).eq('campus_id', campusId),
+          supabase.from('students').select('id', { count: 'exact' }).eq('campus_id', campusId).eq('status', 'active'),
           supabase.from('class_levels').select('id', { count: 'exact' }).eq('campus_id', campusId),
           supabase.from('class_arms').select('id', { count: 'exact' }).eq('campus_id', campusId),
           supabase.from('subjects').select('id', { count: 'exact' }),
@@ -125,7 +125,7 @@ const AdminDashboard = () => {
         // Compute average score for current term (if available)
         let avgScore = 0;
         if (currentTermId) {
-          const { data: campusStudents } = await supabase.from('students').select('id').eq('campus_id', campusId);
+          const { data: campusStudents } = await supabase.from('students').select('id').eq('campus_id', campusId).eq('status', 'active');
           const { data: rows } = await supabase.from('term_scores').select('student_id,total').eq('term_id', currentTermId).in('student_id', (campusStudents || []).map(s => s.id));
           if (rows && rows.length > 0) {
             const byStudent: Record<string, number[]> = {};

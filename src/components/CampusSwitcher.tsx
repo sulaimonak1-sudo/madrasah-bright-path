@@ -5,12 +5,12 @@ import { Building2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export const CampusSwitcher = ({ className }: { className?: string }) => {
-  const { campuses, campusId, setCampusId, assignedCampusId, isSuperAdmin, loading } = useCampus();
+  const { campuses, campusId, setCampusId, assignedCampusId, assignedCampusIds, isSuperAdmin, loading } = useCampus();
   const { t } = useLanguage();
 
   if (loading || campuses.length === 0) return null;
 
-  if (assignedCampusId && !isSuperAdmin) {
+  if (assignedCampusId && assignedCampusIds.length <= 1 && !isSuperAdmin) {
     const c = campuses.find(x => x.id === assignedCampusId);
     return (
       <div className={cn('flex items-center gap-2 rounded-md border px-3 py-2 text-sm', className)}>

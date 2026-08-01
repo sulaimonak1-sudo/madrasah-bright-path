@@ -26,9 +26,10 @@ const AdminCampuses = () => {
   const [saving, setSaving] = useState(false);
 
   const loadCounts = async () => {
-    const [studs, staff, arms] = await Promise.all([
+    const [studs, staff, memberships, arms] = await Promise.all([
       supabase.from('students').select('campus_id').neq('status', 'archived'),
-      supabase.from('profiles').select('campus_id'),
+      supabase.from('profiles').select('id, campus_id'),
+      supabase.from('profile_campuses').select('profile_id, campus_id'),
       supabase.from('class_arms').select('campus_id'),
     ]);
     const map: Record<string, { students: number; staff: number; arms: number }> = {};
@@ -38,7 +39,11 @@ const AdminCampuses = () => {
       map[id][key]++;
     };
     (studs.data || []).forEach((r: any) => bump(r.campus_id, 'students'));
-    (staff.data || []).forEach((r: any) => bump(r.campus_id, 'staff'));
+    const membershipProfileIds = new Set((memberships.data || []).map((r: any) => r.profile_id));
+    (memberships.data || []).forEach((r: any) => bump(r.campus_id, 'staff'));
+    (staff.data || []).forEach((r: any) => {
+      if (!membershipProfileIds.has(r.id)) bump(r.campus_id, 'staff');
+    });
     (arms.data || []).forEach((r: any) => bump(r.campus_id, 'arms'));
     setCounts(map);
   };

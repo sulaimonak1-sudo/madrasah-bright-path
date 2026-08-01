@@ -116,7 +116,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }, [location.pathname, t]);
 
   return (
-    <div className={cn('flex min-h-screen bg-background', isRTL && 'flex-row-reverse')}>
+    <div className={cn('portal-shell flex min-h-screen bg-background', isRTL && 'flex-row-reverse')}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
