@@ -66,12 +66,12 @@ const App = () => (
 
               {/* Admin & Teacher */}
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-              <Route path="/admin/website" element={<ProtectedRoute requiredRole="admin"><AdminWebsite /></ProtectedRoute>} />
-              <Route path="/admin/website/posts" element={<ProtectedRoute requiredRole="admin"><AdminWebsitePosts /></ProtectedRoute>} />
+              <Route path="/admin/website" element={<ProtectedRoute requiredRole="super_admin"><AdminWebsite /></ProtectedRoute>} />
+              <Route path="/admin/website/posts" element={<ProtectedRoute requiredRole="super_admin"><AdminWebsitePosts /></ProtectedRoute>} />
               <Route path="/admin/results" element={<ProtectedRoute><AdminResults /></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute><AdminReports /></ProtectedRoute>} />
               <Route path="/admin/broadsheet" element={<ProtectedRoute><AdminBroadsheet /></ProtectedRoute>} />
-              <Route path="/admin/campuses" element={<ProtectedRoute requiredRole="admin"><AdminCampuses /></ProtectedRoute>} />
+              <Route path="/admin/campuses" element={<ProtectedRoute requiredRole="super_admin"><AdminCampuses /></ProtectedRoute>} />
 
               {/* Admin only (except students which teachers can access) */}
               <Route path="/admin/students" element={<ProtectedRoute><AdminStudents /></ProtectedRoute>} />

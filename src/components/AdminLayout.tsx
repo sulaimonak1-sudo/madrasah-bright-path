@@ -89,7 +89,7 @@ const mobileDockItems = [
 
 export const AdminLayout = ({ children }: AdminLayoutProps) => {
   const { t, isRTL } = useLanguage();
-  const { signOut, isAdmin, role, user } = useAuth();
+  const { signOut, isAdmin, isSuperAdmin, role, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -99,7 +99,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
     .map(group => ({
       ...group,
       items: isAdmin
-        ? group.items
+        ? group.items.filter(item => isSuperAdmin || !['/admin/campuses', '/admin/website', '/admin/website/posts'].includes(item.path))
         : group.items.filter(item => ['/admin', '/admin/results', '/admin/reports', '/admin/broadsheet', '/admin/students'].includes(item.path)),
     }))
     .filter(group => group.items.length > 0);

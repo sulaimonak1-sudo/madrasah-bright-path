@@ -60,7 +60,7 @@ const AdminStaff = () => {
   const [addName, setAddName] = useState('');
   const [addPhone, setAddPhone] = useState('');
   const [addClassId, setAddClassId] = useState('');
-  const [addRole, setAddRole] = useState<'teacher' | 'admin'>('teacher');
+  const [addRole, setAddRole] = useState<'teacher' | 'admin' | 'super_admin'>('teacher');
   const [adding, setAdding] = useState(false);
 
   // Signature upload
@@ -458,11 +458,12 @@ const AdminStaff = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-xs">{t('Role', 'الدور')}</Label>
-                      <Select value={addRole} onValueChange={(v: 'teacher' | 'admin') => setAddRole(v)}>
+                      <Select value={addRole} onValueChange={(v: 'teacher' | 'admin' | 'super_admin') => setAddRole(v)}>
                         <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                         <SelectContent>
                           <SelectItem value="teacher">{t('Teacher', 'معلم')}</SelectItem>
                           <SelectItem value="admin">{t('Admin', 'مدير')}</SelectItem>
+                          <SelectItem value="super_admin">{t('Super admin', 'مدير عام')}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

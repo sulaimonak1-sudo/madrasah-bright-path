@@ -31,7 +31,7 @@ const CampusContext = createContext<CampusContextType | undefined>(undefined);
 const STORAGE_KEY = 'albari.campus';
 
 export const CampusProvider = ({ children }: { children: ReactNode }) => {
-  const { user, isAdmin, loading: authLoading } = useAuth();
+  const { user, isSuperAdmin, loading: authLoading } = useAuth();
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [assignedCampusId, setAssignedCampusId] = useState<string | null>(null);
   const [campusId, setCampusIdState] = useState<string>('');
@@ -60,16 +60,16 @@ export const CampusProvider = ({ children }: { children: ReactNode }) => {
 
       const stored = localStorage.getItem(STORAGE_KEY);
       const fallback =
-        assigned ||
+        (!isSuperAdmin && assigned) ||
         (stored && list.some(c => c.id === stored) ? stored : '') ||
         list.find(c => c.code === 'MAIN')?.id ||
         list[0]?.id ||
         '';
-      setCampusIdState(assigned || fallback);
+      setCampusIdState(isSuperAdmin ? fallback : assigned || fallback);
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isSuperAdmin]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -77,7 +77,7 @@ export const CampusProvider = ({ children }: { children: ReactNode }) => {
   }, [authLoading, load]);
 
   const setCampusId = (id: string) => {
-    if (assignedCampusId && id !== assignedCampusId) return; // locked users cannot switch
+    if (!isSuperAdmin && assignedCampusId && id !== assignedCampusId) return;
     setCampusIdState(id);
     localStorage.setItem(STORAGE_KEY, id);
   };
@@ -94,7 +94,7 @@ export const CampusProvider = ({ children }: { children: ReactNode }) => {
         setCampusId,
         campus: campuses.find(c => c.id === campusId) || null,
         assignedCampusId,
-        isSuperAdmin: isAdmin && !assignedCampusId,
+        isSuperAdmin,
         loading,
         refresh: load,
         campusName,

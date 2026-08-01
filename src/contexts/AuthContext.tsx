@@ -12,6 +12,7 @@ interface AuthContextType {
   loading: boolean;
   signOut: () => Promise<void>;
   isAdmin: boolean;
+  isSuperAdmin: boolean;
   isTeacher: boolean;
 }
 
@@ -28,12 +29,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { data } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', userId)
-        .maybeSingle();
+        .eq('user_id', userId);
       // If a role row exists, use it. Otherwise, fall back to checking the profile
       // for a teacher assignment (class_teacher_class_level_id or class_teacher_class_arm_id)
-      if (data?.role) {
-        setRole(data.role);
+      const assignedRole = data?.find(row => row.role === 'super_admin')?.role
+        || data?.find(row => row.role === 'admin')?.role
+        || data?.find(row => row.role === 'teacher')?.role
+        || data?.[0]?.role;
+      if (assignedRole) {
+        setRole(assignedRole);
         return;
       }
 
@@ -101,7 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       role,
       loading,
       signOut,
-      isAdmin: role === 'admin',
+      isAdmin: role === 'admin' || role === 'super_admin',
+      isSuperAdmin: role === 'super_admin',
       isTeacher: role === 'teacher',
     }}>
       {children}
