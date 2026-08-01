@@ -172,8 +172,10 @@ const AdminResults = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
+      // NOTE: never mix rows with/without `id` in one upsert — PostgREST builds a
+      // uniform column list and sends NULL id for the rows that lack it.
       const upserts = scores.map(s => ({
-        ...(s.existing_id ? { id: s.existing_id } : {}),
+
         student_id: s.student_id,
         subject_id: selectedSubject.id,
         term_id: termId,
