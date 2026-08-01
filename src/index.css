@@ -56,10 +56,11 @@
     --info: 196 66% 38%;
     --info-foreground: 0 0% 100%;
 
-    /* Expressive tokens */
-    --gradient-hero: linear-gradient(135deg, hsl(165 45% 9%) 0%, hsl(162 78% 16%) 52%, hsl(165 72% 26%) 100%);
-    --gradient-gold: linear-gradient(135deg, hsl(44 58% 54%) 0%, hsl(40 72% 66%) 100%);
-    --gradient-surface: linear-gradient(160deg, hsl(0 0% 100%) 0%, hsl(48 44% 97%) 100%);
+    /* Flat surface tokens (no gradients) */
+    --gradient-hero: hsl(162 72% 13%);
+    --gradient-gold: hsl(44 58% 54%);
+    --gradient-surface: hsl(48 40% 98%);
+
 
     --card-shadow: 0 1px 2px hsl(165 32% 11% / 0.04), 0 10px 28px -12px hsl(165 32% 11% / 0.10);
     --card-shadow-lg: 0 28px 60px -26px hsl(165 40% 14% / 0.30);
@@ -101,7 +102,7 @@
     --input: 165 18% 17%;
     --ring: 44 58% 56%;
 
-    --gradient-surface: linear-gradient(160deg, hsl(165 32% 10%) 0%, hsl(165 34% 8%) 100%);
+    --gradient-surface: hsl(165 32% 9%);
 
     --sidebar-background: 165 42% 6%;
     --sidebar-foreground: 48 30% 92%;
@@ -122,11 +123,8 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-family: var(--font-sans);
-    background-image:
-      radial-gradient(1000px 520px at 12% -8%, hsl(var(--primary) / 0.07), transparent 65%),
-      radial-gradient(760px 420px at 100% 0%, hsl(var(--accent) / 0.10), transparent 60%);
-    background-attachment: fixed;
   }
+
 
   [dir="rtl"] body,
   [dir="rtl"] {
@@ -179,11 +177,9 @@
   }
 
   .text-gradient-gold {
-    background: var(--gradient-gold);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: hsl(var(--accent));
   }
+
 
   .card-interactive {
     @apply transition-all duration-300;

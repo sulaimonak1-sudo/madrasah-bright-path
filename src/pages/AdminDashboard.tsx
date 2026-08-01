@@ -228,7 +228,7 @@ const AdminDashboard = () => {
                     <span>{t('Score index', 'مؤشر الدرجات')}</span><span>{stats.averageScore}%</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full [background-image:var(--gradient-hero)] transition-all duration-1000" style={{ width: `${Math.min(stats.averageScore, 100)}%` }} />
+                    <div className="h-full rounded-full bg-primary transition-all duration-1000" style={{ width: `${Math.min(stats.averageScore, 100)}%` }} />
                   </div>
                   <div className="mt-3 flex justify-between text-[10px] text-muted-foreground"><span>0</span><span>50</span><span>100</span></div>
                 </div>
@@ -268,7 +268,7 @@ const AdminDashboard = () => {
                 </div>
                 <p className="text-xs text-muted-foreground leading-none">{t(card.label_en, card.label_ar)}</p>
                 <p className="mt-1 font-display text-3xl font-extrabold tracking-tight md:text-4xl">{(stats as any)[card.key]}</p>
-                <span className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+                <span className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-accent/30 opacity-0 transition-opacity group-hover:opacity-100" />
               </CardContent>
             </Card>
           ))}
