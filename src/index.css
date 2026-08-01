@@ -177,11 +177,9 @@
   }
 
   .text-gradient-gold {
-    background: var(--gradient-gold);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+    color: hsl(var(--accent));
   }
+
 
   .card-interactive {
     @apply transition-all duration-300;
