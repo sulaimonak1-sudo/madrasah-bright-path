@@ -1,5 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Loader2, Plus, Save, Trash2 } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import { CalendarDays, Eye, ImagePlus, Loader2, Newspaper, Plus, Save, Search, Trash2 } from 'lucide-react';
 import { AdminLayout } from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -7,7 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { supabase } from '@/integrations/supabase/client';
 
-type Post = { id?: string; type: 'news' | 'event'; title: string; category: string; excerpt: string; body: string; image_url: string | null; event_date: string; published_at: string; sort_order: number };
+type Filter = 'all' | 'news' | 'event' | 'draft';
+type Post = { id?: string; type: 'news' | 'event'; title: string; category: string; excerpt: string; body: string; image_url: string | null; event_date: string; published_at: string; sort_order: number; updated_at?: string };
   const emptyPost = (type: Post['type']): Post => ({ type, title: '', category: type === 'event' ? 'Institute Event' : 'School News', excerpt: '', body: '', image_url: null, event_date: '', published_at: '', sort_order: 0 });
   const inputClass = 'h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/15';
   const statusOf = (post: Post) => !post.published_at ? 'Draft' : new Date(post.published_at) > new Date() ? 'Scheduled' : 'Published';

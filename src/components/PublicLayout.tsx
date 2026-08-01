@@ -30,16 +30,16 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
         </div>
       </div>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur-lg">
-        <div className="container flex h-[62px] items-center justify-between gap-5">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-primary/10 p-1">
+        <div className="container flex h-[62px] items-center justify-between gap-3 sm:gap-5">
+          <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 p-1">
               <img src="/images/school-logo.png" alt="School logo" className="h-full w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             </div>
-            <div>
-              <h1 className="font-display text-base font-extrabold tracking-tight text-foreground md:text-lg">
+            <div className="min-w-0">
+              <h1 className="truncate font-display text-sm font-extrabold tracking-tight text-foreground sm:text-base md:text-lg">
                 {t(schoolName, schoolNameAr)}
               </h1>
-              <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">
+              <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-primary/70 sm:text-[10px] sm:tracking-[0.16em]">
                 {t('Institute for Islamic Sciences', 'معهد العلوم الإسلامية')}
               </p>
             </div>
@@ -61,7 +61,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
               {t('Admin', 'المسؤول')}
             </Link>
           </div>
-          <div className="flex items-center gap-2 lg:hidden"><Link to="/admin/login" className="inline-flex h-10 items-center bg-accent px-3 text-xs font-bold text-accent-foreground">{t('Admin', 'المسؤول')}</Link><button type="button" onClick={() => setMobileOpen(true)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-border" aria-label={t('Open menu', 'فتح القائمة')}><Menu className="h-5 w-5" /></button></div>
+          <div className="flex shrink-0 items-center gap-2 lg:hidden"><Link to="/admin/login" className="inline-flex h-10 shrink-0 items-center bg-accent px-3 text-xs font-bold text-accent-foreground">{t('Admin', 'المسؤول')}</Link><button type="button" onClick={() => setMobileOpen(true)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border" aria-label={t('Open menu', 'فتح القائمة')}><Menu className="h-5 w-5" /></button></div>
         </div>
       </header>
       {mobileOpen && <div className="fixed inset-0 z-50 bg-background lg:hidden"><div className="flex h-[76px] items-center justify-between border-b border-border px-5"><span className="font-display text-lg font-extrabold">{t('Menu', 'القائمة')}</span><button type="button" onClick={() => setMobileOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-border" aria-label={t('Close menu', 'إغلاق القائمة')}><X className="h-5 w-5" /></button></div><nav className="flex flex-col gap-1 p-5">{[["/", 'Home'], ['/about', 'About Us'], ['/academics', 'Academics'], ['/news-events', 'News & Events'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/results', 'Check Result']].map(([path, label]) => <Link key={path} to={path} onClick={() => setMobileOpen(false)} className="border-b border-border py-4 text-base font-bold">{t(label, label)}</Link>)}</nav></div>}
@@ -77,7 +77,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
           <div><p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-accent">{t('Results', 'النتائج')}</p><div className="grid gap-3 text-sm text-sidebar-foreground/70"><Link to="/results" className="hover:text-accent">{t('Result Checker', 'الاستعلام عن النتائج')}</Link></div></div>
           <div><p className="mb-4 text-xs font-bold uppercase tracking-[0.16em] text-accent">{t('Contact', 'تواصل معنا')}</p><div className="grid gap-3 text-sm text-sidebar-foreground/70"><span>{contact.address}</span><a href={`tel:${contact.phone}`} className="hover:text-accent">{contact.phone}</a><a href={`mailto:${contact.email}`} className="hover:text-accent">{contact.email}</a></div></div>
         </div>
-        <div className="container mt-10 flex flex-col gap-2 border-t border-sidebar-border pt-5 text-xs text-sidebar-foreground/45 sm:flex-row sm:items-center sm:justify-between"><p>© {new Date().getFullYear()} {t(schoolName, schoolNameAr)}. {t('All rights reserved.', 'جميع الحقوق محفوظة.')}</p><a href="https://www.akboy.space" target="_blank" rel="noreferrer" className="transition-colors hover:text-accent">Designed by Akboy Creative Hub</a></div>
+        <div className="container mt-10 border-t border-sidebar-border pt-5 text-xs text-sidebar-foreground/45"><p>© {new Date().getFullYear()} {t(schoolName, schoolNameAr)}. {t('All rights reserved.', 'جميع الحقوق محفوظة.')}</p></div>
       </footer>
     </div>
   );
