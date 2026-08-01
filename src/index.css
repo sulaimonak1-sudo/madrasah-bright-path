@@ -152,6 +152,12 @@
 }
 
 @layer utilities {
+  button,
+  [role="button"],
+  a[class*="inline-flex"] {
+    border-radius: 0.75rem;
+  }
+
   .gradient-hero {
     background: var(--gradient-hero);
   }

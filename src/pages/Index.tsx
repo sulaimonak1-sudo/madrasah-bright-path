@@ -8,6 +8,7 @@ import { ScrollToTop } from '@/components/ScrollToTop';
 import { supabase } from '@/integrations/supabase/client';
 
 type WebsiteSettings = Record<string, string>;
+type WebsitePost = { id: string; type: string; title: string; event_date: string | null; published_at: string | null };
 
 const defaults: WebsiteSettings = {
   'website.school_name': 'Al-Bari Group Of Schools',
@@ -54,17 +55,20 @@ const Index = () => {
   const { t } = useLanguage();
   const [settings, setSettings] = useState<WebsiteSettings>(defaults);
   const [stats, setStats] = useState({ students: 0, subjects: 0 });
+  const [posts, setPosts] = useState<WebsitePost[]>([]);
 
   useEffect(() => {
     (async () => {
-      const [settingsRes, studentsRes, subjectsRes] = await Promise.all([
+      const [settingsRes, studentsRes, subjectsRes, postsRes] = await Promise.all([
         supabase.from('school_settings').select('key,value').like('key', 'website.%'),
         supabase.from('students').select('id', { count: 'exact', head: true }),
         supabase.from('subjects').select('id', { count: 'exact', head: true }),
+        supabase.from('website_posts').select('id,type,title,event_date,published_at').order('published_at', { ascending: false }),
       ]);
       const saved = Object.fromEntries((settingsRes.data || []).map(row => [row.key, row.value]));
       setSettings(current => ({ ...current, ...saved }));
       setStats({ students: Number(studentsRes.count || 0), subjects: Number(subjectsRes.count || 0) });
+      if (postsRes.data) setPosts(postsRes.data);
     })();
   }, []);
 
@@ -77,8 +81,10 @@ const Index = () => {
     { icon: Users, title: [settings['website.program_6'], 'مجتمع آمن وداعم'], text: ['A welcoming environment where every student is seen and valued.', 'بيئة مرحبة يرى فيها كل طالب ويقدّر.'] },
   ];
   const programmes = [1, 2, 3, 4, 5, 6].map(index => settings[`website.programme_${index}`]);
-  const news = [settings['website.news_1'], settings['website.news_2'], settings['website.news_3']];
-  const events = settings['website.events'].split('|');
+  const newsPosts = posts.filter(post => post.type === 'news');
+  const eventPosts = posts.filter(post => post.type === 'event');
+  const news = newsPosts.length > 0 ? newsPosts.slice(0, 3).map(post => post.title) : [settings['website.news_1'], settings['website.news_2'], settings['website.news_3']];
+  const events = eventPosts.length > 0 ? eventPosts.map(post => post.title) : settings['website.events'].split('|');
   const facilities = settings['website.facilities'].split('|');
   const heroPillars = [
     { icon: Sparkles, label: 'Qur’anic Education' },
@@ -90,9 +96,9 @@ const Index = () => {
   return (
     <PublicLayout>
       <ScrollToTop />
-      <section className="relative min-h-[650px] overflow-hidden bg-[hsl(var(--sidebar-background))] text-primary-foreground">
-        <img src="/images/school-students.png" alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
-        <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--sidebar-background)/0.98)_0%,hsl(var(--sidebar-background)/0.82)_45%,hsl(var(--sidebar-background)/0.35)_100%)]" />
+      <section className="relative min-h-[470px] overflow-hidden bg-[hsl(var(--sidebar-background))] text-primary-foreground md:min-h-[500px]">
+        <img src="/images/school-students.png" alt="" className="absolute inset-y-0 right-0 left-auto h-full w-full object-cover opacity-35 md:w-1/2 md:opacity-100" />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,hsl(var(--sidebar-background)/0.99)_0%,hsl(var(--sidebar-background)/0.96)_38%,hsl(var(--sidebar-background)/0.4)_75%,hsl(var(--sidebar-background)/0.18)_100%)]" />
           <div className="container relative flex min-h-[470px] items-center py-16 md:min-h-[500px] lg:py-20">
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="mb-7 inline-flex items-center gap-2 border border-primary-foreground/25 bg-primary-foreground/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em]"><Sparkles className="h-3.5 w-3.5 text-accent" /> {t('Welcome to Al-Bari Institute for Islamic Sciences', 'مرحباً بكم في معهد البارئ للعلوم الإسلامية')}</div>
