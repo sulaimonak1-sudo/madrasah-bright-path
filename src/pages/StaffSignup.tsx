@@ -42,8 +42,17 @@ const StaffSignup = () => {
   }, [campusId, selectedCampusId]);
 
   useEffect(() => {
+    if (!selectedCampusId) {
+      setClassLevels([]);
+      setClassArms([]);
+      setClassesLoading(true);
+      return;
+    }
+
     (async () => {
       setClassesLoading(true);
+      setClassLevels([]);
+      setClassArms([]);
       try {
         console.log('Fetching class_levels and class_arms...');
         const [clRes, armsRes] = await Promise.all([
