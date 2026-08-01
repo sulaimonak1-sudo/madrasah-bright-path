@@ -84,9 +84,13 @@ const AdminStudents = () => {
   const [nameAr, setNameAr] = useState('');
   const [studentUid, setStudentUid] = useState('');
 
-  function generateStudentId() {
+  async function generateStudentId() {
     const prefix = 'ABS-';
-    const nums = students
+    const { data } = await supabase
+      .from('students')
+      .select('student_uid')
+      .not('student_uid', 'is', null);
+    const nums = (data || [])
       .map(s => s.student_uid)
       .filter(Boolean)
       .map(id => parseInt((id || '').replace(/\D/g, '')))
@@ -99,6 +103,10 @@ const AdminStudents = () => {
     const match = studentId.match(/^(.*?)(\d+)$/);
     if (!match) return `${studentId}-${Date.now()}`;
     return `${match[1]}${String(Number(match[2]) + 1).padStart(match[2].length, '0')}`;
+  }
+
+  function generateFallbackStudentId() {
+    return `ABS-${crypto.randomUUID().slice(0, 8).toUpperCase()}`;
   }
 
   function transliterateToArabic(text: string): string {
@@ -199,7 +207,7 @@ const AdminStudents = () => {
       return;
     }
     const hasManualId = Boolean(studentUid.trim());
-    let autoId = hasManualId ? studentUid.trim() : generateStudentId();
+    let autoId = hasManualId ? studentUid.trim() : await generateStudentId();
     const autoAr = nameAr.trim() ? nameAr.trim() : transliterateToArabic(nameEn.trim() || fullName.trim());
     const finalLevelId = levelId || classLevelId || null;
     const finalArmId = armId || classArmId || null;
@@ -226,8 +234,12 @@ const AdminStudents = () => {
       }).select().maybeSingle();
       insertErr = error;
       if (!error) break;
-      if (hasManualId || error.code !== '23505' || !error.message.includes('student_uid')) break;
-      autoId = incrementStudentId(autoId);
+      const isDuplicateStudentId = (
+        error.code === '23505' ||
+        error.message.includes('students_student_uid_key') || error.message.includes('student_uid')
+      );
+      if (hasManualId || !isDuplicateStudentId) break;
+      autoId = attempt >= 2 ? generateFallbackStudentId() : incrementStudentId(autoId);
     }
     if (insertErr) {
       toast({ title: t('Error', 'خطأ'), description: insertErr.message, variant: 'destructive' });
