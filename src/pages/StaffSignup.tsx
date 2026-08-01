@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { GraduationCap, KeyRound, UserPlus, Loader2, ArrowRight, ArrowLeft, CheckCircle } from 'lucide-react';
+import { GraduationCap, KeyRound, UserPlus, Loader2, ArrowRight, ArrowLeft, CheckCircle, Building2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useCampus } from '@/contexts/CampusContext';
@@ -18,7 +18,7 @@ const StaffSignup = () => {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { campusId } = useCampus();
+  const { campusId, activeCampuses } = useCampus();
 
   const [step, setStep] = useState<Step>('auth_key');
   const [loading, setLoading] = useState(false);
@@ -30,6 +30,7 @@ const StaffSignup = () => {
   const [fullName, setFullName] = useState('');
   const [phone, setPhone] = useState('');
   const [classArmId, setClassArmId] = useState('');
+  const [selectedCampusId, setSelectedCampusId] = useState(campusId);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   const [classLevels, setClassLevels] = useState<any[]>([]);
@@ -37,13 +38,17 @@ const StaffSignup = () => {
   const [classesLoading, setClassesLoading] = useState(true);
 
   useEffect(() => {
+    if (!selectedCampusId && campusId) setSelectedCampusId(campusId);
+  }, [campusId, selectedCampusId]);
+
+  useEffect(() => {
     (async () => {
       setClassesLoading(true);
       try {
         console.log('Fetching class_levels and class_arms...');
         const [clRes, armsRes] = await Promise.all([
-          supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
-          supabase.from('class_arms').select('*').eq('campus_id', campusId).order('name'),
+          supabase.from('class_levels').select('*').eq('campus_id', selectedCampusId).order('display_order'),
+          supabase.from('class_arms').select('*').eq('campus_id', selectedCampusId).order('name'),
         ]);
         
         if (clRes.error) {
@@ -68,7 +73,7 @@ const StaffSignup = () => {
         setClassesLoading(false);
       }
     })();
-  }, [campusId, toast, t]);
+  }, [selectedCampusId, toast, t]);
 
   const validateAuthKey = async () => {
     if (!authKey.trim()) return;
@@ -147,6 +152,10 @@ const StaffSignup = () => {
   };
 
   const handleProfileSave = async () => {
+    if (!selectedCampusId) {
+      toast({ title: t('Error', 'خطأ'), description: t('Please select your campus', 'يرجى اختيار الفرع'), variant: 'destructive' });
+      return;
+    }
     if (!fullName.trim() || !currentUserId) {
       toast({ title: t('Error', 'خطأ'), description: t('Please enter your full name', 'يرجى إدخال اسمك الكامل'), variant: 'destructive' });
       return;
@@ -173,7 +182,7 @@ const StaffSignup = () => {
         user_id: currentUserId,
         full_name: fullName.trim(),
         phone: phone.trim() || null,
-        campus_id: campusId,
+        campus_id: selectedCampusId,
         class_teacher_class_arm_id: classTeacherArmId,
         class_teacher_class_level_id: classTeacherLevelId,
       }, { onConflict: 'user_id' });
@@ -316,6 +325,30 @@ const StaffSignup = () => {
           {step === 'profile' && (
             <>
               <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <Building2 className="h-4 w-4" />
+                  {t('Campus', 'الفرع')}
+                </Label>
+                <Select value={selectedCampusId} onValueChange={value => {
+                  setSelectedCampusId(value);
+                  setClassArmId('');
+                }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={t('Select your campus', 'اختر فرعك')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {activeCampuses.map(campus => (
+                      <SelectItem key={campus.id} value={campus.id}>
+                        {campus.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  {t('You will be assigned to this campus after registration.', 'سيتم ربط حسابك بهذا الفرع بعد التسجيل.')}
+                </p>
+              </div>
+              <div className="space-y-2">
                 <Label>{t('Full Name', 'الاسم الكامل')}</Label>
                 <Input value={fullName} onChange={e => setFullName(e.target.value)} placeholder={t('Enter your full name', 'أدخل اسمك الكامل')} />
               </div>
@@ -347,7 +380,7 @@ const StaffSignup = () => {
                   {t('Select the class you are class teacher of (optional)', 'اختر الفصل الذي أنت معلمه (اختياري)')}
                 </p>
               </div>
-              <Button className="w-full" onClick={handleProfileSave} disabled={loading || !fullName.trim()}>
+              <Button className="w-full" onClick={handleProfileSave} disabled={loading || !fullName.trim() || !selectedCampusId}>
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle className="mr-2 h-4 w-4" />}
                 {t('Complete Registration', 'إكمال التسجيل')}
               </Button>
