@@ -29,7 +29,7 @@ type Step = 'classes' | 'subjects' | 'scores';
 const AdminResults = () => {
   const { t, bilingualText } = useLanguage();
   const { toast } = useToast();
-  const { campusId } = useCampus();
+  const { campusId, loading: campusLoading } = useCampus();
   const { user, isAdmin } = useAuth();
 
   const [sessionId, setSessionId] = useState('');
@@ -50,12 +50,19 @@ const AdminResults = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (campusLoading || !campusId) return;
+
     const fetch = async () => {
       const [sessRes, clRes, armsRes] = await Promise.all([
         supabase.from('sessions').select('*').order('name', { ascending: false }),
         supabase.from('class_levels').select('*').eq('campus_id', campusId).order('display_order'),
         supabase.from('class_arms').select('*').eq('campus_id', campusId),
       ]);
+      const firstError = sessRes.error || clRes.error || armsRes.error;
+      if (firstError) {
+        toast({ title: t('Unable to load classes', 'تعذر تحميل الفصول'), description: firstError.message, variant: 'destructive' });
+        return;
+      }
       let assignedLevelId: string | null = null;
       let assignedArmId: string | null = null;
       if (!isAdmin && user) {
@@ -85,20 +92,32 @@ const AdminResults = () => {
       setClassArms(grouped);
     };
     fetch();
-  }, [campusId, isAdmin, user]);
+  }, [campusId, campusLoading, isAdmin, t, toast, user]);
 
   useEffect(() => {
     if (!sessionId) { setTerms([]); setTermId(''); return; }
     supabase.from('terms').select('*').eq('session_id', sessionId).order('term_number')
-      .then(({ data }) => setTerms(data || []));
+      .then(({ data, error }) => {
+        if (error) {
+          toast({ title: t('Unable to load terms', 'تعذر تحميل الفصول الدراسية'), description: error.message, variant: 'destructive' });
+          return;
+        }
+        setTerms(data || []);
+      });
     setTermId('');
-  }, [sessionId]);
+  }, [sessionId, t, toast]);
 
   useEffect(() => {
     if (!selectedClassLevel) { setSubjects([]); return; }
     supabase.from('subjects').select('*').eq('class_level_id', selectedClassLevel.id)
-      .then(({ data }) => setSubjects(data || []));
-  }, [campusId, selectedClassLevel]);
+      .then(({ data, error }) => {
+        if (error) {
+          toast({ title: t('Unable to load subjects', 'تعذر تحميل المواد'), description: error.message, variant: 'destructive' });
+          return;
+        }
+        setSubjects(data || []);
+      });
+  }, [campusId, selectedClassLevel, t, toast]);
 
   useEffect(() => {
     if (!selectedSubject || !termId || !selectedClassLevel) { setScores([]); return; }
@@ -112,6 +131,12 @@ const AdminResults = () => {
         supabase.from('term_scores').select('*')
           .eq('term_id', termId).eq('subject_id', selectedSubject.id),
       ]);
+      const firstError = studRes.error || scoresRes.error;
+      if (firstError) {
+        toast({ title: t('Unable to load scores', 'تعذر تحميل الدرجات'), description: firstError.message, variant: 'destructive' });
+        setScores([]);
+        return;
+      }
       let students = studRes.data || [];
       if (selectedClassArm || teacherClassArmId) {
         students = students.filter((s: any) => s.class_arm_id === (selectedClassArm?.id || teacherClassArmId));
@@ -133,7 +158,7 @@ const AdminResults = () => {
       setScores(entries);
     };
     fetchData();
-  }, [campusId, selectedSubject, selectedClassArm, teacherClassArmId, termId, selectedClassLevel]);
+  }, [campusId, selectedSubject, selectedClassArm, teacherClassArmId, termId, selectedClassLevel, t, toast]);
 
   const updateScore = useCallback((index: number, field: 'ca1' | 'ca2' | 'exam', value: string) => {
     const num = Math.max(0, Math.min(field === 'exam' ? 60 : 20, Number(value) || 0));
@@ -162,8 +187,10 @@ const AdminResults = () => {
       });
       if (error) throw error;
       toast({ title: t('Saved!', 'تم الحفظ!'), description: t(`${scores.length} scores saved`, `تم حفظ ${scores.length} درجة`) });
-      const { data } = await supabase.from('term_scores').select('*').eq('term_id', termId).eq('subject_id', selectedSubject.id);
-      if (data) {
+      const { data, error: refreshError } = await supabase.from('term_scores').select('*').eq('term_id', termId).eq('subject_id', selectedSubject.id);
+      if (refreshError) {
+        toast({ title: t('Scores saved, but refresh failed', 'تم حفظ الدرجات، لكن تعذر التحديث'), description: refreshError.message, variant: 'destructive' });
+      } else if (data) {
         setScores(prev => prev.map(s => {
           const updated = data.find(d => d.student_id === s.student_id);
           return updated ? { ...s, existing_id: updated.id } : s;
