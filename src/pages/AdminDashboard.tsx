@@ -14,10 +14,10 @@ import { useCampus } from '@/contexts/CampusContext';
 // using native textarea to avoid runtime bundling issues
 
 const statCards = [
-  { key: 'totalStudents', icon: GraduationCap, label_en: 'Total Students', label_ar: 'إجمالي الطلاب', color: 'text-primary' },
-  { key: 'totalClasses', icon: Rows3, label_en: 'Class Levels', label_ar: 'المراحل الدراسية', color: 'text-[hsl(var(--info))]' },
-  { key: 'totalArms', icon: Grid2x2, label_en: 'Total Arms', label_ar: 'إجمالي الشعب', color: 'text-accent' },
-  { key: 'totalSubjects', icon: BookText, label_en: 'Subjects', label_ar: 'المواد', color: 'text-[hsl(var(--success))]' },
+  { key: 'totalStudents', icon: GraduationCap, label_en: 'Total Students', label_ar: 'إجمالي الطلاب', color: 'text-primary', tint: 'bg-primary/10' },
+  { key: 'totalClasses', icon: Rows3, label_en: 'Class Levels', label_ar: 'المراحل الدراسية', color: 'text-[hsl(var(--info))]', tint: 'bg-[hsl(var(--info)/0.12)]' },
+  { key: 'totalArms', icon: Grid2x2, label_en: 'Total Arms', label_ar: 'إجمالي الشعب', color: 'text-accent-foreground', tint: 'bg-accent/25' },
+  { key: 'totalSubjects', icon: BookText, label_en: 'Subjects', label_ar: 'المواد', color: 'text-[hsl(var(--success))]', tint: 'bg-[hsl(var(--success)/0.12)]' },
 ];
 
 const REMARK_TIERS = [
@@ -208,7 +208,7 @@ const AdminDashboard = () => {
         <InstallPrompt />
 
         <div className="grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
-          <Card className="overflow-hidden border border-border/70 bg-card shadow-card rounded-3xl">
+          <Card className="overflow-hidden border border-border/70 bg-card shadow-card rounded-2xl">
             <CardContent className="p-6 md:p-8">
               <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
                 <div>
@@ -228,7 +228,7 @@ const AdminDashboard = () => {
                     <span>{t('Score index', 'مؤشر الدرجات')}</span><span>{stats.averageScore}%</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-muted">
-                    <div className="h-full rounded-full bg-primary transition-all duration-1000" style={{ width: `${Math.min(stats.averageScore, 100)}%` }} />
+                    <div className="h-full rounded-full [background-image:var(--gradient-hero)] transition-all duration-1000" style={{ width: `${Math.min(stats.averageScore, 100)}%` }} />
                   </div>
                   <div className="mt-3 flex justify-between text-[10px] text-muted-foreground"><span>0</span><span>50</span><span>100</span></div>
                 </div>
@@ -241,7 +241,7 @@ const AdminDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border border-border/70 bg-card shadow-card rounded-3xl">
+          <Card className="border border-border/70 bg-card shadow-card rounded-2xl">
             <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
               <div><CardTitle className="font-display text-lg font-extrabold">{t('Work queue', 'قائمة العمل')}</CardTitle><CardDescription className="mt-1">{t('Common tasks for today', 'المهام الشائعة اليوم')}</CardDescription></div>
               <LockKeyhole className="h-5 w-5 text-muted-foreground" strokeWidth={1.8} />
@@ -261,13 +261,14 @@ const AdminDashboard = () => {
         {/* Operational inventory */}
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {statCards.map(card => (
-            <Card key={card.key} className="group overflow-hidden border border-border/70 bg-card shadow-card rounded-2xl transition-all duration-300 hover:-translate-y-1 hover:shadow-card-lg">
+            <Card key={card.key} className="group overflow-hidden border border-border/60 surface-panel rounded-2xl card-interactive animate-scale-in">
               <CardContent className="relative p-5">
-                <div className="relative mb-7 flex h-10 w-10 items-center justify-center rounded-xl bg-muted/80">
+                <div className={`relative mb-7 flex h-11 w-11 items-center justify-center rounded-xl ${card.tint}`}>
                   <card.icon className={`h-5 w-5 ${card.color}`} strokeWidth={1.8} />
                 </div>
                 <p className="text-xs text-muted-foreground leading-none">{t(card.label_en, card.label_ar)}</p>
-                <p className="mt-1 font-display text-3xl font-extrabold tracking-tight">{(stats as any)[card.key]}</p>
+                <p className="mt-1 font-display text-3xl font-extrabold tracking-tight md:text-4xl">{(stats as any)[card.key]}</p>
+                <span className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
               </CardContent>
             </Card>
           ))}
@@ -280,7 +281,7 @@ const AdminDashboard = () => {
 
         {/* Head Teacher Tiered Remarks (admin only) */}
         {isAdmin && (
-          <Card className="border border-border/70 bg-card shadow-card rounded-3xl">
+          <Card className="border border-border/70 bg-card shadow-card rounded-2xl">
             <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
               <div><CardTitle className="text-base font-semibold">{t("Head Teacher's Tiered Remarks", 'ملاحظات مدير المدرسة حسب الدرجة')}</CardTitle><CardDescription className="mt-1">{t('Personalize feedback that appears on student reports.', 'تخصيص الملاحظات التي تظهر في تقارير الطلاب.')}</CardDescription></div>
               <Settings2 className="h-5 w-5 text-muted-foreground" />

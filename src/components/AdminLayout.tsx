@@ -124,7 +124,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       {/* ─── Sidebar ─── */}
       <aside
         className={cn(
-          'fixed inset-y-0 z-50 flex flex-col bg-sidebar transition-all duration-300 ease-in-out md:relative',
+          'fixed inset-y-0 z-50 flex flex-col bg-sidebar [background-image:var(--gradient-hero)] transition-all duration-300 ease-in-out md:relative',
           collapsed ? 'w-[72px]' : 'w-[260px]',
           isRTL ? 'right-0 border-l border-sidebar-border' : 'left-0 border-r border-sidebar-border',
           sidebarOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full',
@@ -311,15 +311,20 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         {/* Page content */}
         <main className="flex-1 px-4 pb-24 pt-4 md:p-8 md:pb-0 xl:px-10">
           <div className="mx-auto w-full max-w-[1440px]">
-            <div className="mb-7 flex flex-col gap-4 border-b border-border/70 pb-6 sm:flex-row sm:items-end sm:justify-between">
-              <div className="min-w-0">
-                <p className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/70">
-                  {t('Workspace', 'مساحة العمل')}
-                </p>
-                <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-foreground">{pageTitle}</h1>
+            <div className="relative mb-7 overflow-hidden rounded-2xl border border-border/60 surface-panel p-5 shadow-card sm:p-6">
+              <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-accent/15 blur-2xl" />
+              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                <div className="min-w-0">
+                  <p className="mb-1.5 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/75">
+                    <span className="h-1.5 w-1.5 rounded-full gradient-gold" />
+                    {t('Workspace', 'مساحة العمل')}
+                  </p>
+                  <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-foreground md:text-[28px]">{pageTitle}</h1>
+                </div>
+                <CampusSwitcher className="w-full border-border/70 bg-card shadow-sm sm:w-[240px]" />
               </div>
-              <CampusSwitcher className="w-full border-border/70 bg-card shadow-sm sm:w-[240px]" />
             </div>
+
             {children}
           </div>
         </main>

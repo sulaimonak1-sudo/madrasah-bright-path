@@ -14,9 +14,9 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ['Inter', 'Noto Sans Arabic', 'sans-serif'],
+        sans: ['Figtree', 'Noto Sans Arabic', 'sans-serif'],
         arabic: ['Noto Sans Arabic', 'Amiri', 'sans-serif'],
-        display: ['Inter', 'Noto Sans Arabic', 'sans-serif'],
+        display: ['Outfit', 'Noto Sans Arabic', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -27,6 +27,7 @@ export default {
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
+          glow: "hsl(var(--primary-glow))",
         },
         secondary: {
           DEFAULT: "hsl(var(--secondary))",
@@ -43,6 +44,7 @@ export default {
         accent: {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
+          soft: "hsl(var(--accent-soft))",
         },
         popover: {
           DEFAULT: "hsl(var(--popover))",
@@ -76,6 +78,8 @@ export default {
         },
       },
       borderRadius: {
+        "2xl": "calc(var(--radius) + 6px)",
+        xl: "calc(var(--radius) + 2px)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
@@ -97,12 +101,17 @@ export default {
           from: { opacity: "0", transform: "translateX(20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.97)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.4s ease-out",
         "slide-in-right": "slide-in-right 0.3s ease-out",
+        "scale-in": "scale-in 0.25s ease-out",
       },
     },
   },
