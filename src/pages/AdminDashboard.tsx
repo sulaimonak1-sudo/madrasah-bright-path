@@ -48,6 +48,16 @@ const AdminDashboard = () => {
   // Tiered head teacher remarks
   const [headRemarks, setHeadRemarks] = useState<Record<string, string>>({});
   const [savingRemarks, setSavingRemarks] = useState(false);
+  const [websiteContent, setWebsiteContent] = useState({
+    schoolName: 'Al-Bari Madrasah',
+    heroTitle: 'A grounded education for bright futures.',
+    heroText: 'A caring learning community in the western section, helping every student grow in knowledge, character, and confidence.',
+    aboutTitle: 'A place to learn, belong, and become.',
+    aboutText: 'Our madrasah brings together purposeful teaching, strong values, and close attention to each learner.',
+    address: 'Western Section, Al-Bari Group of Schools',
+    email: 'hello@albari.sch.ng',
+  });
+  const [savingWebsite, setSavingWebsite] = useState(false);
 
   const [stats, setStats] = useState({
     totalStudents: 0,
@@ -127,6 +137,15 @@ const AdminDashboard = () => {
         setIncludeQr(map['report.include_qr'] !== 'false');
         setRemarksEnabled(map['report.remarks_enabled'] !== 'false');
         setPrintDateAuto(map['report.print_date_auto'] !== 'false');
+        setWebsiteContent(current => ({
+          schoolName: map['website.school_name'] || current.schoolName,
+          heroTitle: map['website.hero_title'] || current.heroTitle,
+          heroText: map['website.hero_text'] || current.heroText,
+          aboutTitle: map['website.about_title'] || current.aboutTitle,
+          aboutText: map['website.about_text'] || current.aboutText,
+          address: map['website.address'] || current.address,
+          email: map['website.email'] || current.email,
+        }));
       } catch (err) {}
     })();
 
@@ -183,6 +202,26 @@ const AdminDashboard = () => {
     }
   };
 
+  const saveWebsiteContent = async () => {
+    setSavingWebsite(true);
+    try {
+      await supabase.from('school_settings').upsert([
+        { key: 'website.school_name', value: websiteContent.schoolName },
+        { key: 'website.hero_title', value: websiteContent.heroTitle },
+        { key: 'website.hero_text', value: websiteContent.heroText },
+        { key: 'website.about_title', value: websiteContent.aboutTitle },
+        { key: 'website.about_text', value: websiteContent.aboutText },
+        { key: 'website.address', value: websiteContent.address },
+        { key: 'website.email', value: websiteContent.email },
+      ], { onConflict: 'key' });
+      toast({ title: 'Saved', description: 'Website content saved.' });
+    } catch (err: any) {
+      toast({ title: 'Error', description: err.message || String(err), variant: 'destructive' });
+    } finally {
+      setSavingWebsite(false);
+    }
+  };
+
   return (
     <AdminLayout>
       <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
@@ -206,6 +245,25 @@ const AdminDashboard = () => {
         </div>
 
         <InstallPrompt />
+
+        {isAdmin && (
+          <Card className="rounded-2xl border border-border/70 bg-card shadow-card">
+            <CardHeader className="flex-row items-start justify-between space-y-0 pb-4">
+              <div><CardTitle className="font-display text-lg font-extrabold">{t('Public website', 'الموقع العام')}</CardTitle><CardDescription className="mt-1">{t('Update the information families see on the madrasah homepage.', 'حدّث المعلومات التي تراها الأسر في الصفحة الرئيسية للمدرسة.')}</CardDescription></div>
+              <Link to="/" className="text-xs font-bold text-primary hover:underline">{t('View site', 'عرض الموقع')}</Link>
+            </CardHeader>
+            <CardContent className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2"><Label>{t('School name', 'اسم المدرسة')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.schoolName} onChange={e => setWebsiteContent({ ...websiteContent, schoolName: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('Contact email', 'البريد الإلكتروني')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.email} onChange={e => setWebsiteContent({ ...websiteContent, email: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Homepage headline', 'عنوان الصفحة الرئيسية')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.heroTitle} onChange={e => setWebsiteContent({ ...websiteContent, heroTitle: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Homepage introduction', 'مقدمة الصفحة الرئيسية')}</Label><textarea className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm" value={websiteContent.heroText} onChange={e => setWebsiteContent({ ...websiteContent, heroText: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('About heading', 'عنوان نبذة المدرسة')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.aboutTitle} onChange={e => setWebsiteContent({ ...websiteContent, aboutTitle: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('Location', 'الموقع')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.address} onChange={e => setWebsiteContent({ ...websiteContent, address: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('About the madrasah', 'نبذة عن المدرسة')}</Label><textarea className="flex min-h-[80px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm" value={websiteContent.aboutText} onChange={e => setWebsiteContent({ ...websiteContent, aboutText: e.target.value })} /></div>
+              <div className="flex justify-end md:col-span-2"><Button onClick={saveWebsiteContent} disabled={savingWebsite} size="sm" className="rounded-xl">{savingWebsite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{t('Save website content', 'حفظ محتوى الموقع')}</Button></div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className="grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
           <Card className="overflow-hidden border border-border/70 bg-card shadow-card rounded-2xl">

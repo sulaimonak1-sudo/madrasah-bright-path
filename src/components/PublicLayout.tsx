@@ -1,10 +1,21 @@
-import { ReactNode } from 'react';
+import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { supabase } from '@/integrations/supabase/client';
 
 export const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
+  const [schoolName, setSchoolName] = useState('Al-Bari Madrasah');
+  const [schoolNameAr, setSchoolNameAr] = useState('مدرسة البارئ');
+
+  useEffect(() => {
+    supabase.from('school_settings').select('key,value').like('key', 'website.%').then(({ data }) => {
+      const settings = Object.fromEntries((data || []).map(row => [row.key, row.value]));
+      if (settings['website.school_name']) setSchoolName(settings['website.school_name']);
+      if (settings['website.school_name_ar']) setSchoolNameAr(settings['website.school_name_ar']);
+    });
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -13,18 +24,23 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
         <div className="container flex items-center justify-between py-4 md:py-5">
           <Link to="/" className="flex items-center gap-3">
             <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl bg-primary/10 p-1">
-              <img src="/images/school-logo.png" alt="Al-Bari Logo" className="h-full w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+              <img src="/images/school-logo.png" alt="School logo" className="h-full w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             </div>
             <div>
               <h1 className="font-display text-base font-extrabold tracking-tight text-foreground md:text-lg">
-                {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
+                {t(schoolName, schoolNameAr)}
               </h1>
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">
-                {t('Madrasah Result Portal', 'بوابة نتائج المدرسة')}
+                {t('Western Section', 'القسم الغربي')}
               </p>
             </div>
           </Link>
           <div className="flex items-center gap-3">
+            <nav className="hidden items-center gap-5 lg:flex">
+              <a href="#about" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('About', 'عن المدرسة')}</a>
+              <a href="#programs" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Programs', 'البرامج')}</a>
+              <a href="#contact" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Contact', 'تواصل معنا')}</a>
+            </nav>
             <LanguageToggle />
             <Link
               to="/admin/login"
@@ -42,7 +58,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
       {/* Footer */}
       <footer className="border-t border-border/70 bg-card/60 py-8">
         <div className="container text-center text-sm text-muted-foreground space-y-2">
-          <p>© {new Date().getFullYear()} {t('Al-Bari Group of Schools. All rights reserved.', 'مجموعة مدارس البارئ. جميع الحقوق محفوظة.')}</p>
+          <p>© {new Date().getFullYear()} {t(schoolName, schoolNameAr)}. {t('All rights reserved.', 'جميع الحقوق محفوظة.')}</p>
           <p>
             {t('Designed by', 'تصميم')}{' '}
             <a

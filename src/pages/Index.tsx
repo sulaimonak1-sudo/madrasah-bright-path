@@ -1,234 +1,102 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { ArrowRight, ChevronRight, GraduationCap, KeyRound, MapPin, Search, Shield, Sparkles, Users } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, GraduationCap, BookOpen, Shield, ArrowRight, Users, Star, CheckCircle, KeyRound } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
-import { motion } from 'framer-motion';
-import { HeroCarousel } from '@/components/landing/HeroCarousel';
-import { HowItWorks } from '@/components/landing/HowItWorks';
 import { ScrollToTop } from '@/components/ScrollToTop';
+import { supabase } from '@/integrations/supabase/client';
+
+type WebsiteSettings = Record<string, string>;
+
+const defaults: WebsiteSettings = {
+  'website.school_name': 'Al-Bari Madrasah',
+  'website.school_name_ar': 'مدرسة البارئ',
+  'website.hero_title': 'A grounded education for bright futures.',
+  'website.hero_title_ar': 'تعليم راسخ لمستقبل مشرق',
+  'website.hero_text': 'A caring learning community in the western section, helping every student grow in knowledge, character, and confidence.',
+  'website.hero_text_ar': 'مجتمع تعليمي راعٍ في القسم الغربي، يساعد كل طالب على النمو في المعرفة والشخصية والثقة.',
+  'website.about_title': 'A place to learn, belong, and become.',
+  'website.about_title_ar': 'مكان للتعلم والانتماء والنمو.',
+  'website.about_text': 'Our madrasah brings together purposeful teaching, strong values, and close attention to each learner. Families can stay connected to the academic journey from the classroom to home.',
+  'website.about_text_ar': 'تجمع مدرستنا بين التعليم الهادف والقيم الراسخة والاهتمام بكل متعلم، مع إبقاء الأسرة على صلة بالرحلة الدراسية.',
+  'website.address': 'Western Section, Al-Bari Group of Schools',
+  'website.email': 'hello@albari.sch.ng',
+};
 
 const Index = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [settings, setSettings] = useState<WebsiteSettings>(defaults);
   const [studentId, setStudentId] = useState('');
   const [pin, setPin] = useState('');
   const [termId, setTermId] = useState('');
-  const [loading, setLoading] = useState(false);
   const [terms, setTerms] = useState<any[]>([]);
   const [error, setError] = useState('');
-  const [liveStats, setLiveStats] = useState({ students: 0, subjects: 0 });
+  const [loading, setLoading] = useState(false);
+  const [stats, setStats] = useState({ students: 0, subjects: 0 });
 
   useEffect(() => {
     (async () => {
-      try {
-        const [termsRes, studentsRes, subjectsRes] = await Promise.all([
-          supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false }),
-          supabase.from('students').select('id', { count: 'exact', head: true }),
-          supabase.from('subjects').select('id', { count: 'exact', head: true }),
-        ]);
-        if (termsRes.data) {
-          setTerms(termsRes.data);
-          if (termsRes.data.length > 0) setTermId(termsRes.data[0].id);
-        }
-        setLiveStats({
-          students: Number(studentsRes.count || 0),
-          subjects: Number(subjectsRes.count || 0),
-        });
-      } catch (err) {
-        // ignore
-      }
+      const [settingsRes, termsRes, studentsRes, subjectsRes] = await Promise.all([
+        supabase.from('school_settings').select('key,value').like('key', 'website.%'),
+        supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false }),
+        supabase.from('students').select('id', { count: 'exact', head: true }),
+        supabase.from('subjects').select('id', { count: 'exact', head: true }),
+      ]);
+      const saved = Object.fromEntries((settingsRes.data || []).map(row => [row.key, row.value]));
+      setSettings(current => ({ ...current, ...saved }));
+      setTerms(termsRes.data || []);
+      if (termsRes.data?.[0]) setTermId(termsRes.data[0].id);
+      setStats({ students: Number(studentsRes.count || 0), subjects: Number(subjectsRes.count || 0) });
     })();
   }, []);
 
-  const handleCheckResult = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCheckResult = (event: React.FormEvent) => {
+    event.preventDefault();
     setError('');
-    if (!studentId.trim()) {
-      setError(t('Please enter your Student ID', 'الرجاء إدخال رقم الطالب'));
-      return;
-    }
-    if (!termId) {
-      setError(t('Please select a term', 'الرجاء اختيار الفصل'));
+    if (!studentId.trim() || !termId) {
+      setError(t('Please enter your Student ID and select a term.', 'الرجاء إدخال رقم الطالب واختيار الفصل الدراسي.'));
       return;
     }
     setLoading(true);
     navigate(`/result?student=${encodeURIComponent(studentId.trim())}&term=${encodeURIComponent(termId)}&pin=${encodeURIComponent(pin.trim())}`);
   };
 
-  const features = [
-    { icon: Shield, title_en: 'Secure & Private', title_ar: 'آمن وخاص', desc_en: 'PIN-protected results ensure only authorized access to student records.', desc_ar: 'نتائج محمية بالرقم السري تضمن الوصول المصرح به فقط.' },
-    { icon: BookOpen, title_en: 'Comprehensive Reports', title_ar: 'تقارير شاملة', desc_en: 'View full term results with CA scores, exam marks, and overall grades.', desc_ar: 'عرض نتائج الفصل كاملة مع درجات الأعمال والامتحانات.' },
-    { icon: GraduationCap, title_en: 'Bilingual Support', title_ar: 'دعم ثنائي اللغة', desc_en: 'Full English & Arabic support for all students and parents.', desc_ar: 'دعم كامل للإنجليزية والعربية لجميع الطلاب وأولياء الأمور.' },
-  ];
-
-  const stats = [
-    { icon: Users, value: liveStats.students > 0 ? `${liveStats.students}+` : '—', label_en: 'Students', label_ar: 'طالب' },
-    { icon: BookOpen, value: liveStats.subjects > 0 ? `${liveStats.subjects}+` : '—', label_en: 'Subjects', label_ar: 'مادة' },
-    { icon: Star, value: '100%', label_en: 'Digital Records', label_ar: 'سجلات رقمية' },
-    { icon: CheckCircle, value: '24/7', label_en: 'Access', label_ar: 'وصول' },
+  const featureItems = [
+    { icon: GraduationCap, title: ['Whole-child learning', 'تعليم متكامل'], text: ['Strong academics shaped by character, curiosity, and care.', 'تعليم أكاديمي قوي تشكله الأخلاق والفضول والرعاية.'] },
+    { icon: Users, title: ['A connected community', 'مجتمع مترابط'], text: ['Families and educators work together around every learner.', 'تتعاون الأسر والمعلمون حول كل متعلم.'] },
+    { icon: Shield, title: ['Clear and trusted records', 'سجلات موثوقة وواضحة'], text: ['Secure digital access keeps progress visible when it matters.', 'وصول رقمي آمن يجعل التقدم واضحاً عند الحاجة.'] },
   ];
 
   return (
     <PublicLayout>
       <ScrollToTop />
-
-      {/* Hero Section */}
-      <section className="relative min-h-[460px] overflow-hidden bg-[hsl(var(--sidebar-background))] py-20 md:min-h-[540px] md:py-28">
-        <div className="absolute inset-0">
-          <HeroCarousel />
-        </div>
-        <div className="container relative z-10">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-3xl text-left"
-          >
-            <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-primary-foreground/15 bg-primary-foreground/10 px-4 py-2 backdrop-blur-sm">
-              <span className="h-2 w-2 rounded-full bg-accent" />
-              <span className="text-[11px] font-bold text-primary-foreground tracking-[0.16em] uppercase">
-                {t('Al-Bari Group of Schools', 'مجموعة مدارس البارئ')}
-              </span>
-            </div>
-            <h1 className="mb-5 max-w-2xl font-display text-4xl font-extrabold tracking-tight text-primary-foreground md:text-6xl leading-[1.05]">
-              {t('Madrasah', 'بوابة')}{' '}
-              <span className="text-gradient-gold">{t('Result Portal', 'نتائج المدرسة')}</span>
-            </h1>
-            <p className="max-w-xl text-base leading-relaxed text-primary-foreground/75 md:text-lg">
-              {t(
-                'Access your academic results securely and instantly. Enter your Student ID below to get started.',
-                'اطّلع على نتائجك الدراسية بأمان وفورًا. أدخل رقم الطالب أدناه للبدء.'
-              )}
-            </p>
+      <section className="relative overflow-hidden bg-[hsl(var(--sidebar-background))] text-primary-foreground">
+        <div className="absolute inset-0 bg-[url('/images/school-front.png')] bg-cover bg-center opacity-25" />
+        <div className="absolute inset-0 bg-[linear-gradient(110deg,hsl(var(--sidebar-background))_20%,transparent_90%)]" />
+        <div className="container relative grid min-h-[590px] items-center gap-12 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+            <div className="mb-7 inline-flex items-center gap-2 border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em]"><Sparkles className="h-3.5 w-3.5 text-accent" /> {t('Western section', 'القسم الغربي')}</div>
+            <h1 className="max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">{t(settings['website.hero_title'], settings['website.hero_title_ar'])}</h1>
+            <p className="mt-7 max-w-xl text-base leading-8 text-primary-foreground/75 md:text-lg">{t(settings['website.hero_text'], settings['website.hero_text_ar'])}</p>
+            <div className="mt-9 flex flex-wrap gap-3"><a href="#results" className="inline-flex h-12 items-center gap-2 bg-accent px-5 text-sm font-bold text-accent-foreground transition-transform hover:-translate-y-0.5">{t('Check a result', 'عرض النتيجة')} <ArrowRight className="h-4 w-4" /></a><a href="#about" className="inline-flex h-12 items-center gap-2 border border-primary-foreground/25 px-5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10">{t('Discover our madrasah', 'اكتشف مدرستنا')} <ChevronRight className="h-4 w-4" /></a></div>
           </motion.div>
+          <motion.div initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.15 }} className="hidden lg:block"><img src="/images/school-students.png" alt={t('Students at Al-Bari Madrasah', 'طلاب مدرسة البارئ')} className="ml-auto aspect-[4/5] max-h-[430px] w-full max-w-[390px] object-cover shadow-2xl" /></motion.div>
         </div>
       </section>
 
-      {/* Result Checker Form */}
-      <section className="container relative z-10 -mt-20 pb-10 md:-mt-24">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          <Card className="ml-auto max-w-xl border border-border/70 bg-card shadow-card-lg">
-            <CardHeader className="pb-3">
-              <div className="mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10">
-                <Search className="h-5 w-5 text-primary" />
-              </div>
-              <CardTitle className="font-display text-2xl font-extrabold tracking-tight">
-                {t('Check your result', 'التحقق من النتيجة')}
-              </CardTitle>
-              <CardDescription>
-                {t('Enter your Student ID to view your academic report', 'أدخل رقم الطالب لعرض تقريرك الدراسي')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleCheckResult} className="space-y-4">
-                <div className="space-y-2">
-                  <Label className="font-medium">{t('Student ID', 'رقم الطالب')} *</Label>
-                  <Input placeholder={t('e.g., ABS-001', 'مثال: ABS-001')} value={studentId} onChange={(e) => setStudentId(e.target.value)} disabled={loading} className="h-11" />
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-medium">{t('Term', 'الفصل الدراسي')} *</Label>
-                  <select className="w-full px-3 py-2.5 border border-input rounded-md bg-background text-foreground h-11" value={termId} onChange={(e) => setTermId(e.target.value)} disabled={loading || terms.length === 0}>
-                    <option value="">{t('Select term...', 'اختر الفصل...')}</option>
-                    {terms.map((term) => (
-                      <option key={term.id} value={term.id}>
-                        {`${t('Term', 'الفصل')} ${term.term_number} - ${term.name_en || term.name_ar}`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label className="font-medium">{t('PIN', 'الرقم السري')} <span className="text-muted-foreground font-normal">{t('(optional)', '(اختياري)')}</span></Label>
-                  <Input type="password" placeholder={t('Enter your PIN', 'أدخل الرقم السري')} value={pin} onChange={(e) => setPin(e.target.value)} disabled={loading} className="h-11" />
-                </div>
-                {error && (
-                  <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg border border-destructive/20">{error}</div>
-                )}
-                <Button type="submit" className="w-full h-12 text-base font-semibold" size="lg" disabled={loading}>
-                  <ArrowRight className="mr-2 h-5 w-5" />
-                  {loading ? t('Loading...', 'جارٍ التحميل...') : t('Check Result', 'عرض النتيجة')}
-                </Button>
-              </form>
-              <div className="mt-4 pt-4 border-t border-border text-center">
-                <Button variant="outline" size="sm" onClick={() => navigate('/pin-generate')} className="gap-2">
-                  <KeyRound className="h-4 w-4" />
-                  {t('Generate Result PIN', 'توليد الرقم السري للنتيجة')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </motion.div>
-      </section>
+      <section id="results" className="container relative z-10 -mt-10 pb-20"><Card className="ml-auto max-w-xl rounded-none border-border/70 bg-card shadow-card-lg"><CardHeader className="pb-3"><div className="mb-2 flex h-10 w-10 items-center justify-center bg-primary/10 text-primary"><Search className="h-5 w-5" /></div><CardTitle className="font-display text-2xl font-extrabold">{t('Check your result', 'التحقق من النتيجة')}</CardTitle><CardDescription>{t('Securely view a student report from the current academic cycle.', 'اعرض تقرير الطالب بأمان من الدورة الدراسية الحالية.')}</CardDescription></CardHeader><CardContent><form onSubmit={handleCheckResult} className="space-y-4"><div className="space-y-2"><Label>{t('Student ID', 'رقم الطالب')}</Label><Input placeholder="e.g. ABS-001" value={studentId} onChange={e => setStudentId(e.target.value)} disabled={loading} className="h-11 rounded-none" /></div><div className="space-y-2"><Label>{t('Academic term', 'الفصل الدراسي')}</Label><select className="h-11 w-full rounded-none border border-input bg-background px-3 text-sm" value={termId} onChange={e => setTermId(e.target.value)} disabled={loading}><option value="">{t('Select term...', 'اختر الفصل...')}</option>{terms.map(term => <option key={term.id} value={term.id}>{`${t('Term', 'الفصل')} ${term.term_number} - ${term.name_en || term.name_ar}`}</option>)}</select></div><div className="space-y-2"><Label>{t('PIN', 'الرقم السري')} <span className="font-normal text-muted-foreground">{t('(optional)', '(اختياري)')}</span></Label><Input type="password" value={pin} onChange={e => setPin(e.target.value)} disabled={loading} className="h-11 rounded-none" /></div>{error && <p className="border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}<Button type="submit" className="h-12 w-full rounded-none text-sm font-bold" disabled={loading}>{loading ? t('Loading...', 'جارٍ التحميل...') : t('View student report', 'عرض تقرير الطالب')} <ArrowRight className="ml-2 h-4 w-4" /></Button></form><div className="mt-4 border-t border-border pt-4 text-center"><Link to="/pin-generate" className="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline"><KeyRound className="h-4 w-4" />{t('Generate a result PIN', 'توليد الرقم السري للنتيجة')}</Link></div></CardContent></Card></section>
 
-      {/* How It Works */}
-      <HowItWorks />
+      <section id="about" className="container grid gap-10 pb-24 lg:grid-cols-[0.8fr_1.2fr] lg:items-center"><div><p className="eyebrow text-primary">{t('Our madrasah', 'مدرستنا')}</p><h2 className="mt-3 max-w-lg font-display text-4xl font-extrabold leading-tight md:text-5xl">{t(settings['website.about_title'], settings['website.about_title_ar'])}</h2></div><div><p className="max-w-2xl text-lg leading-8 text-muted-foreground">{t(settings['website.about_text'], settings['website.about_text_ar'])}</p><div className="mt-8 grid grid-cols-2 gap-5 border-t border-border pt-6 sm:grid-cols-3"><div><p className="font-display text-3xl font-extrabold">{stats.students || '—'}</p><p className="mt-1 text-xs text-muted-foreground">{t('Learners', 'المتعلمون')}</p></div><div><p className="font-display text-3xl font-extrabold">{stats.subjects || '—'}</p><p className="mt-1 text-xs text-muted-foreground">{t('Subjects', 'المواد')}</p></div><div><p className="font-display text-3xl font-extrabold">100%</p><p className="mt-1 text-xs text-muted-foreground">{t('Digital records', 'سجلات رقمية')}</p></div></div></div></section>
 
-      {/* Features Section */}
-      <section className="bg-muted/30 py-16">
-        <div className="container">
-          <div className="text-center mb-10">
-            <h2 className="text-2xl font-bold text-foreground md:text-3xl">
-              {t('Why Use Our Portal?', 'لماذا تستخدم بوابتنا؟')}
-            </h2>
-            <p className="text-muted-foreground mt-2 max-w-xl mx-auto">
-              {t('A modern, secure, and bilingual platform for accessing student academic results.',
-                'منصة حديثة وآمنة وثنائية اللغة للوصول إلى نتائج الطلاب الأكاديمية.')}
-            </p>
-          </div>
-          <div className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3">
-            {features.map((f, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: '-50px' }}
-                transition={{ delay: i * 0.1, duration: 0.4 }}
-              >
-                <Card className="text-center border-0 shadow-card hover:shadow-card-lg transition-shadow duration-300 h-full">
-                  <CardContent className="pt-8 pb-6 px-6">
-                    <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
-                      <f.icon className="h-7 w-7 text-primary" />
-                    </div>
-                    <h3 className="font-bold text-foreground text-lg mb-2">{t(f.title_en, f.title_ar)}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{t(f.desc_en, f.desc_ar)}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <section id="programs" className="bg-muted/45 py-24"><div className="container"><div className="mb-10 max-w-xl"><p className="eyebrow text-primary">{t('What matters here', 'ما يهمنا هنا')}</p><h2 className="mt-3 font-display text-4xl font-extrabold">{t('Built around every learner.', 'نضع كل متعلم في المقدمة.')}</h2></div><div className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-3">{featureItems.map(item => <div key={item.title[0]} className="bg-background p-7"><item.icon className="h-7 w-7 text-primary" strokeWidth={1.7} /><h3 className="mt-12 font-display text-xl font-extrabold">{t(item.title[0], item.title[1])}</h3><p className="mt-3 text-sm leading-7 text-muted-foreground">{t(item.text[0], item.text[1])}</p></div>)}</div></div></section>
 
-      {/* Quick Stats */}
-      <section className="py-12">
-        <div className="container">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {stats.map((s, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08, duration: 0.4 }}
-                className="flex flex-col items-center gap-2"
-              >
-                <s.icon className="h-6 w-6 text-primary" />
-                <span className="text-2xl font-bold text-foreground">{s.value}</span>
-                <span className="text-sm text-muted-foreground">{t(s.label_en, s.label_ar)}</span>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+      <section id="contact" className="container grid gap-10 py-24 md:grid-cols-[1fr_auto] md:items-end"><div><p className="eyebrow text-primary">{t('Visit or reach us', 'تواصل معنا')}</p><h2 className="mt-3 max-w-xl font-display text-4xl font-extrabold">{t('Your child’s next chapter starts with a conversation.', 'تبدأ رحلة طفلك القادمة بمحادثة.')}</h2><p className="mt-5 flex items-center gap-2 text-sm text-muted-foreground"><MapPin className="h-4 w-4 text-primary" />{settings['website.address']}</p><p className="mt-2 text-sm text-muted-foreground">{settings['website.email']}</p></div><div><a href={`mailto:${settings['website.email']}`} className="inline-flex h-12 items-center gap-2 bg-primary px-5 text-sm font-bold text-primary-foreground hover:bg-primary/90">{t('Contact the school', 'تواصل مع المدرسة')} <ArrowRight className="h-4 w-4" /></a></div></section>
     </PublicLayout>
   );
 };
