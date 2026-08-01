@@ -4,6 +4,8 @@ CREATE TABLE public.website_posts (
   title TEXT NOT NULL,
   category TEXT NOT NULL DEFAULT 'School News',
   excerpt TEXT NOT NULL DEFAULT '',
+  body TEXT NOT NULL DEFAULT '',
+  image_url TEXT,
   event_date DATE,
   published_at TIMESTAMPTZ,
   sort_order INTEGER NOT NULL DEFAULT 0,

@@ -14,45 +14,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      website_posts: {
-        Row: {
-          category: string
-          created_at: string
-          event_date: string | null
-          excerpt: string
-          id: string
-          published_at: string | null
-          sort_order: number
-          title: string
-          type: string
-          updated_at: string
-        }
-        Insert: {
-          category?: string
-          created_at?: string
-          event_date?: string | null
-          excerpt?: string
-          id?: string
-          published_at?: string | null
-          sort_order?: number
-          title: string
-          type: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string
-          created_at?: string
-          event_date?: string | null
-          excerpt?: string
-          id?: string
-          published_at?: string | null
-          sort_order?: number
-          title?: string
-          type?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       announcements: {
         Row: {
           author_id: string | null

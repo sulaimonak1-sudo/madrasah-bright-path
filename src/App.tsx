@@ -30,6 +30,7 @@ import AdminBroadsheet from "./pages/AdminBroadsheet";
 import About from "./pages/About";
 import Academics from "./pages/Academics";
 import NewsEvents from "./pages/NewsEvents";
+import NewsPost from "./pages/NewsPost";
 import Gallery from "./pages/Gallery";
 import Contact from "./pages/Contact";
 import AdminWebsite from "./pages/AdminWebsite";
@@ -56,6 +57,7 @@ const App = () => (
               <Route path="/about" element={<About />} />
               <Route path="/academics" element={<Academics />} />
               <Route path="/news-events" element={<NewsEvents />} />
+              <Route path="/news/:id" element={<NewsPost />} />
               <Route path="/gallery" element={<Gallery />} />
               <Route path="/contact" element={<Contact />} />
 

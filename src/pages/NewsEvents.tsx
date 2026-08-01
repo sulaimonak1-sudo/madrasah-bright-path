@@ -1,5 +1,6 @@
 import { CalendarDays, ChevronRight, Megaphone } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout } from '@/components/PublicLayout';
 import { PublicPageHeader } from '@/components/PublicPageHeader';
@@ -23,9 +24,9 @@ const defaults = {
 const NewsEvents = () => {
   const { t } = useLanguage();
   const settings = useWebsiteSettings(defaults);
-  const [posts, setPosts] = useState<Array<{ id: string; type: string; title: string; category: string; excerpt: string; event_date: string | null; published_at: string | null }>>([]);
+  const [posts, setPosts] = useState<Array<{ id: string; type: string; title: string; category: string; excerpt: string; body: string; image_url: string | null; event_date: string | null; published_at: string | null }>>([]);
   useEffect(() => {
-    supabase.from('website_posts').select('id,type,title,category,excerpt,event_date,published_at').order('published_at', { ascending: false }).then(({ data }) => {
+    supabase.from('website_posts').select('id,type,title,category,excerpt,body,image_url,event_date,published_at').order('published_at', { ascending: false }).then(({ data }) => {
       if (data) setPosts(data);
     });
   }, []);
@@ -52,8 +53,8 @@ const NewsEvents = () => {
           </div>
           <div className="mt-8 grid gap-5 lg:grid-cols-3">
             {articles.map((article, index) => <article key={article.id || article.title} className={`group flex min-h-[270px] flex-col justify-between border border-border bg-card p-6 shadow-card transition-transform hover:-translate-y-1 ${index === 0 ? 'lg:border-t-4 lg:border-t-accent' : ''}`}>
-              <div><div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.15em] text-primary"><span>{article.category}</span><Megaphone className="h-4 w-4" /></div><h3 className="mt-10 font-display text-2xl font-extrabold leading-tight">{article.title}</h3>{article.excerpt && <p className="mt-3 text-sm leading-6 text-muted-foreground">{article.excerpt}</p>}</div>
-              <div className="mt-8 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground"><time>{'date' in article ? article.date : article.published_at?.slice(0, 10)}</time><ChevronRight className="h-4 w-4 text-primary transition-transform group-hover:translate-x-1" /></div>
+              <div>{'image_url' in article && article.image_url && <img src={article.image_url} alt="" className="mb-5 aspect-[16/9] w-full object-cover" />}<div className="flex items-center justify-between gap-3 text-[10px] font-bold uppercase tracking-[0.15em] text-primary"><span>{article.category}</span><Megaphone className="h-4 w-4" /></div><h3 className="mt-6 font-display text-2xl font-extrabold leading-tight">{article.title}</h3>{article.excerpt && <p className="mt-3 text-sm leading-6 text-muted-foreground">{article.excerpt}</p>}</div>
+              <div className="mt-8 flex items-center justify-between border-t border-border pt-4 text-xs text-muted-foreground"><time>{'date' in article ? article.date : article.published_at?.slice(0, 10)}</time>{'id' in article && <Link to={`/news/${article.id}`} className="inline-flex items-center gap-1 font-bold text-primary">{t('Read story', 'اقرأ الخبر')}<ChevronRight className="h-4 w-4" /></Link>}</div>
             </article>)}
           </div>
         </section>
