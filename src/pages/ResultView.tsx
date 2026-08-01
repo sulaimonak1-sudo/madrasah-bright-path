@@ -7,15 +7,18 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { GRADE_CONFIG, calculateGrade } from '@/types';
 import { supabase } from '@/integrations/supabase/client';
-import { Printer, GraduationCap, ArrowLeft } from 'lucide-react';
+import { Printer, GraduationCap, KeyRound } from 'lucide-react';
 import QRCode from 'qrcode';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import html2pdf from 'html2pdf.js';
+
+type Term = { id: string; name_en: string | null; name_ar: string | null; term_number: number };
 
 const ResultView = () => {
   const { t, bilingualText, isRTL } = useLanguage();
@@ -25,6 +28,7 @@ const ResultView = () => {
   const [studentUid, setStudentUid] = useState('');
   const [pin, setPin] = useState('');
   const [termId, setTermId] = useState('');
+  const [terms, setTerms] = useState<Term[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -52,6 +56,12 @@ const ResultView = () => {
     const term = searchParams.get('term');
     const pin_param = searchParams.get('pin');
     const session = searchParams.get('session');
+
+    supabase.from('terms').select('id,name_en,name_ar,term_number').order('term_number', { ascending: false }).then(({ data }) => {
+      const availableTerms = (data || []) as Term[];
+      setTerms(availableTerms);
+      if (!term && availableTerms[0]) setTermId(availableTerms[0].id);
+    });
 
     if (student && term) {
       setStudentUid(student);
@@ -195,12 +205,18 @@ const ResultView = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>{t('Term', 'الفصل الدراسي')}</Label>
-                  <Input
-                    placeholder={t('e.g., Term 1 2024/2025', 'مثال: الفصل 1 2024/2025')}
-                    value={termId}
-                    onChange={e => setTermId(e.target.value)}
-                    required
-                  />
+                  <Select value={termId} onValueChange={setTermId} disabled={loading}>
+                    <SelectTrigger>
+                      <SelectValue placeholder={t('Select term...', 'اختر الفصل...')} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {terms.map(term => (
+                        <SelectItem key={term.id} value={term.id}>
+                          {`${t('Term', 'الفصل')} ${term.term_number} - ${bilingualText(term.name_en, term.name_ar)}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <p className="text-xs text-muted-foreground">
                     {t('Ask your teacher if unsure', 'استشر معلمك إذا لم تكن متأكدًا')}
                   </p>
@@ -213,10 +229,10 @@ const ResultView = () => {
                   type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={() => navigate('/')}
+                  onClick={() => navigate('/pin-generate')}
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  {t('Back to Home', 'العودة للصفحة الرئيسية')}
+                  <KeyRound className="mr-2 h-4 w-4" />
+                  {t('Generate a result PIN', 'توليد الرقم السري للنتيجة')}
                 </Button>
               </form>
             </CardContent>
@@ -315,9 +331,9 @@ const ResultView = () => {
   };
 
   return (
-    <PublicLayout>
-      <div className="container py-8">
-          <div className="mx-auto max-w-4xl min-h-screen bg-white print:mx-0 print:max-w-[190mm]">
+    <div className="result-page min-h-screen bg-white">
+      <div className="container py-6">
+          <div className="mx-auto max-w-[194mm] bg-white print:mx-0 print:max-w-[194mm]">
           {/* Print button */}
           <div className="mb-4 flex justify-end no-print">
             <Button onClick={downloadResultPDF} variant="outline">
@@ -327,11 +343,11 @@ const ResultView = () => {
           </div>
 
           {/* Printable Report */}
-          <div className="bg-white p-6 print:p-4 result-printable-content">
+          <div className="bg-white px-5 py-4 print:p-0 result-printable-content">
             {/* HEADER */}
-            <div className="text-center pb-6 border-b-2 border-gray-300 mb-6">
-                <div className="flex justify-center mb-3">
-                <div className="w-20 h-20 flex items-center justify-center overflow-hidden">
+            <div className="result-header text-center pb-4 border-b-2 border-gray-700 mb-4">
+              <div className="flex justify-center mb-2">
+              <div className="w-[60px] h-[60px] flex items-center justify-center overflow-hidden">
                   <img 
                     src="/images/school-logo.png" 
                     alt="Logo" 
@@ -341,8 +357,8 @@ const ResultView = () => {
                 </div>
               </div>
               
-              <h1 className="text-3xl font-bold text-gray-800 tracking-wide uppercase mb-1">AL-BARI GROUP OF SCHOOLS</h1>
-              <p className="text-lg text-gray-700 mb-3">Madrasah Section</p>
+              <h1 className="text-[26px] font-extrabold text-gray-800 tracking-[1.5px] uppercase mb-1">AL-BARI GROUP OF SCHOOLS</h1>
+              <p className="text-[13px] font-semibold text-gray-600 mb-2">Madrasah Section</p>
               
               <div className="flex items-center justify-center gap-3 my-2">
                 <div className="flex-1 border-t border-gray-400" />
@@ -350,20 +366,20 @@ const ResultView = () => {
                 <div className="flex-1 border-t border-gray-400" />
               </div>
               
-              <p className="text-xs text-gray-600 mb-4">1, Al-bari cl, Behind UBA, Badagry, lagos, 08028152097, albarischools@Gmail.com</p>
+              <p className="text-[10px] text-gray-600 mb-2">1, Al-bari cl, Behind UBA, Badagry, lagos, 08028152097, albarischools@Gmail.com</p>
               
-              <h2 className="text-lg font-bold text-gray-800 tracking-wider uppercase mb-2 mt-3">STUDENT ACADEMIC REPORT</h2>
-              <p className="text-sm text-gray-700">
+              <h2 className="text-[14px] font-bold text-gray-800 tracking-[0.5px] uppercase mb-1 mt-2">STUDENT ACADEMIC REPORT</h2>
+              <p className="text-[11px] text-gray-700">
                 Session: {sessionName || '—'} | Term: {term?.name_en || '—'}
               </p>
             </div>
 
             {/* STUDENT INFO SECTION */}
-            <div className="mb-6 pb-6 border-b-2 border-gray-300">
-              <div className="flex gap-6">
+            <div className="mb-4 pb-4 border-b-2 border-gray-300">
+              <div className="flex gap-3">
                 {/* Photo */}
                 <div className="flex-shrink-0">
-                  <Avatar className="w-24 h-32 rounded overflow-hidden border-2 border-gray-400 bg-gray-100">
+                  <Avatar className="w-[70px] h-[90px] rounded overflow-hidden border border-gray-300 bg-gray-100">
                     <AvatarImage src={student.photo_url ?? ''} alt="Student Photo" className="h-full w-full object-cover" />
                     <AvatarFallback />
                   </Avatar>
@@ -371,7 +387,7 @@ const ResultView = () => {
 
                 {/* Student Info */}
                 <div className="flex-1">
-                  <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="grid grid-cols-1 gap-1 text-[11px]">
                     <div className="flex">
                       <div className="w-1/2">
                         <span className="font-semibold">Student Name:</span>
@@ -421,35 +437,35 @@ const ResultView = () => {
             </div>
 
             {/* ACADEMIC PERFORMANCE SECTION */}
-            <div className="mb-6">
-              <div className="bg-green-700 text-white text-center py-2 px-4 font-bold tracking-wide mb-4 rounded-t">
+            <div className="mb-3">
+              <div className="bg-emerald-700 text-white text-center py-1.5 px-2 font-bold mb-1 rounded-none">
                 ACADEMIC PERFORMANCE
               </div>
               
               <div className="-mx-2 sm:mx-0 overflow-x-auto">
-                <table className="w-full min-w-[480px] text-xs sm:text-sm border-collapse">
+                <table className="w-full min-w-[480px] text-[10px] border-collapse">
                   <thead>
                     <tr className="bg-green-700 text-white">
-                      <th className="text-left px-2 sm:px-3 py-2 font-semibold">Subject</th>
-                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">CA1</th>
-                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">CA2</th>
-                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">Exam</th>
-                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">المجموع</th>
-                      <th className="text-center px-1 sm:px-2 py-2 font-semibold">Grade</th>
+                      <th className="text-left px-1 py-1.5 font-bold">Subject</th>
+                      <th className="text-center px-1 py-1.5 font-bold">CA1</th>
+                      <th className="text-center px-1 py-1.5 font-bold">CA2</th>
+                      <th className="text-center px-1 py-1.5 font-bold">Exam</th>
+                      <th className="text-center px-1 py-1.5 font-bold">المجموع</th>
+                      <th className="text-center px-1 py-1.5 font-bold">Grade</th>
                     </tr>
                   </thead>
                   <tbody>
                     {subjectRows.map((row, idx) => (
                       <tr key={row.subject.id} className={idx % 2 === 0 ? 'bg-white' : 'bg-amber-50'}>
-                        <td className="text-left px-2 sm:px-3 py-2 font-medium border whitespace-nowrap">
+                        <td className="text-left px-1 py-1.5 font-medium border whitespace-nowrap">
                           <div>{row.subject.name_en}</div>
                           <div className="text-[10px] sm:text-xs text-gray-600">{row.subject.name_ar}</div>
                         </td>
-                        <td className="text-center px-1 sm:px-2 py-2 border">{row.currentScore?.ca1 ?? '—'}</td>
-                        <td className="text-center px-1 sm:px-2 py-2 border">{row.currentScore?.ca2 ?? '—'}</td>
-                        <td className="text-center px-1 sm:px-2 py-2 border">{row.currentScore?.exam ?? '—'}</td>
-                        <td className="text-center px-1 sm:px-2 py-2 border font-semibold">{row.currentScore?.total ?? '—'}</td>
-                        <td className="text-center px-1 sm:px-2 py-2 border font-bold">{row.currentScore?.grade ?? '—'}</td>
+                        <td className="text-center px-1 py-1.5 border">{row.currentScore?.ca1 ?? '—'}</td>
+                        <td className="text-center px-1 py-1.5 border">{row.currentScore?.ca2 ?? '—'}</td>
+                        <td className="text-center px-1 py-1.5 border">{row.currentScore?.exam ?? '—'}</td>
+                        <td className="text-center px-1 py-1.5 border font-semibold">{row.currentScore?.total ?? '—'}</td>
+                        <td className="text-center px-1 py-1.5 border font-bold">{row.currentScore?.grade ?? '—'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -458,14 +474,14 @@ const ResultView = () => {
             </div>
 
             {/* TERM AVERAGE */}
-            <div className="text-right mb-6 text-lg font-bold">
+            <div className="text-right mb-3 text-[11px] font-bold">
               Term Average: <span className="text-gray-800">{termAvg}%</span>
             </div>
 
             {/* REMARKS SECTION */}
             {remarksEnabled && (
-              <div className="mb-6 pb-6 border-t-2 border-b-2 border-gray-300 py-4">
-                <div className="mb-4">
+              <div className="mb-3 pb-3 border-t-2 border-b-2 border-gray-300 py-3 text-[11px]">
+                <div className="mb-2">
                   <p className="font-bold text-gray-800 mb-2">Class Teacher's Remark:</p>
                   <p className="text-sm text-gray-700 mb-1">{teacherRemarkResolved || '_________________________'}</p>
                   <p className="text-xs text-gray-600 text-right" dir="rtl">{teacherRemarkResolved ? 'ملاحظة معلم الفصل:' : ''}</p>
@@ -480,8 +496,8 @@ const ResultView = () => {
             )}
 
             {/* SIGNATURE SECTION */}
-            <div className="mb-8">
-                <div className="grid grid-cols-3 gap-8 text-sm text-center">
+            <div className="mb-3">
+              <div className="grid grid-cols-3 gap-3 text-[10px] text-center">
                   <div>
                     <div className="flex items-center justify-center mb-1 h-12">
                       {teacherSignatureUrl ? (
@@ -502,7 +518,7 @@ const ResultView = () => {
                       <img
                         src="/images/head-teacher-stamp.png"
                         alt="Head Teacher Stamp"
-                        className="w-24 h-24 object-contain"
+                        className="w-20 h-20 object-contain"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                       />
                     </div>
@@ -517,7 +533,7 @@ const ResultView = () => {
             </div>
 
             {/* FOOTER */}
-            <div className="flex items-center justify-between gap-6 mb-4 pb-4 border-b-2 border-gray-300 text-xs">
+            <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b-2 border-gray-300 text-[9px]">
               <div className="flex-1 text-center">
                 <p className="text-gray-700 mb-1">Result generated via Al-Bari</p>
                 <p className="text-gray-700">Madrasah Portal | Student ID: PIN</p>
@@ -525,7 +541,7 @@ const ResultView = () => {
               
               <div className="flex-shrink-0 flex justify-center">
                 {includeQr && qrDataUrl && (
-                  <div className="w-20 h-20 border-2 border-gray-300 p-1">
+                  <div className="w-[50px] h-[50px] border border-gray-400 p-0.5">
                     <img src={qrDataUrl} alt="QR Code" className="w-full h-full object-contain" />
                   </div>
                 )}
@@ -538,11 +554,11 @@ const ResultView = () => {
             </div>
 
             {/* GREEN FOOTER BAR */}
-            <div className="h-3 bg-green-700 rounded" />
+            <div className="h-1 bg-emerald-700 rounded-none" />
           </div>
         </div>
       </div>
-    </PublicLayout>
+    </div>
   );
 };
 
