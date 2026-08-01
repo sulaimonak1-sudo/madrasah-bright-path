@@ -360,15 +360,15 @@ const AdminResults = () => {
                 <p className="text-sm text-muted-foreground py-6 text-center">{t('No students found in this class arm.', 'لا يوجد طلاب في هذه الشعبة.')}</p>
               ) : (
                 <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-                  <Table>
+                  <Table className="min-w-[800px]">
                     <TableHeader>
                       <TableRow>
                         <TableHead className="w-8">#</TableHead>
                         <TableHead>{t('Student', 'الطالب')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('CA1 (20)', 'اختبار١ (٢٠)')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('CA2 (20)', 'اختبار٢ (٢٠)')}</TableHead>
-                        <TableHead className="w-24 text-center">{t('Exam (60)', 'امتحان (٦٠)')}</TableHead>
-                        <TableHead className="w-20 text-center">{t('Total', 'المجموع')}</TableHead>
+                        <TableHead className="w-32 text-center">{t('CA1 (20)', 'اختبار١ (٢٠)')}</TableHead>
+                        <TableHead className="w-32 text-center">{t('CA2 (20)', 'اختبار٢ (٢٠)')}</TableHead>
+                        <TableHead className="w-32 text-center">{t('Exam (60)', 'امتحان (٦٠)')}</TableHead>
+                        <TableHead className="w-24 text-center">{t('Total (100)', 'المجموع (١٠٠)')}</TableHead>
                         <TableHead className="w-16 text-center">{t('Grade', 'التقدير')}</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -383,19 +383,25 @@ const AdminResults = () => {
                             <TableCell>
                               <Input type="number" min={0} max={20} value={s.ca1}
                                 onChange={e => updateScore(i, 'ca1', e.target.value)}
-                                className="h-8 text-center" disabled={isLocked} />
+                                aria-label={`${s.student_name} CA1 score`}
+                                className="h-10 w-full border-2 border-primary/30 bg-muted/30 text-center text-lg font-semibold tabular-nums focus-visible:border-primary" disabled={isLocked} />
                             </TableCell>
                             <TableCell>
                               <Input type="number" min={0} max={20} value={s.ca2}
                                 onChange={e => updateScore(i, 'ca2', e.target.value)}
-                                className="h-8 text-center" disabled={isLocked} />
+                                aria-label={`${s.student_name} CA2 score`}
+                                className="h-10 w-full border-2 border-primary/30 bg-muted/30 text-center text-lg font-semibold tabular-nums focus-visible:border-primary" disabled={isLocked} />
                             </TableCell>
                             <TableCell>
                               <Input type="number" min={0} max={60} value={s.exam}
                                 onChange={e => updateScore(i, 'exam', e.target.value)}
-                                className="h-8 text-center" disabled={isLocked} />
+                                aria-label={`${s.student_name} exam score`}
+                                className="h-10 w-full border-2 border-primary/30 bg-muted/30 text-center text-lg font-semibold tabular-nums focus-visible:border-primary" disabled={isLocked} />
                             </TableCell>
-                            <TableCell className="text-center font-semibold">{total}</TableCell>
+                            <TableCell className="text-center">
+                              <span className="text-lg font-bold tabular-nums">{total}</span>
+                              <span className="text-sm text-muted-foreground"> / 100</span>
+                            </TableCell>
                             <TableCell className="text-center">
                               <Badge variant={
                                 grade === 'A' ? 'default' :
