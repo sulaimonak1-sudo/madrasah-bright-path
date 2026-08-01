@@ -10,8 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 type WebsiteSettings = Record<string, string>;
 
 const defaults: WebsiteSettings = {
-  'website.school_name': 'Al-Bari Madrasah',
-  'website.school_name_ar': 'مدرسة البارئ',
+  'website.school_name': 'Al-Bari Group Of Schools',
+  'website.school_name_ar': 'مجموعة مدارس البارئ',
   'website.hero_title': 'Rooted in faith. Growing in knowledge.',
   'website.hero_title_ar': 'راسخون في الإيمان، نامون في العلم',
   'website.hero_text': 'A welcoming Islamic learning community where Qur’anic values, sound knowledge, and excellent character shape every student’s journey.',
@@ -69,17 +69,15 @@ const Index = () => {
   return (
     <PublicLayout>
       <ScrollToTop />
-      <section className="relative overflow-hidden bg-[hsl(var(--sidebar-background))] text-primary-foreground">
-        <div className="absolute inset-0 bg-[url('/images/school-front.png')] bg-cover bg-center opacity-25" />
-        <div className="absolute inset-0 bg-[linear-gradient(110deg,hsl(var(--sidebar-background))_20%,transparent_90%)]" />
-        <div className="container relative grid min-h-[590px] items-center gap-12 py-20 lg:grid-cols-[1.1fr_0.9fr] lg:py-28">
+      <section className="relative overflow-hidden bg-secondary">
+        <div className="absolute inset-0 geometric-pattern opacity-[0.04]" />
+        <div className="container relative flex min-h-[560px] items-center py-24 lg:py-32">
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="mb-7 inline-flex items-center gap-2 border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em]"><Sparkles className="h-3.5 w-3.5 text-accent" /> {t('Islamic institute', 'المعهد الإسلامي')}</div>
-            <h1 className="max-w-3xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight md:text-7xl">{t(settings['website.hero_title'], settings['website.hero_title_ar'])}</h1>
-            <p className="mt-7 max-w-xl text-base leading-8 text-primary-foreground/75 md:text-lg">{t(settings['website.hero_text'], settings['website.hero_text_ar'])}</p>
+            <div className="mb-7 inline-flex items-center gap-2 border border-primary/20 bg-background/70 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-primary"><Sparkles className="h-3.5 w-3.5 text-accent" /> {t('Institute for Islamic Sciences', 'معهد العلوم الإسلامية')}</div>
+            <h1 className="max-w-4xl font-display text-5xl font-extrabold leading-[0.98] tracking-tight text-foreground md:text-8xl">{t(settings['website.hero_title'], settings['website.hero_title_ar'])}</h1>
+            <p className="mt-7 max-w-2xl text-base leading-8 text-muted-foreground md:text-lg">{t(settings['website.hero_text'], settings['website.hero_text_ar'])}</p>
             <div className="mt-9 flex flex-wrap gap-3"><Link to="/results" className="inline-flex h-12 items-center gap-2 bg-accent px-5 text-sm font-bold text-accent-foreground transition-transform hover:-translate-y-0.5">{t('Check student results', 'عرض نتائج الطلاب')} <ArrowRight className="h-4 w-4" /></Link><a href="#about" className="inline-flex h-12 items-center gap-2 border border-primary-foreground/25 px-5 text-sm font-bold text-primary-foreground hover:bg-primary-foreground/10">{t('Discover our madrasah', 'اكتشف مدرستنا')} <ChevronRight className="h-4 w-4" /></a></div>
           </motion.div>
-          <motion.div initial={{ opacity: 0, x: 22 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.6, delay: 0.15 }} className="hidden lg:block"><img src="/images/school-students.png" alt={t('Students at Al-Bari Madrasah', 'طلاب مدرسة البارئ')} className="ml-auto aspect-[4/5] max-h-[430px] w-full max-w-[390px] object-cover shadow-2xl" /></motion.div>
         </div>
       </section>
 

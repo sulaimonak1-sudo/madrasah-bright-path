@@ -63,7 +63,14 @@ const AdminDashboard = () => {
     newsOne: 'Students celebrate another term of learning and growth.',
     newsTwo: 'Qur’an recitation and Islamic knowledge competition announced.',
     newsThree: 'Our learning community welcomes families to a new academic session.',
+    newsCategoryOne: 'School News',
+    newsCategoryTwo: 'Competitions',
+    newsCategoryThree: 'Announcements',
+    newsDateOne: 'August 01, 2026',
+    newsDateTwo: 'July 24, 2026',
+    newsDateThree: 'July 12, 2026',
     events: 'Qur’an Competition|Ramadan Activities|End-of-year Graduation',
+    eventDates: 'Aug 12|Mar 05|Dec 18',
     facilities: 'Mosque and prayer hall|Tahfeez hall|Library|ICT room|Playground|Safe classrooms',
     phone: '+234 000 000 0000',
     officeHours: 'Monday - Friday, 8:00am - 4:00pm',
@@ -175,7 +182,14 @@ const AdminDashboard = () => {
           newsOne: map['website.news_1'] || current.newsOne,
           newsTwo: map['website.news_2'] || current.newsTwo,
           newsThree: map['website.news_3'] || current.newsThree,
+          newsCategoryOne: map['website.news_category_1'] || current.newsCategoryOne,
+          newsCategoryTwo: map['website.news_category_2'] || current.newsCategoryTwo,
+          newsCategoryThree: map['website.news_category_3'] || current.newsCategoryThree,
+          newsDateOne: map['website.news_date_1'] || current.newsDateOne,
+          newsDateTwo: map['website.news_date_2'] || current.newsDateTwo,
+          newsDateThree: map['website.news_date_3'] || current.newsDateThree,
           events: map['website.events'] || current.events,
+          eventDates: map['website.event_dates'] || current.eventDates,
           facilities: map['website.facilities'] || current.facilities,
           phone: map['website.phone'] || current.phone,
           officeHours: map['website.office_hours'] || current.officeHours,
@@ -266,7 +280,14 @@ const AdminDashboard = () => {
         { key: 'website.news_1', value: websiteContent.newsOne },
         { key: 'website.news_2', value: websiteContent.newsTwo },
         { key: 'website.news_3', value: websiteContent.newsThree },
+        { key: 'website.news_category_1', value: websiteContent.newsCategoryOne },
+        { key: 'website.news_category_2', value: websiteContent.newsCategoryTwo },
+        { key: 'website.news_category_3', value: websiteContent.newsCategoryThree },
+        { key: 'website.news_date_1', value: websiteContent.newsDateOne },
+        { key: 'website.news_date_2', value: websiteContent.newsDateTwo },
+        { key: 'website.news_date_3', value: websiteContent.newsDateThree },
         { key: 'website.events', value: websiteContent.events },
+        { key: 'website.event_dates', value: websiteContent.eventDates },
         { key: 'website.facilities', value: websiteContent.facilities },
         { key: 'website.phone', value: websiteContent.phone },
         { key: 'website.office_hours', value: websiteContent.officeHours },
@@ -336,7 +357,10 @@ const AdminDashboard = () => {
               <div className="space-y-2"><Label>{t('Phone numbers', 'أرقام الهاتف')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.phone} onChange={e => setWebsiteContent({ ...websiteContent, phone: e.target.value })} /></div>
               <div className="space-y-2"><Label>{t('Office hours', 'ساعات العمل')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.officeHours} onChange={e => setWebsiteContent({ ...websiteContent, officeHours: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('Latest news (one per field)', 'آخر الأخبار')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsOne} onChange={e => setWebsiteContent({ ...websiteContent, newsOne: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsTwo} onChange={e => setWebsiteContent({ ...websiteContent, newsTwo: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsThree} onChange={e => setWebsiteContent({ ...websiteContent, newsThree: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('News categories (one per field)', 'تصنيفات الأخبار')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsCategoryOne} onChange={e => setWebsiteContent({ ...websiteContent, newsCategoryOne: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsCategoryTwo} onChange={e => setWebsiteContent({ ...websiteContent, newsCategoryTwo: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsCategoryThree} onChange={e => setWebsiteContent({ ...websiteContent, newsCategoryThree: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('News dates (one per field)', 'تواريخ الأخبار')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsDateOne} onChange={e => setWebsiteContent({ ...websiteContent, newsDateOne: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsDateTwo} onChange={e => setWebsiteContent({ ...websiteContent, newsDateTwo: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsDateThree} onChange={e => setWebsiteContent({ ...websiteContent, newsDateThree: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('Upcoming events (separate with |)', 'الفعاليات القادمة')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.events} onChange={e => setWebsiteContent({ ...websiteContent, events: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Event dates (separate with |)', 'تواريخ الفعاليات')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.eventDates} onChange={e => setWebsiteContent({ ...websiteContent, eventDates: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('Facilities (separate with |)', 'المرافق')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.facilities} onChange={e => setWebsiteContent({ ...websiteContent, facilities: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('Gallery image paths (separate with |)', 'مسارات صور المعرض')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.galleryImages} onChange={e => setWebsiteContent({ ...websiteContent, galleryImages: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('About page content', 'محتوى صفحة نبذة عن المعهد')}</Label><textarea className="min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm" value={`${websiteContent.history}\n${websiteContent.mission}\n${websiteContent.vision}\n${websiteContent.values}\n${websiteContent.philosophy}\n${websiteContent.headMessage}`} onChange={e => { const [history = '', mission = '', vision = '', values = '', philosophy = '', headMessage = ''] = e.target.value.split('\n'); setWebsiteContent({ ...websiteContent, history, mission, vision, values, philosophy, headMessage }); }} /></div>

@@ -6,8 +6,8 @@ import { supabase } from '@/integrations/supabase/client';
 
 export const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
-  const [schoolName, setSchoolName] = useState('Al-Bari Madrasah');
-  const [schoolNameAr, setSchoolNameAr] = useState('مدرسة البارئ');
+  const [schoolName, setSchoolName] = useState('Al-Bari Group Of Schools');
+  const [schoolNameAr, setSchoolNameAr] = useState('مجموعة مدارس البارئ');
 
   useEffect(() => {
     supabase.from('school_settings').select('key,value').like('key', 'website.%').then(({ data }) => {
@@ -31,7 +31,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
                 {t(schoolName, schoolNameAr)}
               </h1>
               <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">
-                {t('Islamic Institute', 'المعهد الإسلامي')}
+                {t('Institute for Islamic Sciences', 'معهد العلوم الإسلامية')}
               </p>
             </div>
           </Link>
