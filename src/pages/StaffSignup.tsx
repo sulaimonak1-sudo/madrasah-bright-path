@@ -18,7 +18,7 @@ const StaffSignup = () => {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { campusId, activeCampuses } = useCampus();
+  const { campusId, activeCampuses, loading: campusesLoading } = useCampus();
 
   const [step, setStep] = useState<Step>('auth_key');
   const [loading, setLoading] = useState(false);
@@ -42,12 +42,14 @@ const StaffSignup = () => {
   }, [campusId, selectedCampusId]);
 
   useEffect(() => {
-    if (!selectedCampusId) {
+    if (campusesLoading || !selectedCampusId || !activeCampuses.some(campus => campus.id === selectedCampusId)) {
       setClassLevels([]);
       setClassArms([]);
       setClassesLoading(true);
       return;
     }
+
+    let cancelled = false;
 
     (async () => {
       setClassesLoading(true);
@@ -60,6 +62,8 @@ const StaffSignup = () => {
           supabase.from('class_arms').select('*').eq('campus_id', selectedCampusId).order('name'),
         ]);
         
+        if (cancelled) return;
+
         if (clRes.error) {
           console.error('Error fetching class_levels:', clRes.error);
           toast({ title: t('Error', 'خطأ'), description: 'Failed to fetch class levels', variant: 'destructive' });
@@ -79,10 +83,14 @@ const StaffSignup = () => {
         console.error('Error loading classes:', err);
         toast({ title: t('Error', 'خطأ'), description: 'Failed to load classes', variant: 'destructive' });
       } finally {
-        setClassesLoading(false);
+        if (!cancelled) setClassesLoading(false);
       }
     })();
-  }, [selectedCampusId, toast, t]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeCampuses, campusesLoading, selectedCampusId, toast, t]);
 
   const validateAuthKey = async () => {
     if (!authKey.trim()) return;
