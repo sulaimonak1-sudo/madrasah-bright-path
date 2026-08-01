@@ -27,7 +27,12 @@ import AdminStaff from "./pages/AdminStaff";
 import ProfileSettings from "./pages/ProfileSettings";
 import AdminCampuses from "./pages/AdminCampuses";
 import AdminBroadsheet from "./pages/AdminBroadsheet";
-import ResultsChecker from "./pages/ResultsChecker";
+import About from "./pages/About";
+import Academics from "./pages/Academics";
+import NewsEvents from "./pages/NewsEvents";
+import Gallery from "./pages/Gallery";
+import Contact from "./pages/Contact";
+import { Navigate } from "react-router-dom";
 
 const queryClient = new QueryClient();
 
@@ -44,8 +49,13 @@ const App = () => (
               {/* Public */}
               <Route path="/" element={<Index />} />
               <Route path="/result" element={<ResultView />} />
-              <Route path="/results" element={<ResultsChecker />} />
+              <Route path="/results" element={<Navigate to="/result" replace />} />
               <Route path="/pin-generate" element={<PinGenerate />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/academics" element={<Academics />} />
+              <Route path="/news-events" element={<NewsEvents />} />
+              <Route path="/gallery" element={<Gallery />} />
+              <Route path="/contact" element={<Contact />} />
 
               <Route path="/admin/login" element={<AdminLogin />} />
               <Route path="/staff/signup" element={<StaffSignup />} />

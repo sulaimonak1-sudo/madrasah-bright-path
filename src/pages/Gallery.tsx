@@ -1,0 +1,8 @@
+import { Image as ImageIcon } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
+import { PublicLayout } from '@/components/PublicLayout';
+import { PublicPageHeader } from '@/components/PublicPageHeader';
+import { useWebsiteSettings } from '@/hooks/use-website-settings';
+
+const Gallery = () => { const { t } = useLanguage(); const settings = useWebsiteSettings({ 'website.gallery_images': '/images/school-front.png|/images/school-building.png|/images/school-students.png|/images/school-logo.png' }); const images = settings['website.gallery_images'].split('|').filter(Boolean); return <PublicLayout><PublicPageHeader eyebrow="Gallery" title={t('A glimpse into madrasah life.', 'لمحة من حياة المدرسة')} /><main className="container py-20"><div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{images.map((image, index) => <figure key={`${image}-${index}`} className="group overflow-hidden bg-muted"><img src={image} alt={t(`Madrasah gallery image ${index + 1}`, `صورة من معرض المدرسة ${index + 1}`)} className="aspect-square h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" /></figure>)}</div><p className="mt-8 flex items-center gap-2 text-sm text-muted-foreground"><ImageIcon className="h-4 w-4 text-primary" />{t('Gallery images are managed by the administrator.', 'يدير المسؤول صور المعرض.')}</p></main></PublicLayout>; };
+export default Gallery;

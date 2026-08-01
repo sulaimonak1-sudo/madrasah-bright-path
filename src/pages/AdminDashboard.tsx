@@ -60,6 +60,25 @@ const AdminDashboard = () => {
     programQuran: 'Qur’an and sound learning',
     programTarbiyah: 'Tarbiyah and good character',
     programCommunity: 'A trusted family partnership',
+    newsOne: 'Students celebrate another term of learning and growth.',
+    newsTwo: 'Qur’an recitation and Islamic knowledge competition announced.',
+    newsThree: 'Our learning community welcomes families to a new academic session.',
+    events: 'Qur’an Competition|Ramadan Activities|End-of-year Graduation',
+    facilities: 'Mosque and prayer hall|Tahfeez hall|Library|ICT room|Playground|Safe classrooms',
+    phone: '+234 000 000 0000',
+    officeHours: 'Monday - Friday, 8:00am - 4:00pm',
+    galleryImages: '/images/school-front.png|/images/school-building.png|/images/school-students.png|/images/school-logo.png',
+    history: 'Founded to serve families seeking a balanced Islamic education.',
+    mission: 'To provide a safe, excellent, and faith-centred learning environment.',
+    vision: 'To raise a generation grounded in Islam, equipped with knowledge, and ready to serve.',
+    values: 'Faith, excellence, integrity, compassion, discipline, and service.',
+    philosophy: 'We believe education is an amanah. Learning should shape the mind, refine the heart, and equip each student to contribute positively.',
+    headMessage: 'Welcome to our madrasah. We are honoured to partner with families in a journey of learning, worship, and character.',
+    academicsIntro: 'Our educational system brings together Qur’anic memorisation, Arabic language, Islamic studies, and strong general academics.',
+    curriculum: 'A structured curriculum develops literacy, numeracy, scientific thinking, Islamic understanding, and practical life skills.',
+    methodology: 'Teaching combines explanation, practice, revision, discussion, and close attention to each learner.',
+    assessment: 'Continuous classwork, assignments, tests, examinations, and teacher observations help families understand progress.',
+    calendar: 'The academic calendar follows the published school sessions and terms, with special Islamic programmes throughout the year.',
   });
   const [savingWebsite, setSavingWebsite] = useState(false);
 
@@ -153,6 +172,25 @@ const AdminDashboard = () => {
           programQuran: map['website.program_quran'] || current.programQuran,
           programTarbiyah: map['website.program_tarbiyah'] || current.programTarbiyah,
           programCommunity: map['website.program_community'] || current.programCommunity,
+          newsOne: map['website.news_1'] || current.newsOne,
+          newsTwo: map['website.news_2'] || current.newsTwo,
+          newsThree: map['website.news_3'] || current.newsThree,
+          events: map['website.events'] || current.events,
+          facilities: map['website.facilities'] || current.facilities,
+          phone: map['website.phone'] || current.phone,
+          officeHours: map['website.office_hours'] || current.officeHours,
+          galleryImages: map['website.gallery_images'] || current.galleryImages,
+          history: map['website.history'] || current.history,
+          mission: map['website.mission'] || current.mission,
+          vision: map['website.vision'] || current.vision,
+          values: map['website.values'] || current.values,
+          philosophy: map['website.philosophy'] || current.philosophy,
+          headMessage: map['website.head_message'] || current.headMessage,
+          academicsIntro: map['website.academics_intro'] || current.academicsIntro,
+          curriculum: map['website.curriculum'] || current.curriculum,
+          methodology: map['website.methodology'] || current.methodology,
+          assessment: map['website.assessment'] || current.assessment,
+          calendar: map['website.calendar'] || current.calendar,
         }));
       } catch (err) {}
     })();
@@ -225,6 +263,25 @@ const AdminDashboard = () => {
         { key: 'website.program_quran', value: websiteContent.programQuran },
         { key: 'website.program_tarbiyah', value: websiteContent.programTarbiyah },
         { key: 'website.program_community', value: websiteContent.programCommunity },
+        { key: 'website.news_1', value: websiteContent.newsOne },
+        { key: 'website.news_2', value: websiteContent.newsTwo },
+        { key: 'website.news_3', value: websiteContent.newsThree },
+        { key: 'website.events', value: websiteContent.events },
+        { key: 'website.facilities', value: websiteContent.facilities },
+        { key: 'website.phone', value: websiteContent.phone },
+        { key: 'website.office_hours', value: websiteContent.officeHours },
+        { key: 'website.gallery_images', value: websiteContent.galleryImages },
+        { key: 'website.history', value: websiteContent.history },
+        { key: 'website.mission', value: websiteContent.mission },
+        { key: 'website.vision', value: websiteContent.vision },
+        { key: 'website.values', value: websiteContent.values },
+        { key: 'website.philosophy', value: websiteContent.philosophy },
+        { key: 'website.head_message', value: websiteContent.headMessage },
+        { key: 'website.academics_intro', value: websiteContent.academicsIntro },
+        { key: 'website.curriculum', value: websiteContent.curriculum },
+        { key: 'website.methodology', value: websiteContent.methodology },
+        { key: 'website.assessment', value: websiteContent.assessment },
+        { key: 'website.calendar', value: websiteContent.calendar },
       ], { onConflict: 'key' });
       toast({ title: 'Saved', description: 'Website content saved.' });
     } catch (err: any) {
@@ -276,6 +333,14 @@ const AdminDashboard = () => {
               <div className="space-y-2"><Label>{t('Program one', 'البرنامج الأول')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programQuran} onChange={e => setWebsiteContent({ ...websiteContent, programQuran: e.target.value })} /></div>
               <div className="space-y-2"><Label>{t('Program two', 'البرنامج الثاني')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programTarbiyah} onChange={e => setWebsiteContent({ ...websiteContent, programTarbiyah: e.target.value })} /></div>
               <div className="space-y-2 md:col-span-2"><Label>{t('Program three', 'البرنامج الثالث')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.programCommunity} onChange={e => setWebsiteContent({ ...websiteContent, programCommunity: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('Phone numbers', 'أرقام الهاتف')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.phone} onChange={e => setWebsiteContent({ ...websiteContent, phone: e.target.value })} /></div>
+              <div className="space-y-2"><Label>{t('Office hours', 'ساعات العمل')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.officeHours} onChange={e => setWebsiteContent({ ...websiteContent, officeHours: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Latest news (one per field)', 'آخر الأخبار')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsOne} onChange={e => setWebsiteContent({ ...websiteContent, newsOne: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsTwo} onChange={e => setWebsiteContent({ ...websiteContent, newsTwo: e.target.value })} /><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.newsThree} onChange={e => setWebsiteContent({ ...websiteContent, newsThree: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Upcoming events (separate with |)', 'الفعاليات القادمة')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.events} onChange={e => setWebsiteContent({ ...websiteContent, events: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Facilities (separate with |)', 'المرافق')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.facilities} onChange={e => setWebsiteContent({ ...websiteContent, facilities: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Gallery image paths (separate with |)', 'مسارات صور المعرض')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.galleryImages} onChange={e => setWebsiteContent({ ...websiteContent, galleryImages: e.target.value })} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('About page content', 'محتوى صفحة نبذة عن المعهد')}</Label><textarea className="min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm" value={`${websiteContent.history}\n${websiteContent.mission}\n${websiteContent.vision}\n${websiteContent.values}\n${websiteContent.philosophy}\n${websiteContent.headMessage}`} onChange={e => { const [history = '', mission = '', vision = '', values = '', philosophy = '', headMessage = ''] = e.target.value.split('\n'); setWebsiteContent({ ...websiteContent, history, mission, vision, values, philosophy, headMessage }); }} /></div>
+              <div className="space-y-2 md:col-span-2"><Label>{t('Academics page content', 'محتوى صفحة الأكاديميات')}</Label><textarea className="min-h-[100px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm" value={`${websiteContent.academicsIntro}\n${websiteContent.curriculum}\n${websiteContent.methodology}\n${websiteContent.assessment}\n${websiteContent.calendar}`} onChange={e => { const [academicsIntro = '', curriculum = '', methodology = '', assessment = '', calendar = ''] = e.target.value.split('\n'); setWebsiteContent({ ...websiteContent, academicsIntro, curriculum, methodology, assessment, calendar }); }} /></div>
               <div className="flex justify-end md:col-span-2"><Button onClick={saveWebsiteContent} disabled={savingWebsite} size="sm" className="rounded-xl">{savingWebsite ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}{t('Save website content', 'حفظ محتوى الموقع')}</Button></div>
             </CardContent>
           </Card>

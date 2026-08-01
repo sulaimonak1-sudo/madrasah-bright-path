@@ -37,9 +37,11 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
           </Link>
           <div className="flex items-center gap-3">
             <nav className="hidden items-center gap-5 lg:flex">
-              <a href="#about" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('About', 'عن المدرسة')}</a>
-              <a href="#programs" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Programs', 'البرامج')}</a>
-              <a href="#contact" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Contact', 'تواصل معنا')}</a>
+              <Link to="/about" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('About', 'عن المدرسة')}</Link>
+              <Link to="/academics" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Academics', 'الأكاديميات')}</Link>
+              <Link to="/news-events" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('News & Events', 'الأخبار والفعاليات')}</Link>
+              <Link to="/gallery" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Gallery', 'معرض الصور')}</Link>
+              <Link to="/contact" className="text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground">{t('Contact', 'تواصل معنا')}</Link>
               <Link to="/results" className="text-xs font-bold text-primary transition-colors hover:text-primary/70">{t('Results', 'النتائج')}</Link>
             </nav>
             <LanguageToggle />
