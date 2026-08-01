@@ -42,14 +42,15 @@ const ResultsChecker = () => {
 
   return (
     <PublicLayout>
-      <main className="relative overflow-hidden bg-muted/35 py-16 md:py-24">
-        <div className="geometric-pattern absolute inset-0 bg-primary opacity-[0.035]" />
+      <main className="relative overflow-hidden bg-primary py-16 text-primary-foreground md:py-24">
+        <div className="geometric-pattern absolute inset-0 opacity-10" />
         <div className="container relative grid gap-12 lg:grid-cols-[0.8fr_1.2fr] lg:items-center">
           <div>
-            <p className="eyebrow text-primary">{t('Student services', 'خدمات الطلاب')}</p>
+            <img src="/images/school-logo.png" alt="Al-Bari Group Of Schools" className="h-16 w-16 object-contain" />
+            <p className="eyebrow mt-8 text-accent">{t('Student services', 'خدمات الطلاب')}</p>
             <h1 className="mt-4 max-w-xl font-display text-5xl font-extrabold leading-tight md:text-6xl">{t('Your academic journey, clearly recorded.', 'رحلتك الدراسية موثقة بوضوح.')}</h1>
-            <p className="mt-6 max-w-lg text-base leading-8 text-muted-foreground">{t('Use your student details to securely access a term report prepared by the madrasah.', 'استخدم بيانات الطالب للوصول الآمن إلى التقرير الدراسي الذي أعدته المدرسة.')}</p>
-            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-primary"><ShieldCheck className="h-5 w-5" />{t('Private and secure access', 'وصول خاص وآمن')}</div>
+            <p className="mt-6 max-w-lg text-base leading-8 text-primary-foreground/75">{t('Use your student details to securely access a term report prepared by the Institute for Islamic Sciences.', 'استخدم بيانات الطالب للوصول الآمن إلى التقرير الدراسي الذي أعده معهد العلوم الإسلامية.')}</p>
+            <div className="mt-8 flex items-center gap-3 text-sm font-semibold text-primary-foreground"><ShieldCheck className="h-5 w-5 text-accent" />{t('Private and secure access', 'وصول خاص وآمن')}</div>
           </div>
           <Card className="rounded-none border-border/70 bg-card shadow-card-lg">
             <CardHeader><div className="mb-2 flex h-11 w-11 items-center justify-center bg-primary/10 text-primary"><Search className="h-5 w-5" /></div><CardTitle className="font-display text-2xl font-extrabold">{t('Check your result', 'التحقق من النتيجة')}</CardTitle><CardDescription>{t('Enter your details to view your academic report.', 'أدخل بياناتك لعرض تقريرك الدراسي.')}</CardDescription></CardHeader>

@@ -25,6 +25,7 @@ import {
   Building2,
   Table2,
   Globe2,
+  Newspaper,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -73,6 +74,7 @@ const navGroups = [
       { path: '/admin/campuses', icon: Building2, label_en: 'Campuses', label_ar: 'الفروع' },
       { path: '/admin/staff', icon: Settings, label_en: 'Staff Management', label_ar: 'إدارة الموظفين' },
       { path: '/admin/website', icon: Globe2, label_en: 'Website', label_ar: 'الموقع الإلكتروني' },
+      { path: '/admin/website/posts', icon: Newspaper, label_en: 'Website Posts', label_ar: 'منشورات الموقع' },
     ],
   },
 ];
