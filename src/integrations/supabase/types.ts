@@ -222,7 +222,15 @@ export type Database = {
           name_ar?: string | null
           name_en?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "class_levels_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       classes: {
         Row: {
@@ -506,21 +514,18 @@ export type Database = {
       }
       sessions: {
         Row: {
-          campus_id: string
           created_at: string
           id: string
           is_active: boolean
           name: string
         }
         Insert: {
-          campus_id?: string
           created_at?: string
           id?: string
           is_active?: boolean
           name: string
         }
         Update: {
-          campus_id?: string
           created_at?: string
           id?: string
           is_active?: boolean
@@ -628,7 +633,6 @@ export type Database = {
       }
       subjects: {
         Row: {
-          campus_id: string | null
           class_level_id: string | null
           created_at: string
           description: string | null
@@ -637,7 +641,6 @@ export type Database = {
           name_ar: string | null
         }
         Insert: {
-          campus_id?: string | null
           class_level_id?: string | null
           created_at?: string
           description?: string | null
@@ -646,7 +649,6 @@ export type Database = {
           name_ar?: string | null
         }
         Update: {
-          campus_id?: string | null
           class_level_id?: string | null
           created_at?: string
           description?: string | null
@@ -655,13 +657,6 @@ export type Database = {
           name_ar?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "subjects_campus_id_fkey"
-            columns: ["campus_id"]
-            isOneToOne: false
-            referencedRelation: "campuses"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "subjects_class_level_id_fkey"
             columns: ["class_level_id"]
