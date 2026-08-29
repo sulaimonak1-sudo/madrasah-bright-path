@@ -135,7 +135,7 @@ const ResultView = () => {
 
       // generate QR for verification URL
       try {
-        const verifyUrl = `${window.location.origin}/#/result?student=${encodeURIComponent(data.student.student_uid)}&term=${encodeURIComponent(data.term.id)}`;
+        const verifyUrl = `${window.location.origin}/result?student=${encodeURIComponent(data.student.student_uid)}&term=${encodeURIComponent(data.term.id)}`;
         const qr = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
         setQrDataUrl(qr);
       } catch (err) {

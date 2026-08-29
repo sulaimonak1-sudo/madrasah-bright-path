@@ -198,7 +198,7 @@ const AdminReports = () => {
       let qrSrc = '';
       try {
         if (reportIncludeQr) {
-          const verifyUrl = `${window.location.origin}/#/result?student=${encodeURIComponent(student.student_uid)}&term=${encodeURIComponent(termId)}`;
+          const verifyUrl = `${window.location.origin}/result?student=${encodeURIComponent(student.student_uid)}&term=${encodeURIComponent(termId)}`;
           qrSrc = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 240 });
         }
       } catch (err) {
