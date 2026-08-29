@@ -5,6 +5,8 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { supabase } from '@/integrations/supabase/client';
 import { Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 
+export const ADMISSIONS_URL = 'https://www.albari.com.ng/website/admissions/apply';
+
 export const PublicLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
   const [schoolName, setSchoolName] = useState('Al-Bari Group Of Schools');
