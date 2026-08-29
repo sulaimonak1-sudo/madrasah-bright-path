@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -339,6 +339,39 @@ export type Database = {
           },
         ]
       }
+      profile_campuses: {
+        Row: {
+          campus_id: string
+          created_at: string
+          profile_id: string
+        }
+        Insert: {
+          campus_id: string
+          created_at?: string
+          profile_id: string
+        }
+        Update: {
+          campus_id?: string
+          created_at?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profile_campuses_campus_id_fkey"
+            columns: ["campus_id"]
+            isOneToOne: false
+            referencedRelation: "campuses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "profile_campuses_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -399,39 +432,6 @@ export type Database = {
             columns: ["class_teacher_class_level_id"]
             isOneToOne: false
             referencedRelation: "class_levels"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      profile_campuses: {
-        Row: {
-          campus_id: string
-          created_at: string
-          profile_id: string
-        }
-        Insert: {
-          campus_id: string
-          created_at?: string
-          profile_id: string
-        }
-        Update: {
-          campus_id?: string
-          created_at?: string
-          profile_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "profile_campuses_campus_id_fkey"
-            columns: ["campus_id"]
-            isOneToOne: false
-            referencedRelation: "campuses"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "profile_campuses_profile_id_fkey"
-            columns: ["profile_id"]
-            isOneToOne: false
-            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -576,7 +576,6 @@ export type Database = {
           created_at: string
           date_of_birth: string | null
           enrollment_date: string
-          email: string | null
           full_name: string
           gender: string | null
           guardian_name: string | null
@@ -599,7 +598,6 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           enrollment_date?: string
-          email?: string | null
           full_name: string
           gender?: string | null
           guardian_name?: string | null
@@ -622,7 +620,6 @@ export type Database = {
           created_at?: string
           date_of_birth?: string | null
           enrollment_date?: string
-          email?: string | null
           full_name?: string
           gender?: string | null
           guardian_name?: string | null
@@ -905,6 +902,51 @@ export type Database = {
         }
         Relationships: []
       }
+      website_posts: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          event_date: string | null
+          excerpt: string
+          id: string
+          image_url: string | null
+          published_at: string | null
+          sort_order: number
+          title: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          event_date?: string | null
+          excerpt?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          sort_order?: number
+          title: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          event_date?: string | null
+          excerpt?: string
+          id?: string
+          image_url?: string | null
+          published_at?: string | null
+          sort_order?: number
+          title?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -925,7 +967,7 @@ export type Database = {
       user_campus_id: { Args: never; Returns: string }
     }
     Enums: {
-      app_role: "super_admin" | "admin" | "teacher" | "parent"
+      app_role: "admin" | "teacher" | "parent" | "super_admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1053,7 +1095,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["super_admin", "admin", "teacher", "parent"],
+      app_role: ["admin", "teacher", "parent", "super_admin"],
     },
   },
 } as const
