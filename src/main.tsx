@@ -2,39 +2,27 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Register service worker only outside preview domains
-const isPreviewHost = window.location.hostname.includes("lovableproject.com");
-
-if ("serviceWorker" in navigator && !isPreviewHost) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker
-      .register("/sw.js", { scope: "/" })
-      .then((registration) => {
-        const hadController = Boolean(navigator.serviceWorker.controller);
-
-        if (hadController) {
-          navigator.serviceWorker.addEventListener(
-            "controllerchange",
-            () => window.location.reload(),
-            { once: true },
-          );
-        }
-
-        registration.update();
-        console.log("Service Worker registered successfully:", registration);
-      })
-      .catch((error) => {
-        console.error("Service Worker registration failed:", error);
-      });
-  });
-} else if ("serviceWorker" in navigator) {
-  // Cleanup stale workers/caches in preview to prevent stale chunk loading issues
+// No app-shell caching: always serve the latest deployed code.
+// Any previously installed worker is unregistered and its caches cleared,
+// so users get updates without clearing browser history.
+if ("serviceWorker" in navigator) {
   navigator.serviceWorker.getRegistrations().then((registrations) => {
-    registrations.forEach((registration) => registration.unregister());
+    registrations
+      .filter((registration) => {
+        const url = registration.active?.scriptURL || registration.installing?.scriptURL || "";
+        return url.includes("/sw.js") || url.includes("/service-worker.js");
+      })
+      .forEach((registration) => registration.unregister());
   });
 
   if ("caches" in window) {
-    caches.keys().then((keys) => Promise.all(keys.map((key) => caches.delete(key))));
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((key) => key.startsWith("madrasah-")).map((key) => caches.delete(key)),
+        ),
+      );
   }
 }
 
