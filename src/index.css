@@ -7,7 +7,7 @@
 @layer base {
   :root {
     /* Emerald Prestige — deep emerald, gold accent, warm cream canvas */
-    --background: 46 42% 97%;
+    --background: 80 30% 97%;
     --foreground: 165 32% 11%;
 
     --card: 0 0% 100%;
@@ -23,30 +23,30 @@
     --secondary: 48 38% 93%;
     --secondary-foreground: 165 32% 14%;
 
-    --muted: 46 26% 94%;
+    --muted: 80 20% 94%;
     --muted-foreground: 165 10% 42%;
 
-    --accent: 44 58% 54%;
+    --accent: 82 56% 52%;
     --accent-foreground: 165 40% 11%;
-    --accent-soft: 44 70% 88%;
+    --accent-soft: 82 62% 88%;
 
     --destructive: 0 70% 48%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 46 22% 88%;
-    --input: 46 22% 88%;
+    --border: 80 16% 88%;
+    --input: 80 16% 88%;
     --ring: 162 78% 16%;
 
     --radius: 1rem;
 
     --sidebar-background: 165 45% 9%;
     --sidebar-foreground: 48 40% 96%;
-    --sidebar-primary: 44 58% 54%;
+    --sidebar-primary: 82 56% 52%;
     --sidebar-primary-foreground: 165 45% 9%;
     --sidebar-accent: 165 34% 15%;
     --sidebar-accent-foreground: 48 40% 96%;
     --sidebar-border: 165 26% 18%;
-    --sidebar-ring: 44 58% 54%;
+    --sidebar-ring: 82 56% 52%;
 
     /* Status tokens */
     --success: 158 62% 34%;
@@ -58,13 +58,13 @@
 
     /* Flat surface tokens (no gradients) */
     --gradient-hero: hsl(162 72% 13%);
-    --gradient-gold: hsl(44 58% 54%);
-    --gradient-surface: hsl(48 40% 98%);
+    --gradient-gold: hsl(82 56% 52%);
+    --gradient-surface: hsl(80 26% 98%);
 
 
     --card-shadow: 0 1px 2px hsl(165 32% 11% / 0.04), 0 10px 28px -12px hsl(165 32% 11% / 0.10);
     --card-shadow-lg: 0 28px 60px -26px hsl(165 40% 14% / 0.30);
-    --shadow-gold: 0 12px 30px -14px hsl(44 58% 44% / 0.55);
+    --shadow-gold: 0 12px 30px -14px hsl(82 56% 42% / 0.55);
 
     --font-sans: 'Figtree', 'Noto Sans Arabic', sans-serif;
     --font-arabic: 'Noto Sans Arabic', 'Amiri', sans-serif;
@@ -81,9 +81,9 @@
     --popover: 165 32% 9%;
     --popover-foreground: 48 30% 95%;
 
-    --primary: 44 58% 56%;
+    --primary: 82 58% 55%;
     --primary-foreground: 165 45% 8%;
-    --primary-glow: 44 70% 68%;
+    --primary-glow: 82 60% 70%;
 
     --secondary: 165 24% 14%;
     --secondary-foreground: 48 30% 92%;
@@ -91,7 +91,7 @@
     --muted: 165 20% 14%;
     --muted-foreground: 48 10% 62%;
 
-    --accent: 44 58% 56%;
+    --accent: 82 58% 55%;
     --accent-foreground: 165 45% 8%;
     --accent-soft: 165 26% 18%;
 
@@ -100,18 +100,18 @@
 
     --border: 165 18% 17%;
     --input: 165 18% 17%;
-    --ring: 44 58% 56%;
+    --ring: 82 58% 55%;
 
     --gradient-surface: hsl(165 32% 9%);
 
     --sidebar-background: 165 42% 6%;
     --sidebar-foreground: 48 30% 92%;
-    --sidebar-primary: 44 58% 56%;
+    --sidebar-primary: 82 58% 55%;
     --sidebar-primary-foreground: 165 45% 8%;
     --sidebar-accent: 165 24% 12%;
     --sidebar-accent-foreground: 48 30% 92%;
     --sidebar-border: 165 18% 15%;
-    --sidebar-ring: 44 58% 56%;
+    --sidebar-ring: 82 58% 55%;
   }
 }
 
