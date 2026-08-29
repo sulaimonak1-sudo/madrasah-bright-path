@@ -30,16 +30,16 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
         </div>
       </div>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur-lg">
-        <div className="container flex h-[62px] items-center justify-between gap-3 sm:gap-5">
+        <div className="container flex h-[62px] flex-nowrap items-center justify-between gap-2 sm:gap-5">
           <Link to="/" className="flex min-w-0 items-center gap-2 sm:gap-3">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-primary/10 p-1">
               <img src="/images/school-logo.png" alt="School logo" className="h-full w-full object-contain" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-display text-sm font-extrabold tracking-tight text-foreground sm:text-base md:text-lg">
+              <h1 className="truncate font-display text-[13px] font-extrabold leading-tight tracking-tight text-foreground sm:text-base md:text-lg">
                 {t(schoolName, schoolNameAr)}
               </h1>
-              <p className="mt-0.5 truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-primary/70 sm:text-[10px] sm:tracking-[0.16em]">
+              <p className="mt-0.5 hidden truncate text-[9px] font-semibold uppercase tracking-[0.1em] text-primary/70 sm:block sm:text-[10px] sm:tracking-[0.16em]">
                 {t('Institute for Islamic Sciences', 'معهد العلوم الإسلامية')}
               </p>
             </div>
@@ -55,7 +55,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
             </nav>
             <LanguageToggle />
           </div>
-          <div className="flex shrink-0 items-center gap-2 lg:hidden"><Link to="/results" className="inline-flex h-10 shrink-0 items-center rounded-lg bg-accent px-3 text-xs font-bold text-accent-foreground">{t('Result', 'النتيجة')}</Link><button type="button" onClick={() => setMobileOpen(true)} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border" aria-label={t('Open menu', 'فتح القائمة')}><Menu className="h-5 w-5" /></button></div>
+          <div className="flex shrink-0 items-center gap-2 lg:hidden"><Link to="/results" className="inline-flex h-9 shrink-0 items-center rounded-lg bg-accent px-2.5 text-[11px] font-bold text-accent-foreground">{t('Result', 'النتيجة')}</Link><button type="button" onClick={() => setMobileOpen(true)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border text-foreground" aria-label={t('Open menu', 'فتح القائمة')}><Menu className="h-5 w-5" /></button></div>
         </div>
       </header>
       {mobileOpen && <div className="fixed inset-0 z-50 bg-background lg:hidden"><div className="flex h-[76px] items-center justify-between border-b border-border px-5"><span className="font-display text-lg font-extrabold">{t('Menu', 'القائمة')}</span><button type="button" onClick={() => setMobileOpen(false)} className="flex h-10 w-10 items-center justify-center rounded-lg border border-border" aria-label={t('Close menu', 'إغلاق القائمة')}><X className="h-5 w-5" /></button></div><nav className="flex flex-col gap-1 p-5">{[["/", 'Home'], ['/about', 'About Us'], ['/academics', 'Academics'], ['/news-events', 'News & Events'], ['/gallery', 'Gallery'], ['/contact', 'Contact'], ['/results', 'Check Result']].map(([path, label]) => <Link key={path} to={path} onClick={() => setMobileOpen(false)} className="border-b border-border py-4 text-base font-bold">{t(label, label)}</Link>)}<div className="mt-6 grid gap-3"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">{t('Portals', 'البوابات')}</p><Link to="/staff/signup" onClick={() => setMobileOpen(false)} className="rounded-xl border border-border px-4 py-3 text-sm font-bold">{t('Staff Portal', 'بوابة الموظفين')}</Link><Link to="/admin/login" onClick={() => setMobileOpen(false)} className="rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground">{t('Admin Portal', 'بوابة المسؤول')}</Link></div><div className="mt-6"><LanguageToggle /></div></nav></div>}
