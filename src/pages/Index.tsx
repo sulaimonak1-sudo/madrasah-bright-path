@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowRight, BookOpen, ChevronRight, GraduationCap, Image as ImageIcon, MapPin, Shield, Sparkles, Users } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { PublicLayout } from '@/components/PublicLayout';
+import { PublicLayout, ADMISSIONS_URL } from '@/components/PublicLayout';
 import { ScrollToTop } from '@/components/ScrollToTop';
 import { supabase } from '@/integrations/supabase/client';
 
