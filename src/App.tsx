@@ -28,6 +28,7 @@ import ProfileSettings from "./pages/ProfileSettings";
 import AdminCampuses from "./pages/AdminCampuses";
 import AdminBroadsheet from "./pages/AdminBroadsheet";
 import About from "./pages/About";
+import Admissions from "./pages/Admissions";
 import Academics from "./pages/Academics";
 import NewsEvents from "./pages/NewsEvents";
 import NewsPost from "./pages/NewsPost";
@@ -55,6 +56,7 @@ const App = () => (
               <Route path="/results" element={<Navigate to="/result" replace />} />
               <Route path="/pin-generate" element={<PinGenerate />} />
               <Route path="/about" element={<About />} />
+              <Route path="/admissions" element={<Admissions />} />
               <Route path="/academics" element={<Academics />} />
               <Route path="/news-events" element={<NewsEvents />} />
               <Route path="/news/:id" element={<NewsPost />} />
