@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { supabase } from '@/integrations/supabase/client';
 import { Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 
