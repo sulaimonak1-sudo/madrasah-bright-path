@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
+import { WhatsAppButton } from '@/components/WhatsAppButton';
 import { supabase } from '@/integrations/supabase/client';
 import { Mail, MapPin, Menu, Phone, X } from 'lucide-react';
 
@@ -65,6 +66,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Content */}
       <main className="flex-1">{children}</main>
+      <WhatsAppButton />
 
       {/* Footer */}
       <footer className="bg-[hsl(var(--sidebar-background))] py-12 text-[hsl(var(--sidebar-foreground))]">
