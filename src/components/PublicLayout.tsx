@@ -66,6 +66,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
 
       {/* Content */}
       <main className="flex-1">{children}</main>
+      <WhatsAppButton />
 
       {/* Footer */}
       <footer className="bg-[hsl(var(--sidebar-background))] py-12 text-[hsl(var(--sidebar-foreground))]">
