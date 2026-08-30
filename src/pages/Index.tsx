@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowRight, BookOpen, ChevronRight, GraduationCap, Image as ImageIcon, MapPin, Shield, Sparkles, Users } from 'lucide-react';
+import { ArrowRight, BookOpen, ChevronRight, GraduationCap, Image as ImageIcon, MapPin, Shield, Sparkles, Users, FileSearch } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { PublicLayout, ADMISSIONS_URL } from '@/components/PublicLayout';
 import { ScrollToTop } from '@/components/ScrollToTop';
