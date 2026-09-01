@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 
-const WHATSAPP_NUMBER = '08101466977';
+const WHATSAPP_NUMBER = '+2348101466977';
 
 const options = [
   { en: 'I need support', ar: 'أحتاج إلى الدعم' },
