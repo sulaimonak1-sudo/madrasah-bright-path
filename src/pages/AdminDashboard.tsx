@@ -340,7 +340,7 @@ const AdminDashboard = () => {
           <Card className="rounded-2xl border border-border/70 bg-card shadow-card">
             <CardHeader className="flex-row items-start justify-between space-y-0 pb-4">
               <div><CardTitle className="font-display text-lg font-extrabold">{t('Public website', 'الموقع العام')}</CardTitle><CardDescription className="mt-1">{t('Update the information families see on the madrasah homepage.', 'حدّث المعلومات التي تراها الأسر في الصفحة الرئيسية للمدرسة.')}</CardDescription></div>
-              <Link to="/" className="text-xs font-bold text-primary hover:underline">{t('View site', 'عرض الموقع')}</Link>
+              <Link to="/home" className="text-xs font-bold text-primary hover:underline">{t('View site', 'عرض الموقع')}</Link>
             </CardHeader>
             <CardContent className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2"><Label>{t('School name', 'اسم المدرسة')}</Label><input className="flex h-10 w-full rounded-xl border border-input bg-background px-3 text-sm" value={websiteContent.schoolName} onChange={e => setWebsiteContent({ ...websiteContent, schoolName: e.target.value })} /></div>
