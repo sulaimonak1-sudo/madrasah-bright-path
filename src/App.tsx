@@ -51,7 +51,8 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               {/* Public */}
-              <Route path="/" element={<Index />} />
+              <Route path="/" element={<Navigate to="/admin" replace />} />
+              <Route path="/home" element={<Index />} />
               <Route path="/result" element={<ResultView />} />
               <Route path="/results" element={<Navigate to="/result" replace />} />
               <Route path="/pin-generate" element={<PinGenerate />} />

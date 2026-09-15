@@ -29,7 +29,7 @@ export const PublicLayout = ({ children }: { children: ReactNode }) => {
       <div className="hidden bg-[hsl(var(--sidebar-background))] text-[hsl(var(--sidebar-foreground))] md:block">
         <div className="container flex h-7 items-center justify-between text-[10px]">
           <div className="flex items-center gap-5"><span className="flex items-center gap-1.5"><MapPin className="h-3 w-3 text-accent" />{contact.address}</span><a href={`tel:${contact.phone}`} className="flex items-center gap-1.5"><Phone className="h-3 w-3 text-accent" />{contact.phone}</a><a href={`mailto:${contact.email}`} className="flex items-center gap-1.5"><Mail className="h-3 w-3 text-accent" />{contact.email}</a></div>
-          <div className="flex items-center gap-4"><Link to="/staff/signup" className="hover:text-accent">{t('Staff Portal', 'بوابة الموظفين')}</Link><Link to="/admin/login" className="hover:text-accent">{t('Admin Portal', 'بوابة المسؤول')}</Link></div>
+          <div className="flex items-center gap-4"><Link to="/admin/login" className="hover:text-accent">{t('Staff Portal', 'بوابة الموظفين')}</Link></div>
         </div>
       </div>
       <header className="sticky top-0 z-30 border-b border-border/70 bg-background/95 backdrop-blur-lg">
