@@ -314,7 +314,7 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6 animate-fade-in pb-20 md:pb-0">
+      <div className="min-w-0 max-w-full space-y-4 overflow-x-hidden pb-20 animate-fade-in sm:space-y-6 md:pb-0">
         {/* Page heading — hidden on mobile since header shows title */}
         <div className="hidden items-end justify-between gap-4 md:flex">
           <div>
@@ -370,23 +370,23 @@ const AdminDashboard = () => {
           </Card>
         )}
 
-        <div className="grid gap-5 xl:grid-cols-[1.35fr_0.85fr]">
-          <Card className="overflow-hidden border border-border/70 bg-card shadow-card rounded-2xl">
-            <CardContent className="p-6 md:p-8">
-              <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
-                <div>
+        <div className="grid min-w-0 gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(0,0.85fr)]">
+          <Card className="min-w-0 overflow-hidden rounded-xl border border-border/70 bg-card shadow-card sm:rounded-2xl">
+            <CardContent className="p-4 sm:p-6 md:p-8">
+              <div className="flex min-w-0 flex-col justify-between gap-6 md:flex-row md:items-center md:gap-8">
+                <div className="min-w-0">
                   <div className="mb-5 flex items-center gap-2 text-primary">
                     <TrendingUp className="h-4 w-4" strokeWidth={2} />
                     <span className="text-[10px] font-bold uppercase tracking-[0.18em]">{t('Performance overview', 'نظرة عامة على الأداء')}</span>
                   </div>
                   <p className="text-sm text-muted-foreground">{t('Average student score', 'متوسط درجات الطلاب')}</p>
                   <div className="mt-2 flex items-end gap-3">
-                    <span className="font-display text-6xl font-extrabold tracking-tight text-foreground">{stats.averageScore}</span>
+                    <span className="font-display text-5xl font-extrabold text-foreground sm:text-6xl">{stats.averageScore}</span>
                     <span className="mb-2 text-lg font-semibold text-muted-foreground">%</span>
                   </div>
                   <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground">{t('Average across recorded subject scores for the active term.', 'المتوسط عبر درجات المواد المسجلة للفصل النشط.')}</p>
                 </div>
-                <div className="w-full max-w-[230px]">
+                <div className="w-full min-w-0 md:max-w-[230px]">
                   <div className="mb-2 flex justify-between text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
                     <span>{t('Score index', 'مؤشر الدرجات')}</span><span>{stats.averageScore}%</span>
                   </div>
@@ -396,22 +396,22 @@ const AdminDashboard = () => {
                   <div className="mt-3 flex justify-between text-[10px] text-muted-foreground"><span>0</span><span>50</span><span>100</span></div>
                 </div>
               </div>
-              <div className="mt-8 grid grid-cols-2 gap-3 border-t border-border pt-5 md:grid-cols-3">
-                <div><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t('Session', 'السنة')}</p><p className="mt-1 truncate text-sm font-bold">{stats.activeSession || '—'}</p></div>
-                <div><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t('Term', 'الفصل')}</p><p className="mt-1 truncate text-sm font-bold">{stats.currentTerm || '—'}</p></div>
+              <div className="mt-6 grid min-w-0 grid-cols-2 gap-3 border-t border-border pt-5 md:mt-8 md:grid-cols-3">
+                <div className="min-w-0"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t('Session', 'السنة')}</p><p className="mt-1 break-words text-sm font-bold">{stats.activeSession || '—'}</p></div>
+                <div className="min-w-0"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t('Term', 'الفصل')}</p><p className="mt-1 break-words text-sm font-bold">{stats.currentTerm || '—'}</p></div>
                 <div className="hidden md:block"><p className="text-[10px] uppercase tracking-widest text-muted-foreground">{t('Status', 'الحالة')}</p><p className="mt-1 flex items-center gap-1.5 text-sm font-bold"><span className="h-1.5 w-1.5 rounded-full bg-[hsl(var(--success))]" />{t('Active', 'نشط')}</p></div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border border-border/70 bg-card shadow-card rounded-2xl">
-            <CardHeader className="flex-row items-start justify-between space-y-0 pb-3">
-              <div><CardTitle className="font-display text-lg font-extrabold">{t('Work queue', 'قائمة العمل')}</CardTitle><CardDescription className="mt-1">{t('Common tasks for today', 'المهام الشائعة اليوم')}</CardDescription></div>
+          <Card className="min-w-0 rounded-xl border border-border/70 bg-card shadow-card sm:rounded-2xl">
+            <CardHeader className="flex-row flex-nowrap items-start justify-between gap-3 space-y-0 p-4 pb-3 sm:p-6 sm:pb-3">
+              <div className="min-w-0"><CardTitle className="font-display text-lg font-extrabold">{t('Work queue', 'قائمة العمل')}</CardTitle><CardDescription className="mt-1 break-words">{t('Common tasks for today', 'المهام الشائعة اليوم')}</CardDescription></div>
               <LockKeyhole className="h-5 w-5 text-muted-foreground" strokeWidth={1.8} />
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-2 p-4 pt-0 sm:p-6 sm:pt-0">
               {quickActions.map(action => (
-                <Link key={action.to} to={action.to} className="group flex items-center gap-3 rounded-2xl border border-transparent p-3 transition-colors hover:border-border hover:bg-muted/60">
+                <Link key={action.to} to={action.to} className="group flex min-w-0 items-center gap-3 rounded-xl border border-transparent p-2.5 transition-colors hover:border-border hover:bg-muted/60 sm:rounded-2xl sm:p-3">
                   <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"><action.icon className="h-4 w-4" /></div>
                   <div className="min-w-0 flex-1"><p className="text-sm font-bold">{t(action.label_en, action.label_ar)}</p><p className="truncate text-xs text-muted-foreground">{t(action.detail_en, action.detail_ar)}</p></div>
                   <ArrowUpRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -422,24 +422,24 @@ const AdminDashboard = () => {
         </div>
 
         {/* Operational inventory */}
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <div className="grid min-w-0 grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
           {statCards.map(card => (
-            <Card key={card.key} className="group overflow-hidden border border-border/60 surface-panel rounded-2xl card-interactive animate-scale-in">
-              <CardContent className="relative p-5">
-                <div className={`relative mb-7 flex h-11 w-11 items-center justify-center rounded-xl ${card.tint}`}>
+            <Card key={card.key} className="group min-w-0 overflow-hidden rounded-xl border border-border/60 surface-panel card-interactive animate-scale-in sm:rounded-2xl">
+              <CardContent className="relative min-w-0 p-3.5 sm:p-5">
+                <div className={`relative mb-5 flex h-10 w-10 items-center justify-center rounded-lg sm:mb-7 sm:h-11 sm:w-11 sm:rounded-xl ${card.tint}`}>
                   <card.icon className={`h-5 w-5 ${card.color}`} strokeWidth={1.8} />
                 </div>
-                <p className="text-xs text-muted-foreground leading-none">{t(card.label_en, card.label_ar)}</p>
-                <p className="mt-1 font-display text-3xl font-extrabold tracking-tight md:text-4xl">{(stats as any)[card.key]}</p>
+                <p className="min-h-8 break-words text-[11px] leading-tight text-muted-foreground sm:min-h-0 sm:text-xs sm:leading-none">{t(card.label_en, card.label_ar)}</p>
+                <p className="mt-1 font-display text-2xl font-extrabold sm:text-3xl md:text-4xl">{(stats as any)[card.key]}</p>
                 <span className="pointer-events-none absolute inset-x-5 bottom-0 h-px bg-accent/30 opacity-0 transition-opacity group-hover:opacity-100" />
               </CardContent>
             </Card>
           ))}
         </div>
 
-        <div className="flex items-center justify-between rounded-2xl border border-dashed border-border bg-card/60 px-4 py-3">
-          <div className="flex items-center gap-3"><CalendarRange className="h-4 w-4 text-primary" /><span className="text-sm font-semibold">{t('Academic cycle', 'الدورة الأكاديمية')}</span><span className="hidden text-xs text-muted-foreground sm:inline">{stats.activeSession || '—'} · {stats.currentTerm || '—'}</span></div>
-          <Link to="/admin/sessions" className="text-xs font-bold text-primary hover:underline">{t('Manage', 'إدارة')}</Link>
+        <div className="flex min-w-0 flex-nowrap items-center justify-between gap-3 rounded-xl border border-dashed border-border bg-card/60 px-3 py-3 sm:rounded-2xl sm:px-4">
+          <div className="flex min-w-0 flex-nowrap items-center gap-2 sm:gap-3"><CalendarRange className="h-4 w-4 shrink-0 text-primary" /><span className="truncate text-sm font-semibold">{t('Academic cycle', 'الدورة الأكاديمية')}</span><span className="hidden truncate text-xs text-muted-foreground sm:inline">{stats.activeSession || '—'} · {stats.currentTerm || '—'}</span></div>
+          <Link to="/admin/sessions" className="shrink-0 text-xs font-bold text-primary hover:underline">{t('Manage', 'إدارة')}</Link>
         </div>
 
         {/* Head Teacher Tiered Remarks (admin only) */}

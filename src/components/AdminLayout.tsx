@@ -116,7 +116,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
   }, [location.pathname, t]);
 
   return (
-    <div className={cn('portal-shell flex min-h-screen bg-background', isRTL && 'flex-row-reverse')}>
+    <div className={cn('portal-shell flex min-h-screen max-w-full overflow-x-hidden bg-background', isRTL && 'flex-row-reverse')}>
       {/* Mobile overlay */}
       {sidebarOpen && (
         <div
@@ -272,10 +272,10 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
       </aside>
 
       {/* ─── Main content ─── */}
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 max-w-full flex-1 flex-col overflow-x-hidden">
         {/* Mobile top bar */}
         <header className="sticky top-0 z-30 md:hidden">
-          <div className="flex items-center justify-between bg-background/80 px-4 py-3 backdrop-blur-lg">
+          <div className="flex min-w-0 flex-nowrap items-center justify-between gap-2 bg-background/80 px-3 py-3 backdrop-blur-lg sm:px-4">
             <button
               onClick={() => setSidebarOpen(true)}
               className="flex h-10 w-10 items-center justify-center rounded-xl bg-card text-foreground shadow-sm transition-transform active:scale-95"
@@ -313,17 +313,17 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 px-4 pb-24 pt-4 md:p-8 md:pb-0 xl:px-10">
-          <div className="mx-auto w-full max-w-[1440px]">
-            <div className="relative mb-7 overflow-hidden rounded-2xl border border-border/60 surface-panel p-5 shadow-card sm:p-6">
+        <main className="min-w-0 max-w-full flex-1 overflow-x-hidden px-3 pb-24 pt-3 sm:px-4 sm:pt-4 md:p-8 md:pb-0 xl:px-10">
+          <div className="mx-auto min-w-0 w-full max-w-[1440px]">
+            <div className="relative mb-5 min-w-0 overflow-hidden rounded-xl border border-border/60 surface-panel p-4 shadow-card sm:mb-7 sm:rounded-2xl sm:p-6">
               <div className="pointer-events-none absolute -right-10 -top-16 h-40 w-40 rounded-full bg-accent/15 blur-2xl" />
-              <div className="relative flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div className="relative flex min-w-0 flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
                 <div className="min-w-0">
                   <p className="mb-1.5 inline-flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.2em] text-primary/75">
                     <span className="h-1.5 w-1.5 rounded-full bg-accent" />
                     {t('Workspace', 'مساحة العمل')}
                   </p>
-                  <h1 className="truncate font-display text-2xl font-extrabold tracking-tight text-foreground md:text-[28px]">{pageTitle}</h1>
+                  <h1 className="break-words font-display text-xl font-extrabold text-foreground sm:text-2xl md:text-[28px]">{pageTitle}</h1>
                 </div>
                 <CampusSwitcher className="w-full border-border/70 bg-card shadow-sm sm:w-[240px]" />
               </div>
@@ -335,11 +335,11 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
 
         {/* ─── Mobile bottom nav ─── */}
         <nav
-          className="fixed bottom-0 left-0 right-0 z-40 px-3 md:hidden"
+          className="fixed bottom-0 left-0 right-0 z-40 max-w-full overflow-hidden px-2 md:hidden sm:px-3"
           style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
         >
-          <div className="mx-auto max-w-lg rounded-t-3xl border border-border/70 bg-card/95 px-2 pt-2 shadow-[0_-8px_30px_hsl(var(--foreground)/0.08)] backdrop-blur-lg">
-            <div className="flex items-stretch justify-around gap-1">
+          <div className="mx-auto w-full max-w-lg rounded-t-2xl border border-border/70 bg-card/95 px-1 pt-2 shadow-[0_-8px_30px_hsl(var(--foreground)/0.08)] backdrop-blur-lg sm:rounded-t-3xl sm:px-2">
+            <div className="grid grid-cols-5 gap-0.5 sm:gap-1">
               {mobileDockItems.map(item => {
                 if (item.type === 'action') {
                   return (
@@ -347,7 +347,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                       key="more"
                       type="button"
                       onClick={() => setSidebarOpen(true)}
-                      className="flex min-h-[58px] min-w-[58px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-2 text-muted-foreground transition-colors active:bg-muted active:text-foreground"
+                      className="flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-2 text-muted-foreground transition-colors active:bg-muted active:text-foreground sm:rounded-2xl"
                       aria-label={t(item.label_en, item.label_ar)}
                     >
                       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-muted/70">
@@ -367,7 +367,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                     key={item.to}
                     to={item.to}
                     className={cn(
-                      'relative flex min-h-[58px] min-w-[58px] flex-1 flex-col items-center justify-center gap-1 rounded-2xl py-2 transition-colors',
+                        'relative flex min-h-[58px] min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 py-2 transition-colors sm:rounded-2xl',
                       active ? 'bg-primary/10 text-primary' : 'text-muted-foreground active:bg-muted'
                     )}
                     aria-label={t(item.label_en, item.label_ar)}
@@ -379,7 +379,7 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
                       />
                     </div>
                     <span className={cn(
-                      'text-[10px] leading-none',
+                      'max-w-full truncate text-[9px] leading-none sm:text-[10px]',
                       active ? 'font-semibold' : 'font-medium'
                     )}>
                       {t(item.label_en, item.label_ar)}
