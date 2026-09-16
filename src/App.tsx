@@ -37,6 +37,7 @@ import Contact from "./pages/Contact";
 import AdminWebsite from "./pages/AdminWebsite";
 import AdminWebsitePosts from "./pages/AdminWebsitePosts";
 import { Navigate } from "react-router-dom";
+import RootEntry from "@/components/RootEntry";
 
 const queryClient = new QueryClient();
 
@@ -51,7 +52,7 @@ const App = () => (
           <BrowserRouter>
             <Routes>
               {/* Public */}
-              <Route path="/" element={<Navigate to="/admin" replace />} />
+              <Route path="/" element={<RootEntry />} />
               <Route path="/home" element={<Index />} />
               <Route path="/result" element={<ResultView />} />
               <Route path="/results" element={<Navigate to="/result" replace />} />

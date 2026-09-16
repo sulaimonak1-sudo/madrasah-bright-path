@@ -180,7 +180,7 @@ const ResultView = () => {
                 {t('Check Your Result', 'التحقق من النتيجة')}
               </CardTitle>
               <CardDescription>
-                {t('Enter your Student ID and PIN', 'أدخل رقم الطالب والرقم السري')}
+                {t('Enter your Student ID and select your term', 'أدخل رقم الطالب واختر الفصل الدراسي')}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -192,15 +192,6 @@ const ResultView = () => {
                     value={studentUid}
                     onChange={e => setStudentUid(e.target.value)}
                     required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('PIN', 'الرقم السري')}</Label>
-                  <Input
-                    type="password"
-                    placeholder={t('Enter your PIN', 'أدخل الرقم السري')}
-                    value={pin}
-                    onChange={e => setPin(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
@@ -224,15 +215,6 @@ const ResultView = () => {
                 {error && <div className="text-destructive text-sm p-2 bg-destructive/10 rounded">{error}</div>}
                 <Button type="submit" className="w-full" size="lg" disabled={loading}>
                   {loading ? t('Loading...', 'جارٍ التحميل...') : t('View Result', 'عرض النتيجة')}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => navigate('/pin-generate')}
-                >
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  {t('Generate a result PIN', 'توليد الرقم السري للنتيجة')}
                 </Button>
               </form>
             </CardContent>
