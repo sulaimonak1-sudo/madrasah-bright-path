@@ -432,12 +432,12 @@ const AdminStudents = () => {
                 {selectedClassArm ? ` - ${selectedClassArm.name}` : ''}
               </h1>
             </div>
-            <div className="flex items-center justify-between mb-2 gap-2 flex-wrap">
-              <div className="relative max-w-sm">
+            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="relative w-full sm:max-w-sm">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input className="pl-9" placeholder={t('Search students...', 'البحث عن طالب...')} value={search} onChange={e => setSearch(e.target.value)} />
               </div>
-              <div className="flex gap-2">
+              <div className="-mx-1 flex flex-wrap gap-2 px-1">
                 <Button size="sm" variant={showArchived ? 'secondary' : 'outline'} onClick={() => setShowArchived(value => !value)}>
                   {showArchived ? <ArchiveRestore className="mr-2 h-4 w-4" /> : <Archive className="mr-2 h-4 w-4" />}
                   {showArchived ? t('Hide Archived', 'إخفاء المؤرشفين') : t('Show Archived', 'عرض المؤرشفين')}
